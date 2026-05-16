@@ -1,0 +1,39 @@
+<script setup>
+import AppIcon from '@/Components/UI/AppIcon.vue';
+defineProps({
+    modelValue: { type: String, default: 'banknotes' },
+    label: { type: String, default: 'Icon' },
+});
+
+const emit = defineEmits(['update:modelValue']);
+
+const icons = [
+    'banknotes', 'credit-card', 'building-library', 'currency-dollar',
+    'shopping-bag', 'shopping-cart', 'truck', 'home',
+    'bolt', 'heart', 'academic-cap', 'briefcase',
+    'chart-bar', 'computer-desktop', 'device-phone-mobile', 'film',
+    'cake', 'sparkles', 'tag', 'plus-circle',
+    'arrow-path', 'ellipsis-horizontal', 'wallet', 'gift',
+];
+</script>
+
+<template>
+    <div>
+        <label class="block text-sm font-medium text-slate-300 mb-2">{{ label }}</label>
+        <div class="grid grid-cols-8 gap-2">
+            <button
+                v-for="icon in icons"
+                :key="icon"
+                type="button"
+                @click="emit('update:modelValue', icon)"
+                :class="[
+                    'w-10 h-10 flex items-center justify-center rounded-lg border-2 text-lg transition-all duration-200 cursor-pointer hover:bg-[#232936]',
+                    modelValue === icon ? 'border-[#6366F1] bg-[#6366F1]/10 ring-2 ring-[#6366F1]/20' : 'border-[#232936]',
+                ]"
+                :title="icon"
+            >
+                <AppIcon :name="icon" size="20" :class="modelValue === icon ? 'text-[#6366F1]' : 'text-slate-400'" />
+            </button>
+        </div>
+    </div>
+</template>

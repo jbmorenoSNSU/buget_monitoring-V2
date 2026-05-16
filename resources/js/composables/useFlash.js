@@ -1,0 +1,26 @@
+import { usePage } from '@inertiajs/vue3';
+import { useToast } from 'vue-toastification';
+import { watch } from 'vue';
+
+/**
+ * Composable to show toast notifications from Inertia flash messages.
+ */
+export function useFlash() {
+    const toast = useToast();
+    const page = usePage();
+
+    watch(
+        () => page.props?.flash,
+        (flash) => {
+            if (flash?.success) {
+                toast.success(flash.success);
+            }
+            if (flash?.error) {
+                toast.error(flash.error);
+            }
+        },
+        { immediate: true, deep: true }
+    );
+
+    return { toast };
+}

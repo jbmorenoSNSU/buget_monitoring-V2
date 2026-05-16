@@ -1,0 +1,84 @@
+<script setup>
+import { computed, ref } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
+import AppLayout from '@/Components/Layout/AppLayout.vue';
+import AppButton from '@/Components/UI/AppButton.vue';
+import AppBadge from '@/Components/UI/AppBadge.vue';
+import AppModal from '@/Components/UI/AppModal.vue';
+import AppTable from '@/Components/UI/AppTable.vue';
+import { useCurrency } from '@/composables/useCurrency.js';
+import { useDate } from '@/composables/useDate.js';
+
+const props = defineProps({
+    recurring: { type: Array, default: () => [] },
+});
+
+const { formatPeso } = useCurrency();
+const { formatShortDate, formatRelative } = useDate();
+
+const items = computed(() => props.recurring || []);
+const deleteTarget = ref(null);
+const showDeleteModal = ref(false);
+
+const columns = [
+    { key: 'description', label: 'Description' },
+    { key: 'type', label: 'Type' },
+    { key: 'amount', label: 'Amount', class: 'text-right', cellClass: 'text-right' },
+    { key: 'frequency', label: 'Frequency' },
+    { key: 'next_due_date', label: 'Next Due' },
+    { key: 'is_active', label: 'Status' },
+    { key: 'actions', label: '' },
+];
+
+const confirmDelete = (r) => { deleteTarget.value = r; showDeleteModal.value = true; };
+const doDelete = () => { router.delete(`/recurring/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
+const toggle = (r) => router.patch(`/recurring/${r.id}/toggle`);
+const generateNow = () => router.post('/recurring/generate-now');
+</script>
+
+<template>
+    <AppLayout title="Recurring Transactions">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 class="text-lg font-semibold text-[#F8FAFC]">Recurring Transactions</h2>
+            <div class="flex gap-2">
+                <AppButton variant="secondary" @click="generateNow">⚡ Generate Now</AppButton>
+                <Link href="/recurring/create"><AppButton>+ Add Recurring</AppButton></Link>
+            </div>
+        </div>
+
+        <AppTable :columns="columns" :rows="items">
+            <template #cell-type="{ row }">
+                <AppBadge :type="row.type" :label="row.type" />
+            </template>
+            <template #cell-amount="{ row }">
+                <span :class="['font-semibold', row.type === 'income' ? 'text-[#10B981]' : row.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
+                    {{ row.type === 'income' ? '+' : row.type === 'transfer' ? '' : '-' }}{{ formatPeso(row.amount) }}
+                </span>
+            </template>
+            <template #cell-frequency="{ row }">
+                <span class="capitalize text-sm text-slate-400">{{ row.frequency }}</span>
+            </template>
+            <template #cell-next_due_date="{ row }">
+                <span class="text-sm">{{ formatRelative(row.next_due_date) }}</span>
+            </template>
+            <template #cell-is_active="{ row }">
+                <AppBadge :type="row.is_active ? 'active' : 'inactive'" :label="row.is_active ? 'Active' : 'Paused'" />
+            </template>
+            <template #cell-actions="{ row }">
+                <div class="flex gap-1">
+                    <Link :href="`/recurring/${row.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
+                    <AppButton variant="ghost" size="sm" @click="toggle(row)">{{ row.is_active ? 'Pause' : 'Resume' }}</AppButton>
+                    <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
+                </div>
+            </template>
+        </AppTable>
+
+        <AppModal :show="showDeleteModal" title="Delete Recurring" @close="showDeleteModal = false">
+            <p class="text-slate-400">Delete "<strong>{{ deleteTarget?.description }}</strong>"?</p>
+            <template #footer>
+                <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
+                <AppButton variant="danger" @click="doDelete">Delete</AppButton>
+            </template>
+        </AppModal>
+    </AppLayout>
+</template>

@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreCategoryRequest extends FormRequest
+{
+    public function authorize(): bool { return true; }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|max:100',
+            'type' => 'required|in:income,expense,both',
+            'icon' => 'required|string|max:50',
+            'color' => 'required|string|max:7',
+            'is_active' => 'sometimes|boolean',
+        ];
+    }
+}
