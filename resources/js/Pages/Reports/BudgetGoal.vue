@@ -5,6 +5,7 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
 const props = defineProps({
@@ -37,8 +38,18 @@ const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=$
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppSelect v-model="month" :options="monthOptions" label="Month" @change="filter" />
             <AppSelect v-model="year" :options="yearOptions" label="Year" @change="filter" />
-            <a :href="exportUrl('budget-goal-excel')"><AppButton variant="secondary">📥 Excel</AppButton></a>
-            <a :href="exportUrl('budget-goal-pdf')"><AppButton variant="secondary">📄 PDF</AppButton></a>
+            <a :href="exportUrl('budget-goal-excel')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                    Excel
+                </AppButton>
+            </a>
+            <a :href="exportUrl('budget-goal-pdf')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileText" size="18" class="text-rose-500" />
+                    PDF
+                </AppButton>
+            </a>
         </div>
 
         <AppTable :columns="columns" :rows="data">

@@ -7,6 +7,7 @@ import AppButton from '@/Components/UI/AppButton.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
@@ -44,8 +45,18 @@ const exportUrl = (type) => `/reports/export/${type}?account_id=${accountId.valu
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
             <AppButton @click="filter">Apply</AppButton>
-            <a :href="exportUrl('account-statement-excel')"><AppButton variant="secondary">📥 Excel</AppButton></a>
-            <a :href="exportUrl('account-statement-pdf')"><AppButton variant="secondary">📄 PDF</AppButton></a>
+            <a :href="exportUrl('account-statement-excel')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                    Excel
+                </AppButton>
+            </a>
+            <a :href="exportUrl('account-statement-pdf')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileText" size="18" class="text-rose-500" />
+                    PDF
+                </AppButton>
+            </a>
         </div>
 
         <template v-if="data">

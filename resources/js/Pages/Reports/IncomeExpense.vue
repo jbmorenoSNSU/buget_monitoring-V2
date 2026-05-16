@@ -6,6 +6,7 @@ import AppCard from '@/Components/UI/AppCard.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
@@ -44,8 +45,18 @@ const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
             <AppButton @click="filter">Apply</AppButton>
-            <a :href="exportUrl('income-expense-excel')"><AppButton variant="secondary">📥 Excel</AppButton></a>
-            <a :href="exportUrl('income-expense-pdf')"><AppButton variant="secondary">📄 PDF</AppButton></a>
+            <a :href="exportUrl('income-expense-excel')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                    Excel
+                </AppButton>
+            </a>
+            <a :href="exportUrl('income-expense-pdf')" class="inline-block">
+                <AppButton variant="secondary" class="gap-2">
+                    <AppIcon name="FileText" size="18" class="text-rose-500" />
+                    PDF
+                </AppButton>
+            </a>
         </div>
 
         <AppCard class="mb-6">
