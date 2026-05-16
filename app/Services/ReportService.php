@@ -208,4 +208,45 @@ class ReportService
 
         return $result;
     }
+
+    public function calendarReport(int $month, int $year): array
+    {
+        $start = Carbon::create($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+        
+        $transactions = Transaction::with(['category', 'account'])
+            ->whereBetween('transaction_date', [$start, $end])
+            ->orderBy('transaction_date')
+            ->get()
+            ->groupBy(fn($t) => $t->transaction_date->format('Y-m-d'));
+
+        $calendar = [];
+        $cursor = $start->copy();
+        while ($cursor->lte($end)) {
+            $date = $cursor->format('Y-m-d');
+            $dayTransactions = $transactions->get($date, collect());
+            
+            $calendar[$date] = [
+                'date' => $date,
+                'day' => $cursor->day,
+                'weekday' => $cursor->dayOfWeek,
+                'is_today' => $cursor->isToday(),
+                'income' => (float) $dayTransactions->where('type', 'income')->sum('amount'),
+                'expense' => (float) $dayTransactions->where('type', 'expense')->sum('amount'),
+                'transfer' => (float) $dayTransactions->where('type', 'transfer')->sum('amount'),
+                'items' => $dayTransactions->map(fn($t) => [
+                    'id' => $t->id,
+                    'description' => $t->description,
+                    'amount' => (float) $t->amount,
+                    'type' => $t->type->value ?? $t->type,
+                    'category_name' => $t->category?->name,
+                    'category_color' => $t->category?->color,
+                    'account_name' => $t->account?->name,
+                ]),
+            ];
+            $cursor->addDay();
+        }
+
+        return $calendar;
+    }
 }

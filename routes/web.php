@@ -35,5 +35,6 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/category-expense', [ReportController::class, 'categoryExpense'])->name('category-expense');
     Route::get('/account-statement', [ReportController::class, 'accountStatement'])->name('account-statement');
     Route::get('/budget-goal', [ReportController::class, 'budgetGoal'])->name('budget-goal');
+    Route::get('/calendar', [ReportController::class, 'calendar'])->name('calendar');
     Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
 });

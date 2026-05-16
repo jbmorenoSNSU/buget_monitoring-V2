@@ -9,6 +9,7 @@ const reports = [
     { name: 'Expense by Category', description: 'See spending breakdown by category', href: '/reports/category-expense', icon: 'PieChart' },
     { name: 'Account Statement', description: 'View transaction history for an account', href: '/reports/account-statement', icon: 'ClipboardList' },
     { name: 'Budget Goals vs Actual', description: 'Track budget performance', href: '/reports/budget-goal', icon: 'Target' },
+    { name: 'Financial Calendar', description: 'Visualize daily spending and income patterns', href: '/reports/calendar', icon: 'Calendar' },
 ];
 </script>
 

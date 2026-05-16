@@ -73,6 +73,17 @@ class ReportController extends Controller
         ]);
     }
 
+    public function calendar(Request $request): Response
+    {
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
+
+        return Inertia::render('Reports/Calendar', [
+            'data' => $this->service->calendarReport($month, $year),
+            'filters' => compact('month', 'year'),
+        ]);
+    }
+
     public function export(Request $request, string $type)
     {
         $date = now()->format('Y-m-d');
