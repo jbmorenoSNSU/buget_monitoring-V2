@@ -93,67 +93,70 @@ const getTransactionColor = (type) => {
         </div>
 
         <AppCard class="p-0 overflow-hidden border-[#232936] shadow-2xl">
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 bg-[#0F111A]">
-                <!-- Header -->
-                <div v-for="day in weekDays" :key="day" 
-                    class="py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest bg-[#161B26] border-b border-r border-[#232936] last:border-r-0">
-                    {{ day }}
-                </div>
+            <!-- Scrollable container for mobile -->
+            <div class="overflow-x-auto">
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 bg-[#0F111A] min-w-[600px] md:min-w-0">
+                    <!-- Header -->
+                    <div v-for="day in weekDays" :key="day" 
+                        class="py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest bg-[#161B26] border-b border-r border-[#232936] last:border-r-0">
+                        {{ day }}
+                    </div>
 
-                <!-- Padding for start of month -->
-                <div v-for="p in paddingStart" :key="'p'+p" 
-                    class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
-                </div>
-                
-                <!-- Day Cells -->
-                <div v-for="day in calendarDays" :key="day.date" 
-                    :class="[
-                        'min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] p-3 transition-all duration-300 group flex flex-col',
-                        day.is_today ? 'bg-[#6366F1]/5' : 'hover:bg-[#161B26]'
-                    ]">
-                    <div class="flex justify-between items-start mb-2">
-                        <span :class="[
-                            'text-sm font-bold transition-colors',
-                            day.is_today ? 'flex items-center justify-center w-7 h-7 rounded-full bg-[#6366F1] text-white shadow-lg shadow-[#6366F1]/20' : 'text-slate-500 group-hover:text-slate-300'
+                    <!-- Padding for start of month -->
+                    <div v-for="p in paddingStart" :key="'p'+p" 
+                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
+                    </div>
+                    
+                    <!-- Day Cells -->
+                    <div v-for="day in calendarDays" :key="day.date" 
+                        :class="[
+                            'min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] p-3 transition-all duration-300 group flex flex-col',
+                            day.is_today ? 'bg-[#6366F1]/5' : 'hover:bg-[#161B26]'
                         ]">
-                            {{ day.day }}
-                        </span>
-                    </div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span :class="[
+                                'text-sm font-bold transition-colors',
+                                day.is_today ? 'flex items-center justify-center w-7 h-7 rounded-full bg-[#6366F1] text-white shadow-lg shadow-[#6366F1]/20' : 'text-slate-500 group-hover:text-slate-300'
+                            ]">
+                                {{ day.day }}
+                            </span>
+                        </div>
 
-                    <!-- Daily Summaries -->
-                    <div class="flex-1 space-y-1.5 overflow-hidden">
-                        <div v-if="day.income > 0" class="text-[10px] md:text-xs font-bold text-[#10B981] flex items-center gap-1">
-                            <span class="opacity-50 font-medium">+</span>{{ formatPeso(day.income) }}
-                        </div>
-                        <div v-if="day.expense > 0" class="text-[10px] md:text-xs font-bold text-[#F43F5E] flex items-center gap-1">
-                            <span class="opacity-50 font-medium">-</span>{{ formatPeso(day.expense) }}
-                        </div>
-                        
-                        <!-- Itemized Mini-list -->
-                        <div v-if="day.items.length > 0" class="mt-3 space-y-1">
-                            <div v-for="item in day.items.slice(0, 3)" :key="item.id" 
-                                class="text-[9px] md:text-[10px] text-slate-500 truncate flex items-center gap-1.5 group-hover:text-slate-400">
-                                <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: item.category_color || '#94A3B8' }"></div>
-                                <span class="truncate">{{ item.description }}</span>
+                        <!-- Daily Summaries -->
+                        <div class="flex-1 space-y-1.5 overflow-hidden">
+                            <div v-if="day.income > 0" class="text-[10px] md:text-xs font-bold text-[#10B981] flex items-center gap-1">
+                                <span class="opacity-50 font-medium">+</span>{{ formatPeso(day.income) }}
                             </div>
-                            <div v-if="day.items.length > 3" class="text-[8px] md:text-[9px] text-slate-600 font-bold uppercase tracking-tighter pt-0.5">
-                                +{{ day.items.length - 3 }} more
+                            <div v-if="day.expense > 0" class="text-[10px] md:text-xs font-bold text-[#F43F5E] flex items-center gap-1">
+                                <span class="opacity-50 font-medium">-</span>{{ formatPeso(day.expense) }}
+                            </div>
+                            
+                            <!-- Itemized Mini-list -->
+                            <div v-if="day.items.length > 0" class="mt-3 space-y-1">
+                                <div v-for="item in day.items.slice(0, 3)" :key="item.id" 
+                                    class="text-[9px] md:text-[10px] text-slate-500 truncate flex items-center gap-1.5 group-hover:text-slate-400">
+                                    <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: item.category_color || '#94A3B8' }"></div>
+                                    <span class="truncate">{{ item.description }}</span>
+                                </div>
+                                <div v-if="day.items.length > 3" class="text-[8px] md:text-[9px] text-slate-600 font-bold uppercase tracking-tighter pt-0.5">
+                                    +{{ day.items.length - 3 }} more
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Balance Indicator (Subtle) -->
+                        <div v-if="day.income > 0 || day.expense > 0" class="mt-auto pt-2">
+                            <div class="h-0.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#10B981]" :style="{ width: (day.income / (day.income + day.expense) * 100) + '%' }"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Daily Balance Indicator (Subtle) -->
-                    <div v-if="day.income > 0 || day.expense > 0" class="mt-auto pt-2">
-                        <div class="h-0.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-[#10B981]" :style="{ width: (day.income / (day.income + day.expense) * 100) + '%' }"></div>
-                        </div>
+                    <!-- Padding for end of month -->
+                    <div v-for="p in paddingEnd" :key="'pe'+p" 
+                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
                     </div>
-                </div>
-
-                <!-- Padding for end of month -->
-                <div v-for="p in paddingEnd" :key="'pe'+p" 
-                    class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
                 </div>
             </div>
         </AppCard>

@@ -7,7 +7,7 @@ defineProps({
     collapsed: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'toggle']);
 const page = usePage();
 const currentRoute = computed(() => page.url);
 
@@ -28,12 +28,18 @@ const isActive = (item) => {
 
 <template>
     <aside :class="[
-        'fixed top-0 left-0 h-full bg-[#090A0F] border-r border-[#232936] z-40 transition-all duration-300 flex flex-col',
+        'fixed top-0 left-0 h-full bg-[#090A0F] border-r border-[#232936] z-40 transition-all duration-300 ease-in-out flex flex-col',
         collapsed ? 'w-[60px]' : 'w-[260px]',
     ]">
-        <!-- Logo -->
-        <div :class="['flex items-center border-b border-[#232936] px-4', collapsed ? 'justify-center h-16' : 'h-16 gap-3']">
-            <div class="w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center text-white font-bold text-sm shrink-0">₱</div>
+        <!-- Logo / Toggle -->
+        <div 
+            @click="emit('toggle')"
+            :class="[
+                'flex items-center border-b border-[#232936] px-4 cursor-pointer hover:bg-[#161B26]/50 transition-colors h-[65px]', 
+                collapsed ? 'justify-center' : 'gap-3'
+            ]"
+        >
+            <div class="w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-indigo-500/20">₱</div>
             <Transition name="fade">
                 <span v-if="!collapsed" class="text-white font-semibold text-sm whitespace-nowrap">Budget Monitor</span>
             </Transition>
