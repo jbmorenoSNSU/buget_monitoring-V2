@@ -20,11 +20,17 @@ class AccountResource extends JsonResource
                 'name' => $this->accountType->name,
                 'icon' => $this->accountType->icon,
             ]),
+            'person_id' => $this->person_id,
+            'person' => $this->whenLoaded('person', fn () => [
+                'id' => $this->person->id,
+                'name' => $this->person->name,
+                'color' => $this->person->color,
+            ]),
             'name' => $this->name,
             'description' => $this->description,
             'initial_balance' => (float) $this->initial_balance,
             'current_balance' => (float) $this->current_balance,
-            'color' => $this->color,
+            'color' => $this->relationLoaded('person') && $this->person ? $this->person->color : '#94A3B8',
             'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
         ];

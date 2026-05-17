@@ -15,10 +15,10 @@ class StoreAccountRequest extends FormRequest
     {
         return [
             'account_type_id' => 'required|exists:account_types,id',
+            'person_id' => 'nullable|exists:persons,id',
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
             'initial_balance' => 'sometimes|numeric|min:-9999999999999.99|max:9999999999999.99',
-            'color' => 'required|string|max:7',
             'is_active' => 'sometimes|boolean',
         ];
     }

@@ -8,6 +8,7 @@ use App\Http\Requests\StoreAccountRequest;
 use App\Http\Resources\AccountResource;
 use App\Models\Account;
 use App\Models\AccountType;
+use App\Models\Person;
 use App\Services\AccountService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ class AccountController extends Controller
     {
         return Inertia::render('Accounts/Form', [
             'accountTypes' => AccountType::all(),
+            'persons' => Person::active()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 
@@ -41,8 +43,9 @@ class AccountController extends Controller
     public function edit(Account $account): Response
     {
         return Inertia::render('Accounts/Form', [
-            'account' => new AccountResource($account->load('accountType')),
+            'account' => new AccountResource($account->load(['accountType', 'person'])),
             'accountTypes' => AccountType::all(),
+            'persons' => Person::active()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 

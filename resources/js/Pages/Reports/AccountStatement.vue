@@ -22,7 +22,10 @@ const accountId = ref(props.filters.accountId || '');
 const from = ref(props.filters.from || '');
 const to = ref(props.filters.to || '');
 
-const accountOptions = props.accounts.map(a => ({ value: a.id, label: a.name }));
+const accountOptions = props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name,
+}));
 
 const filter = () => router.get('/reports/account-statement', { account_id: accountId.value, from: from.value, to: to.value }, { preserveState: true });
 

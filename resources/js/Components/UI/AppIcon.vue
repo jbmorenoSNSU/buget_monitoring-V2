@@ -46,6 +46,7 @@ const lucideMapping = {
     'BarChart': 'BarChart',
     'PieChart': 'PieChart',
     'ClipboardList': 'ClipboardList',
+    'Users': 'Users',
 };
 
 const iconComponent = computed(() => {

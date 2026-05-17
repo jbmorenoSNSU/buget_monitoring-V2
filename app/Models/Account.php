@@ -20,6 +20,7 @@ class Account extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'account_type_id',
+        'person_id',
         'name',
         'description',
         'initial_balance',
@@ -41,6 +42,14 @@ class Account extends Model
     public function accountType(): BelongsTo
     {
         return $this->belongsTo(AccountType::class);
+    }
+
+    /**
+     * Get the person/owner of this account.
+     */
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
     }
 
     /**

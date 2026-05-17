@@ -13,6 +13,7 @@ const currentRoute = computed(() => page.url);
 
 const navItems = [
     { name: 'Dashboard', route: 'dashboard', icon: 'Home', href: '/dashboard' },
+    { name: 'Persons', route: 'persons', icon: 'Users', href: '/persons' },
     { name: 'Accounts', route: 'accounts', icon: 'CreditCard', href: '/accounts' },
     { name: 'Transactions', route: 'transactions', icon: 'ArrowUpDown', href: '/transactions' },
     { name: 'Recurring', route: 'recurring', icon: 'RefreshCw', href: '/recurring' },

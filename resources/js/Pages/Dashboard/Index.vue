@@ -1,9 +1,11 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
 import AppBadge from '@/Components/UI/AppBadge.vue';
+import AppSelect from '@/Components/UI/AppSelect.vue';
 import ProgressBar from '@/Components/UI/ProgressBar.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
 import DoughnutChart from '@/Components/Charts/DoughnutChart.vue';
@@ -21,6 +23,8 @@ const props = defineProps({
     budgetGoals: { type: Object, default: () => ({ data: [] }) },
     upcomingRecurring: { type: Array, default: () => [] },
     chartData: { type: Object, default: () => ({}) },
+    persons: { type: Array, default: () => [] },
+    selectedPersonId: { type: Number, default: null },
 });
 
 const { formatPeso } = useCurrency();
@@ -31,6 +35,18 @@ const netSavings = computed(() => props.monthlyIncome - props.monthlyExpense);
 const accounts = computed(() => props.accounts?.data || props.accounts || []);
 const recentTxns = computed(() => props.recentTransactions?.data || props.recentTransactions || []);
 const goals = computed(() => props.budgetGoals?.data || props.budgetGoals || []);
+
+// Person filter
+const selectedPerson = ref(props.selectedPersonId ? props.selectedPersonId.toString() : '');
+const personOptions = computed(() => [
+    { value: '', label: 'Everyone' },
+    ...props.persons.map(p => ({ value: p.id.toString(), label: p.name })),
+]);
+
+const onPersonChange = () => {
+    const params = selectedPerson.value ? { person_id: selectedPerson.value } : {};
+    router.get('/dashboard', params, { preserveState: false });
+};
 
 const barChartData = computed(() => {
     const data = props.chartData?.sixMonths || [];
@@ -76,6 +92,12 @@ const lineChartData = computed(() => {
 
 <template>
     <AppLayout title="Dashboard">
+        <!-- Person Filter -->
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-sm text-slate-400 font-medium">View as:</span>
+            <AppSelect v-model="selectedPerson" :options="personOptions" class="w-44" @change="onPersonChange" />
+        </div>
+
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatCard label="Total Balance" :value="formatPeso(totalBalance)" accentColor="#6366F1" />
@@ -111,7 +133,7 @@ const lineChartData = computed(() => {
                             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: acc.color }" />
                             <div>
                                 <p class="text-sm font-medium text-slate-100">{{ acc.name }}</p>
-                                <p class="text-xs text-slate-400">{{ acc.account_type?.name }}</p>
+                                <p class="text-xs text-slate-400">{{ acc.account_type?.name }}<span v-if="acc.person" :style="{ color: acc.person.color }"> · {{ acc.person.name }}</span></p>
                             </div>
                         </div>
                         <span :class="['text-sm font-semibold', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
@@ -134,7 +156,7 @@ const lineChartData = computed(() => {
                             <AppIcon :name="txn.category?.icon || 'Package'" size="20" class="text-slate-400" />
                             <div>
                                 <p class="text-sm font-medium text-slate-100">{{ txn.description }}</p>
-                                <p class="text-xs text-slate-400">{{ txn.account?.name }} · {{ formatShortDate(txn.transaction_date) }}</p>
+                                <p class="text-xs text-slate-400">{{ txn.account?.name }}<span v-if="txn.account?.person" :style="{ color: txn.account.person.color }"> ({{ txn.account.person.name }})</span> · {{ formatShortDate(txn.transaction_date) }}</p>
                             </div>
                         </div>
                         <span :class="['text-sm font-semibold', txn.type === 'income' ? 'text-[#10B981]' : txn.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">

@@ -12,12 +12,16 @@ class AccountService
 {
     public function getAll()
     {
-        return Account::with('accountType')->orderBy('name')->get();
+        return Account::with(['accountType', 'person'])->orderBy('name')->get();
     }
 
-    public function getActive()
+    public function getActive(?int $personId = null)
     {
-        return Account::with('accountType')->active()->orderBy('name')->get();
+        $query = Account::with(['accountType', 'person'])->active()->orderBy('name');
+        if ($personId) {
+            $query->where('person_id', $personId);
+        }
+        return $query->get();
     }
 
     public function create(array $data): Account
@@ -69,8 +73,12 @@ class AccountService
         return $account;
     }
 
-    public function getTotalBalance(): float
+    public function getTotalBalance(?int $personId = null): float
     {
-        return (float) Account::active()->sum('current_balance');
+        $query = Account::active();
+        if ($personId) {
+            $query->where('person_id', $personId);
+        }
+        return (float) $query->sum('current_balance');
     }
 }

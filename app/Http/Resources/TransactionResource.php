@@ -19,6 +19,11 @@ class TransactionResource extends JsonResource
                 'id' => $this->account->id,
                 'name' => $this->account->name,
                 'color' => $this->account->color,
+                'person' => $this->account->relationLoaded('person') && $this->account->person ? [
+                    'id' => $this->account->person->id,
+                    'name' => $this->account->person->name,
+                    'color' => $this->account->person->color,
+                ] : null,
             ]),
             'category_id' => $this->category_id,
             'category' => $this->whenLoaded('category', fn () => [

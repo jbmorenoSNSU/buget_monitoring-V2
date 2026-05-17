@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
@@ -8,6 +8,9 @@ import AppBadge from '@/Components/UI/AppBadge.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import AppInput from '@/Components/UI/AppInput.vue';
+import AppSelect from '@/Components/UI/AppSelect.vue';
+import AppPagination from '@/Components/UI/AppPagination.vue';
 
 const props = defineProps({
     categories: { type: Object, default: () => ({ data: [] }) },
@@ -16,24 +19,148 @@ const props = defineProps({
 const items = computed(() => props.categories?.data || []);
 const activeTab = ref('expense');
 
-const filteredItems = computed(() => {
-    return items.value.filter(cat => cat.type === activeTab.value);
+// Client-Side Datatable States
+const search = ref('');
+const sortBy = ref('name');
+const sortDirection = ref('asc');
+const perPage = ref('10');
+const currentPage = ref(1);
+
+const handleSort = (columnKey) => {
+    if (sortBy.value === columnKey) {
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy.value = columnKey;
+        sortDirection.value = 'asc';
+    }
+};
+
+const filteredAndSortedItems = computed(() => {
+    // 1. Filter by tab type
+    let list = items.value.filter(cat => cat.type === activeTab.value);
+
+    // 2. Filter by search string
+    if (search.value.trim()) {
+        const q = search.value.toLowerCase().trim();
+        list = list.filter(cat => {
+            const name = (cat.name || '').toLowerCase();
+            const type = (cat.type || '').toLowerCase();
+            const statusLabel = cat.is_active ? 'active' : 'inactive';
+            return name.includes(q) || type.includes(q) || statusLabel.includes(q);
+        });
+    }
+
+    // 3. Sort list client-side
+    return [...list].sort((a, b) => {
+        let valA = a[sortBy.value];
+        let valB = b[sortBy.value];
+
+        // Handle boolean mapping for status sorting
+        if (sortBy.value === 'is_active') {
+            valA = a.is_active ? 1 : 0;
+            valB = b.is_active ? 1 : 0;
+        }
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+
+        let comparison = 0;
+        if (typeof valA === 'string') {
+            comparison = valA.localeCompare(valB);
+        } else {
+            comparison = valA - valB;
+        }
+
+        return sortDirection.value === 'asc' ? comparison : -comparison;
+    });
 });
+
+// Client-Side Pagination Calculations
+const totalItems = computed(() => filteredAndSortedItems.value.length);
+const lastPage = computed(() => Math.ceil(totalItems.value / parseInt(perPage.value)) || 1);
+
+const paginatedItems = computed(() => {
+    const start = (currentPage.value - 1) * parseInt(perPage.value);
+    const end = start + parseInt(perPage.value);
+    return filteredAndSortedItems.value.slice(start, end);
+});
+
+// Reset current page when filters, sorting or page limit changes
+watch([search, activeTab, sortBy, sortDirection, perPage], () => {
+    currentPage.value = 1;
+});
+
+const paginationMeta = computed(() => {
+    const total = totalItems.value;
+    if (total === 0) return { from: 0, to: 0, total: 0 };
+    const from = (currentPage.value - 1) * parseInt(perPage.value) + 1;
+    const to = Math.min(from + parseInt(perPage.value) - 1, total);
+    return { from, to, total };
+});
+
+const paginationLinks = computed(() => {
+    const links = [];
+    const current = currentPage.value;
+    const last = lastPage.value;
+
+    // Previous link
+    links.push({
+        label: '&laquo; Previous',
+        url: current > 1 ? 'prev' : null,
+        active: false
+    });
+
+    // Page links
+    for (let i = 1; i <= last; i++) {
+        links.push({
+            label: i.toString(),
+            url: i.toString(),
+            active: i === current
+        });
+    }
+
+    // Next link
+    links.push({
+        label: 'Next &raquo;',
+        url: current < last ? 'next' : null,
+        active: false
+    });
+
+    return links;
+});
+
+const handlePageNavigate = (pageStr) => {
+    if (pageStr === 'prev') {
+        currentPage.value = Math.max(1, currentPage.value - 1);
+    } else if (pageStr === 'next') {
+        currentPage.value = Math.min(lastPage.value, currentPage.value + 1);
+    } else {
+        currentPage.value = parseInt(pageStr);
+    }
+};
+
 const deleteTarget = ref(null);
 const showDeleteModal = ref(false);
 
 const columns = [
     { key: 'icon', label: 'Icon' },
-    { key: 'name', label: 'Name' },
-    { key: 'type', label: 'Type' },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
     { key: 'color', label: 'Color' },
-    { key: 'is_active', label: 'Status' },
+    { key: 'is_active', label: 'Status', sortable: true },
     { key: 'actions', label: 'Actions' },
 ];
 
 const confirmDelete = (cat) => { deleteTarget.value = cat; showDeleteModal.value = true; };
 const doDelete = () => { router.delete(`/categories/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
 const toggle = (cat) => router.patch(`/categories/${cat.id}/toggle`);
+
+const perPageOptions = [
+    { value: '5', label: 'Show 5 entries' },
+    { value: '10', label: 'Show 10 entries' },
+    { value: '25', label: 'Show 25 entries' },
+    { value: '50', label: 'Show 50 entries' },
+];
 </script>
 
 <template>
@@ -43,22 +170,44 @@ const toggle = (cat) => router.patch(`/categories/${cat.id}/toggle`);
             <Link href="/categories/create"><AppButton>+ Add Category</AppButton></Link>
         </div>
 
-        <div class="flex border-b border-[#232936] mb-6">
-            <button
-                @click="activeTab = 'expense'"
-                :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors', activeTab === 'expense' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
-            >
-                Expense Categories
-            </button>
-            <button
-                @click="activeTab = 'income'"
-                :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors', activeTab === 'income' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
-            >
-                Income Categories
-            </button>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-[#232936] pb-2 md:pb-0">
+            <!-- Tabs -->
+            <div class="flex gap-2">
+                <button
+                    @click="activeTab = 'expense'"
+                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'expense' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
+                >
+                    Expense Categories
+                </button>
+                <button
+                    @click="activeTab = 'income'"
+                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'income' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
+                >
+                    Income Categories
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="w-full md:w-72 mb-2 md:mb-0">
+                <AppInput v-model="search" placeholder="Search categories..." />
+            </div>
         </div>
 
-        <AppTable :columns="columns" :rows="filteredItems">
+        <!-- Controls: Show entries -->
+        <div class="flex justify-end items-center mb-4">
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Page Size:</span>
+                <AppSelect v-model="perPage" :options="perPageOptions" class="w-40 select-none" />
+            </div>
+        </div>
+
+        <AppTable
+            :columns="columns"
+            :rows="paginatedItems"
+            :sort-by="sortBy"
+            :sort-direction="sortDirection"
+            @sort="handleSort"
+        >
             <template #cell-icon="{ row }">
                 <AppIcon :name="row.icon || 'Package'" size="20" class="text-slate-400" />
             </template>
@@ -77,6 +226,14 @@ const toggle = (cat) => router.patch(`/categories/${cat.id}/toggle`);
                     <AppButton variant="ghost" size="sm" @click="toggle(row)">{{ row.is_active ? 'Disable' : 'Enable' }}</AppButton>
                     <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
                 </div>
+            </template>
+            <template #pagination>
+                <AppPagination
+                    :links="paginationLinks"
+                    :meta="paginationMeta"
+                    :client-side="true"
+                    @navigate="handlePageNavigate"
+                />
             </template>
         </AppTable>
 

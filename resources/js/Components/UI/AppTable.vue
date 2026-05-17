@@ -1,9 +1,21 @@
 <script setup>
+import AppIcon from '@/Components/UI/AppIcon.vue';
+
 defineProps({
     columns: { type: Array, default: () => [] },
     rows: { type: Array, default: () => [] },
     emptyMessage: { type: String, default: 'No data found.' },
+    sortBy: { type: String, default: '' },
+    sortDirection: { type: String, default: 'asc' },
 });
+
+const emit = defineEmits(['sort']);
+
+const handleHeaderClick = (col) => {
+    if (col.sortable) {
+        emit('sort', col.key);
+    }
+};
 </script>
 
 <template>
@@ -14,9 +26,25 @@ defineProps({
                     <th
                         v-for="col in columns"
                         :key="col.key"
-                        :class="['px-4 py-3 text-left font-semibold text-slate-400 whitespace-nowrap', col.class || '']"
+                        @click="handleHeaderClick(col)"
+                        :class="[
+                            'px-4 py-3 text-left font-semibold text-slate-400 whitespace-nowrap select-none',
+                            col.sortable ? 'cursor-pointer hover:text-slate-200 transition-colors' : '',
+                            col.class || ''
+                        ]"
                     >
-                        {{ col.label }}
+                        <div :class="['flex items-center gap-1.5', (col.class || '').includes('text-right') ? 'justify-end' : '']">
+                            <span>{{ col.label }}</span>
+                            <span v-if="col.sortable" class="text-slate-500">
+                                <AppIcon
+                                    :name="sortBy === col.key 
+                                        ? (sortDirection === 'asc' ? 'ArrowUp' : 'ArrowDown') 
+                                        : 'ArrowUpDown'"
+                                    size="13"
+                                    class="transition-transform duration-200"
+                                />
+                            </span>
+                        </div>
                     </th>
                 </tr>
             </thead>
@@ -48,3 +76,4 @@ defineProps({
         </div>
     </div>
 </template>
+

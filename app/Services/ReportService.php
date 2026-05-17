@@ -11,20 +11,25 @@ use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
-    public function incomeVsExpense(?string $from = null, ?string $to = null): array
+    public function incomeVsExpense(?string $from = null, ?string $to = null, ?int $personId = null): array
     {
         $from = $from ? Carbon::parse($from)->startOfMonth() : now()->subMonths(5)->startOfMonth();
         $to = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
 
-        $data = Transaction::select(
+        $query = Transaction::select(
                 DB::raw('YEAR(transaction_date) as year'),
                 DB::raw('MONTH(transaction_date) as month'),
                 'type',
                 DB::raw('SUM(amount) as total')
             )
             ->whereIn('type', ['income', 'expense'])
-            ->whereBetween('transaction_date', [$from, $to])
-            ->groupBy('year', 'month', 'type')
+            ->whereBetween('transaction_date', [$from, $to]);
+
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $data = $query->groupBy('year', 'month', 'type')
             ->orderBy('year')->orderBy('month')
             ->get();
 
@@ -58,16 +63,21 @@ class ReportService
         return array_values($months);
     }
 
-    public function categoryExpense(int $month, int $year): array
+    public function categoryExpense(int $month, int $year, ?int $personId = null): array
     {
-        $data = Transaction::select(
+        $query = Transaction::select(
                 'category_id',
                 DB::raw('SUM(amount) as total')
             )
             ->with('category')
             ->where('type', 'expense')
-            ->forMonth($month, $year)
-            ->groupBy('category_id')
+            ->forMonth($month, $year);
+
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $data = $query->groupBy('category_id')
             ->orderByDesc('total')
             ->get();
 
@@ -172,28 +182,34 @@ class ReportService
         })->toArray();
     }
 
-    public function last6MonthsChart(): array
+    public function last6MonthsChart(?int $personId = null): array
     {
         return $this->incomeVsExpense(
             now()->subMonths(5)->startOfMonth()->format('Y-m-d'),
-            now()->endOfMonth()->format('Y-m-d')
+            now()->endOfMonth()->format('Y-m-d'),
+            $personId
         );
     }
 
-    public function dailySpendingTrend(int $month, int $year): array
+    public function dailySpendingTrend(int $month, int $year, ?int $personId = null): array
     {
         $start = Carbon::create($year, $month, 1);
         $end = $start->copy()->endOfMonth();
         $today = now();
         if ($end->gt($today)) $end = $today;
 
-        $data = Transaction::select(
+        $query = Transaction::select(
                 DB::raw('DAY(transaction_date) as day'),
                 DB::raw('SUM(amount) as total')
             )
             ->where('type', 'expense')
-            ->forMonth($month, $year)
-            ->groupBy('day')
+            ->forMonth($month, $year);
+
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $data = $query->groupBy('day')
             ->orderBy('day')
             ->pluck('total', 'day')
             ->toArray();

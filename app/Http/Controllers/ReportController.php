@@ -58,7 +58,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/AccountStatement', [
             'data' => $data,
             'filters' => compact('accountId', 'from', 'to'),
-            'accounts' => Account::orderBy('name')->get(['id', 'name']),
+            'accounts' => Account::with('person')->orderBy('name')->get(['id', 'name', 'person_id']),
         ]);
     }
 

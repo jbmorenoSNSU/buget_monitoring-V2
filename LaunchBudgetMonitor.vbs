@@ -1,0 +1,14 @@
+Set WshShell = CreateObject("WScript.Shell")
+Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
+
+' Check if WampServer is already running to avoid lag/double-launch
+Set colProcessList = objWMIService.ExecQuery("Select * from Win32_Process Where Name = 'wampmanager.exe'")
+
+If colProcessList.Count = 0 Then
+    ' Start WampServer ONLY if not already running
+    WshShell.Run chr(34) & "C:\wamp64\wampmanager.exe" & chr(34), 0, False
+End If
+
+' Run the batch file hidden (0)
+WshShell.Run chr(34) & "start_server.bat" & Chr(34), 0
+Set WshShell = Nothing

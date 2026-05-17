@@ -21,7 +21,10 @@ class TransactionController extends Controller
 
     public function index(Request $request): Response
     {
-        $filters = $request->only(['type', 'account_id', 'category_id', 'date_from', 'date_to', 'search']);
+        $filters = $request->only([
+            'type', 'account_id', 'category_id', 'person_id', 'date_from', 'date_to', 'search',
+            'sort_by', 'sort_direction', 'per_page'
+        ]);
         $transactions = $this->service->getPaginated($filters);
 
         return Inertia::render('Transactions/Index', [
@@ -29,8 +32,10 @@ class TransactionController extends Controller
             'filters' => $filters,
             'accounts' => Account::active()->orderBy('name')->get(['id', 'name']),
             'categories' => Category::active()->orderBy('name')->get(['id', 'name', 'type']),
+            'persons' => \App\Models\Person::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
+
 
     public function create(): Response
     {

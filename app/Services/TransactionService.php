@@ -13,14 +13,22 @@ class TransactionService
 {
     public function getPaginated(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Transaction::with(['account', 'category', 'transferToAccount'])
-            ->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
+        // Handle custom per-page limits from filters
+        if (!empty($filters['per_page'])) {
+            $perPage = (int) $filters['per_page'];
+        }
+
+        $query = Transaction::with(['account.person', 'category', 'transferToAccount'])
+            ->select('transactions.*'); // Critical: only select transaction fields to prevent join overlaps
 
         if (!empty($filters['type'])) {
             $query->byType($filters['type']);
         }
         if (!empty($filters['account_id'])) {
             $query->byAccount((int) $filters['account_id']);
+        }
+        if (!empty($filters['person_id'])) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', (int) $filters['person_id']));
         }
         if (!empty($filters['category_id'])) {
             $query->byCategory((int) $filters['category_id']);
@@ -29,11 +37,40 @@ class TransactionService
             $query->byDateRange($filters['date_from'], $filters['date_to']);
         }
         if (!empty($filters['search'])) {
-            $query->where('description', 'like', '%' . $filters['search'] . '%');
+            $query->where('transactions.description', 'like', '%' . $filters['search'] . '%');
         }
+
+        // Whitelisted dynamic sorting
+        $sortBy = $filters['sort_by'] ?? 'transaction_date';
+        $sortDirection = isset($filters['sort_direction']) && strtolower($filters['sort_direction']) === 'asc' ? 'asc' : 'desc';
+
+        $allowedSorts = [
+            'transaction_date' => 'transactions.transaction_date',
+            'description' => 'transactions.description',
+            'type' => 'transactions.type',
+            'amount' => 'transactions.amount',
+            'account' => 'accounts.name',
+            'category' => 'categories.name',
+        ];
+
+        if (array_key_exists($sortBy, $allowedSorts)) {
+            $dbField = $allowedSorts[$sortBy];
+            if ($sortBy === 'account') {
+                $query->leftJoin('accounts', 'transactions.account_id', '=', 'accounts.id');
+            } elseif ($sortBy === 'category') {
+                $query->leftJoin('categories', 'transactions.category_id', '=', 'categories.id');
+            }
+            $query->orderBy($dbField, $sortDirection);
+        } else {
+            $query->orderBy('transactions.transaction_date', 'desc');
+        }
+
+        // Secondary stable order to guarantee correct pagination sequence
+        $query->orderBy('transactions.id', 'desc');
 
         return $query->paginate($perPage)->withQueryString();
     }
+
 
     public function create(array $data): Transaction
     {
@@ -99,20 +136,31 @@ class TransactionService
         };
     }
 
-    public function getMonthlyIncome(int $month, int $year): float
+    public function getMonthlyIncome(int $month, int $year, ?int $personId = null): float
     {
-        return (float) Transaction::byType('income')->forMonth($month, $year)->sum('amount');
+        $query = Transaction::byType('income')->forMonth($month, $year);
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+        return (float) $query->sum('amount');
     }
 
-    public function getMonthlyExpense(int $month, int $year): float
+    public function getMonthlyExpense(int $month, int $year, ?int $personId = null): float
     {
-        return (float) Transaction::byType('expense')->forMonth($month, $year)->sum('amount');
+        $query = Transaction::byType('expense')->forMonth($month, $year);
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+        return (float) $query->sum('amount');
     }
 
-    public function getRecentTransactions(int $limit = 10)
+    public function getRecentTransactions(int $limit = 10, ?int $personId = null)
     {
-        return Transaction::with(['account', 'category'])
-            ->orderBy('transaction_date', 'desc')->orderBy('id', 'desc')
-            ->limit($limit)->get();
+        $query = Transaction::with(['account.person', 'category'])
+            ->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+        return $query->limit($limit)->get();
     }
 }
