@@ -112,7 +112,7 @@ class ReportController extends Controller
             'account-statement-pdf' => $this->exportPdf('pdf.account-statement', [
                 'data' => $this->service->accountStatement((int)$request->get('account_id'), $request->get('from'), $request->get('to')),
                 'title' => 'Account Statement Report',
-                'account' => Account::find($request->get('account_id')),
+                'account' => Account::with('person')->find($request->get('account_id')),
             ], "account-statement-{$date}.pdf"),
             'budget-goal-excel' => Excel::download(
                 new BudgetGoalExport((int)$request->get('month', now()->month), (int)$request->get('year', now()->year)),

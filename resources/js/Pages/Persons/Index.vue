@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
@@ -20,6 +20,22 @@ const confirmDelete = (person) => { deleteTarget.value = person; showDeleteModal
 const doDelete = () => {
     router.delete(`/persons/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
 };
+
+// Dropdown state
+const activeDropdownId = ref(null);
+const toggleDropdown = (id, event) => {
+    event.stopPropagation();
+    activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+const closeDropdown = () => {
+    activeDropdownId.value = null;
+};
+onMounted(() => {
+    window.addEventListener('click', closeDropdown);
+});
+onUnmounted(() => {
+    window.removeEventListener('click', closeDropdown);
+});
 </script>
 
 <template>
@@ -29,46 +45,65 @@ const doDelete = () => {
             <Link href="/persons/create"><AppButton>+ Add Person</AppButton></Link>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div v-for="person in items" :key="person.id"
-                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
-                <div class="h-2" :style="{ backgroundColor: person.color }" />
-                <div class="p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg"
+                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                <div class="h-1" :style="{ backgroundColor: person.color }" />
+                
+                <div class="p-4">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2 max-w-[80%]">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-md"
                                 :style="{ backgroundColor: person.color + '30', color: person.color }">
                                 {{ person.name.charAt(0).toUpperCase() }}
                             </div>
-                            <div>
-                                <h3 class="font-semibold text-slate-100">{{ person.name }}</h3>
-                                <p class="text-xs text-slate-400">{{ person.accounts_count }} active account{{ person.accounts_count !== 1 ? 's' : '' }}</p>
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-slate-100 text-sm truncate leading-snug">{{ person.name }}</h3>
+                                <p class="text-[11px] text-slate-400 truncate leading-none mt-0.5">{{ person.accounts_count }} active account{{ person.accounts_count !== 1 ? 's' : '' }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Dropdown Menu trigger -->
+                        <div class="relative shrink-0">
+                            <button @click="toggleDropdown(person.id, $event)" 
+                                class="p-1 rounded hover:bg-[#232936] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                <AppIcon name="MoreVertical" size="16" />
+                            </button>
+                            
+                            <!-- Dropdown List -->
+                            <div v-if="activeDropdownId === person.id" 
+                                class="absolute right-0 top-7 w-32 bg-[#1A202C] border border-[#232936] rounded-lg shadow-xl py-1 z-10"
+                                @click.stop>
+                                <Link :href="`/persons/${person.id}/edit`" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left">
+                                    <AppIcon name="Edit2" size="12" /> Edit
+                                </Link>
+                                <div class="border-t border-[#232936] my-1"></div>
+                                <button @click="confirmDelete(person); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-[#232936] hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon name="Trash2" size="12" /> Delete
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-[#0F111A]/50 rounded-lg p-3 mb-4 space-y-3">
+                    <div class="bg-[#0F111A]/50 rounded-lg p-2.5 space-y-2">
                         <div>
-                            <p class="text-xs text-slate-400 mb-1">Total Balance</p>
-                            <p :class="['text-xl font-bold', person.total_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
+                            <p class="text-[10px] text-slate-400 mb-0.5">Total Balance</p>
+                            <p :class="['text-lg font-bold', person.total_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
                                 {{ formatPeso(person.total_balance) }}
                             </p>
                         </div>
-                        <div class="flex items-center justify-between pt-3 border-t border-[#232936]/50">
+                        <div class="flex items-center justify-between pt-2 border-t border-[#232936]/50">
                             <div>
-                                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Income This Month</p>
-                                <p class="text-sm font-semibold text-[#10B981]">{{ formatPeso(person.income_this_month) }}</p>
+                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Income</p>
+                                <p class="text-xs font-semibold text-[#10B981]">{{ formatPeso(person.income_this_month) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Expense This Month</p>
-                                <p class="text-sm font-semibold text-[#F43F5E]">{{ formatPeso(person.expense_this_month) }}</p>
+                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Expense</p>
+                                <p class="text-xs font-semibold text-[#F43F5E]">{{ formatPeso(person.expense_this_month) }}</p>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="flex gap-2 pt-3 border-t border-[#232936]">
-                        <Link :href="`/persons/${person.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
-                        <AppButton variant="danger" size="sm" @click="confirmDelete(person)">Delete</AppButton>
                     </div>
                 </div>
             </div>

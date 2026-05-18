@@ -173,16 +173,38 @@ const lineChartData = computed(() => {
             <!-- Recent Transactions -->
             <AppCard class="lg:col-span-2">
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Recent Transactions</h3>
-                <div class="space-y-2">
-                    <div v-for="txn in recentTxns" :key="txn.id" class="flex items-center justify-between p-3 rounded-lg hover:bg-[#0F111A] transition-colors">
-                        <div class="flex items-center gap-3">
-                            <AppIcon :name="txn.category?.icon || 'Package'" size="20" class="text-slate-400" />
-                            <div>
-                                <p class="text-sm font-medium text-slate-100">{{ txn.description }}</p>
-                                <p class="text-xs text-slate-400">{{ txn.account?.name }}<span v-if="txn.account?.person" :style="{ color: txn.account.person.color }"> ({{ txn.account.person.name }})</span> · {{ formatShortDate(txn.transaction_date) }}</p>
+                <div class="divide-y divide-[#232936]/40">
+                    <div v-for="txn in recentTxns" :key="txn.id" class="flex items-center justify-between py-2.5 hover:bg-[#0F111A]/30 transition-colors px-1 first:pt-0 last:pb-0">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <!-- Category Color Dot -->
+                            <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: txn.category?.color || '#6366F1' }" />
+                            
+                            <div class="min-w-0">
+                                <!-- First Line: Category Badge + Description -->
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="text-[9px] font-extrabold px-1 py-0.5 rounded uppercase tracking-wider shrink-0" 
+                                        :style="{ backgroundColor: (txn.category?.color || '#6366F1') + '15', color: txn.category?.color || '#6366F1' }">
+                                        {{ txn.category?.name || 'Transfer' }}
+                                    </span>
+                                    <span class="text-sm font-medium text-slate-200 truncate" :title="txn.description">{{ txn.description }}</span>
+                                </div>
+                                
+                                <!-- Second Line: Account & Owner · Date · "Notes" -->
+                                <p class="text-xs text-slate-400 mt-1 truncate">
+                                    <span>{{ txn.account?.name }}</span>
+                                    <span v-if="txn.account?.person" :style="{ color: txn.account.person.color }"> ({{ txn.account.person.name }})</span>
+                                    <span class="mx-1.5 text-slate-500">·</span>
+                                    <span>{{ formatShortDate(txn.transaction_date) }}</span>
+                                    <span v-if="txn.notes" class="text-slate-500">
+                                        <span class="mx-1.5">·</span>
+                                        <span class="italic text-[11px] text-slate-400">"{{ txn.notes }}"</span>
+                                    </span>
+                                </p>
                             </div>
                         </div>
-                        <span :class="['text-sm font-semibold', txn.type === 'income' ? 'text-[#10B981]' : txn.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
+                        
+                        <!-- Amount -->
+                        <span :class="['text-sm font-semibold shrink-0 pl-3', txn.type === 'income' ? 'text-[#10B981]' : txn.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
                             {{ txn.type === 'income' ? '+' : txn.type === 'transfer' ? '' : '-' }}{{ formatPeso(txn.amount) }}
                         </span>
                     </div>

@@ -21,7 +21,7 @@
 <body>
     <div class="header">
         <h1>Personal Budget Monitoring System</h1>
-        <p>{{ $title }}@if(isset($account)) — {{ $account->name }}@endif</p>
+        <p>{{ $title }}@if(isset($account)) — {{ $account->name }}@if($account->person) ({{ $account->person->name }})@endif @endif</p>
         <p>Generated: {{ $generatedAt }}</p>
     </div>
     @if($data)

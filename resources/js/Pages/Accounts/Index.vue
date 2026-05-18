@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
@@ -52,6 +52,22 @@ const doDelete = () => {
     router.delete(`/accounts/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
 };
 const toggle = (acc) => router.patch(`/accounts/${acc.id}/toggle`);
+
+// Dropdown state
+const activeDropdownId = ref(null);
+const toggleDropdown = (id, event) => {
+    event.stopPropagation();
+    activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+const closeDropdown = () => {
+    activeDropdownId.value = null;
+};
+onMounted(() => {
+    window.addEventListener('click', closeDropdown);
+});
+onUnmounted(() => {
+    window.removeEventListener('click', closeDropdown);
+});
 </script>
 
 <template>
@@ -69,37 +85,75 @@ const toggle = (acc) => router.patch(`/accounts/${acc.id}/toggle`);
             </Link>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div v-for="acc in filteredItems" :key="acc.id"
-                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                <div class="h-2" :style="{ backgroundColor: acc.color }" />
-                <div class="p-5">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <AppIcon :name="acc.account_type?.icon || 'Wallet'" size="24" class="text-slate-400" />
-                            <div>
-                                <h3 class="font-semibold text-slate-100">{{ acc.name }}</h3>
-                                <p class="text-xs text-slate-400">{{ acc.account_type?.name }}</p>
+                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                <!-- Color bar (Compact Option 1: h-1 instead of h-2) -->
+                <div class="h-1" :style="{ backgroundColor: acc.color }" />
+                
+                <div class="p-4">
+                    <!-- Top section with dropdown (Option 2) -->
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2 max-w-[80%]">
+                            <AppIcon :name="acc.account_type?.icon || 'Wallet'" size="20" class="text-slate-400 shrink-0" />
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-slate-100 text-sm truncate leading-snug" :title="acc.name">{{ acc.name }}</h3>
+                                <p class="text-[11px] text-slate-400 truncate leading-none mt-0.5">{{ acc.account_type?.name }}</p>
                             </div>
                         </div>
-                        <AppBadge :type="acc.is_active ? 'active' : 'inactive'" :label="acc.is_active ? 'Active' : 'Inactive'" />
-                    </div>
-                    <div v-if="acc.person" class="flex items-center gap-1.5 mb-3">
-                        <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0"
-                            :style="{ backgroundColor: acc.person.color + '30', color: acc.person.color }">
-                            {{ acc.person.name.charAt(0).toUpperCase() }}
+                        
+                        <!-- Dropdown Menu trigger -->
+                        <div class="relative shrink-0">
+                            <button @click="toggleDropdown(acc.id, $event)" 
+                                class="p-1 rounded hover:bg-[#232936] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                <AppIcon name="MoreVertical" size="16" />
+                            </button>
+                            
+                            <!-- Dropdown List -->
+                            <div v-if="activeDropdownId === acc.id" 
+                                class="absolute right-0 top-7 w-32 bg-[#1A202C] border border-[#232936] rounded-lg shadow-xl py-1 z-10"
+                                @click.stop>
+                                <Link :href="`/accounts/${acc.id}/edit`" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left">
+                                    <AppIcon name="Edit2" size="12" /> Edit
+                                </Link>
+                                <button @click="toggle(acc); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon :name="acc.is_active ? 'EyeOff' : 'Eye'" size="12" />
+                                    {{ acc.is_active ? 'Deactivate' : 'Activate' }}
+                                </button>
+                                <div class="border-t border-[#232936] my-1"></div>
+                                <button @click="confirmDelete(acc); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-[#232936] hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon name="Trash2" size="12" /> Delete
+                                </button>
+                            </div>
                         </div>
-                        <span class="text-xs font-medium" :style="{ color: acc.person.color }">{{ acc.person.name }}</span>
                     </div>
-                    <p v-if="acc.description" class="text-sm text-slate-400 mb-3">{{ acc.description }}</p>
-                    <p :class="['text-2xl font-bold', acc.current_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
+
+                    <!-- Owner and Badge -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div v-if="acc.person" class="flex items-center gap-1.5 min-w-0">
+                            <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0"
+                                :style="{ backgroundColor: acc.person.color + '30', color: acc.person.color }">
+                                {{ acc.person.name.charAt(0).toUpperCase() }}
+                            </div>
+                            <span class="text-[11px] font-medium truncate" :style="{ color: acc.person.color }">{{ acc.person.name }}</span>
+                        </div>
+                        <div v-else class="h-4"></div>
+                        <AppBadge :type="acc.is_active ? 'active' : 'inactive'" :label="acc.is_active ? 'Active' : 'Inactive'" class="scale-75 origin-right shrink-0" />
+                    </div>
+
+                    <!-- Description -->
+                    <p v-if="acc.description" class="text-[11px] text-slate-400 mb-2 line-clamp-2 h-8" :title="acc.description">
+                        {{ acc.description }}
+                    </p>
+                    <div v-else class="h-8"></div>
+
+                    <!-- Balance -->
+                    <p :class="['text-xl font-bold mt-1', acc.current_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
                         {{ formatPeso(acc.current_balance) }}
                     </p>
-                    <div class="flex gap-2 mt-4 pt-4 border-t border-[#232936]">
-                        <Link :href="`/accounts/${acc.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
-                        <AppButton variant="ghost" size="sm" @click="toggle(acc)">{{ acc.is_active ? 'Deactivate' : 'Activate' }}</AppButton>
-                        <AppButton variant="danger" size="sm" @click="confirmDelete(acc)">Delete</AppButton>
-                    </div>
                 </div>
             </div>
         </div>

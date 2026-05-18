@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
@@ -35,6 +35,22 @@ const filter = () => {
 
 const confirmDelete = (g) => { deleteTarget.value = g; showDeleteModal.value = true; };
 const doDelete = () => { router.delete(`/budget-goals/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
+
+// Dropdown state
+const activeDropdownId = ref(null);
+const toggleDropdown = (id, event) => {
+    event.stopPropagation();
+    activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+const closeDropdown = () => {
+    activeDropdownId.value = null;
+};
+onMounted(() => {
+    window.addEventListener('click', closeDropdown);
+});
+onUnmounted(() => {
+    window.removeEventListener('click', closeDropdown);
+});
 </script>
 
 <template>
@@ -47,35 +63,59 @@ const doDelete = () => { router.delete(`/budget-goals/${deleteTarget.value.id}`,
             <Link href="/budget-goals/create"><AppButton>+ Add Goal</AppButton></Link>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AppCard v-for="goal in items" :key="goal.id">
-                <div class="flex items-center gap-3 mb-4">
-                    <AppIcon :name="goal.category?.icon || 'Target'" size="24" class="text-slate-400" />
-                    <div>
-                        <h3 class="font-semibold text-[#F8FAFC]">{{ goal.category?.name }}</h3>
-                        <p class="text-xs text-slate-400">{{ formatMonthYear(goal.month, goal.year) }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="goal in items" :key="goal.id"
+                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative p-4">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-2 max-w-[80%]">
+                        <AppIcon :name="goal.category?.icon || 'Target'" size="20" class="text-slate-400 shrink-0" />
+                        <div class="min-w-0">
+                            <h3 class="font-semibold text-slate-100 text-sm truncate leading-snug">{{ goal.category?.name }}</h3>
+                            <p class="text-[11px] text-slate-400 truncate leading-none mt-0.5">{{ formatMonthYear(goal.month, goal.year) }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu trigger -->
+                    <div class="relative shrink-0">
+                        <button @click="toggleDropdown(goal.id, $event)" 
+                            class="p-1 rounded hover:bg-[#232936] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                            <AppIcon name="MoreVertical" size="16" />
+                        </button>
+                        
+                        <!-- Dropdown List -->
+                        <div v-if="activeDropdownId === goal.id" 
+                            class="absolute right-0 top-7 w-32 bg-[#1A202C] border border-[#232936] rounded-lg shadow-xl py-1 z-10"
+                            @click.stop>
+                            <Link :href="`/budget-goals/${goal.id}/edit`" 
+                                class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left">
+                                <AppIcon name="Edit2" size="12" /> Edit
+                            </Link>
+                            <div class="border-t border-[#232936] my-1"></div>
+                            <button @click="confirmDelete(goal); activeDropdownId = null" 
+                                class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-[#232936] hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                <AppIcon name="Trash2" size="12" /> Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="space-y-2 mb-4">
-                    <div class="flex justify-between text-sm">
+
+                <div class="space-y-1.5 mb-3 text-xs">
+                    <div class="flex justify-between">
                         <span class="text-slate-400">Limit</span>
                         <span class="font-medium text-[#F8FAFC]">{{ formatPeso(goal.limit_amount) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between">
                         <span class="text-slate-400">Spent</span>
                         <span class="font-medium" :class="goal.percent >= 90 ? 'text-[#F43F5E]' : 'text-[#F8FAFC]'">{{ formatPeso(goal.spent) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between">
                         <span class="text-slate-400">Remaining</span>
                         <span :class="['font-medium', goal.remaining >= 0 ? 'text-[#10B981]' : 'text-[#F43F5E]']">{{ formatPeso(goal.remaining) }}</span>
                     </div>
                 </div>
-                <ProgressBar :percent="goal.percent" />
-                <div class="flex gap-2 mt-4 pt-3 border-t border-[#232936]">
-                    <Link :href="`/budget-goals/${goal.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
-                    <AppButton variant="danger" size="sm" @click="confirmDelete(goal)">Delete</AppButton>
-                </div>
-            </AppCard>
+                
+                <ProgressBar :percent="goal.percent" class="scale-y-75 origin-bottom mt-1" />
+            </div>
         </div>
 
         <p v-if="!items.length" class="text-center text-slate-400 py-12">No budget goals set for {{ formatMonthYear(selectedMonth, selectedYear) }}.</p>

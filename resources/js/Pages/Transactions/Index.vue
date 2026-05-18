@@ -167,6 +167,14 @@ const perPageOptions = [
                     <span class="text-sm">{{ row.category?.name || 'Transfer' }}</span>
                 </div>
             </template>
+            <template #cell-description="{ row }">
+                <div>
+                    <span class="text-sm font-medium text-slate-100">{{ row.description }}</span>
+                    <div v-if="row.notes" class="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                        {{ row.notes }}
+                    </div>
+                </div>
+            </template>
             <template #cell-type="{ row }">
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
