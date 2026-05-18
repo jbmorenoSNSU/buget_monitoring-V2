@@ -97,7 +97,10 @@ const typeOptions = [
 ];
 
 const personOptions = [{ value: '', label: 'All Persons' }, ...props.persons.map(p => ({ value: p.id, label: p.name }))];
-const accountOptions = [{ value: '', label: 'All Accounts' }, ...props.accounts.map(a => ({ value: a.id, label: a.name }))];
+const accountOptions = [{ value: '', label: 'All Accounts' }, ...props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name
+}))];
 const categoryOptions = [{ value: '', label: 'All Categories' }, ...props.categories.map(c => ({ value: c.id, label: c.name }))];
 
 const perPageOptions = [

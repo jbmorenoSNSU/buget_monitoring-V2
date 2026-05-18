@@ -34,7 +34,10 @@ const typeOptions = [
     { value: 'transfer', label: 'Transfer' },
 ];
 
-const accountOptions = computed(() => props.accounts.map(a => ({ value: a.id, label: a.name })));
+const accountOptions = computed(() => props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name
+})));
 
 const filteredCategories = computed(() => {
     if (form.type === 'transfer') return [];

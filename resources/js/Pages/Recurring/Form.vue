@@ -32,7 +32,10 @@ const freqOptions = [
     { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' },
     { value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' },
 ];
-const accountOptions = computed(() => props.accounts.map(a => ({ value: a.id, label: a.name })));
+const accountOptions = computed(() => props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name
+})));
 const categoryOptions = computed(() =>
     props.categories.filter(c => c.type === form.type || c.type === 'both').map(c => ({ value: c.id, label: c.name }))
 );

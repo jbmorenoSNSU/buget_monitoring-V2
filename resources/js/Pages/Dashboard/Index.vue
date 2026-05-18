@@ -32,7 +32,22 @@ const { formatShortDate, formatRelative } = useDate();
 
 const netSavings = computed(() => props.monthlyIncome - props.monthlyExpense);
 
-const accounts = computed(() => props.accounts?.data || props.accounts || []);
+const groupedAccounts = computed(() => {
+    const accs = props.accounts?.data || props.accounts || [];
+    const groups = {};
+    accs.forEach(acc => {
+        const personName = acc.person?.name || 'Shared / Unassigned';
+        if (!groups[personName]) {
+            groups[personName] = {
+                name: personName,
+                color: acc.person?.color || '#94A3B8',
+                accounts: []
+            };
+        }
+        groups[personName].accounts.push(acc);
+    });
+    return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+});
 const recentTxns = computed(() => props.recentTransactions?.data || props.recentTransactions || []);
 const goals = computed(() => props.budgetGoals?.data || props.budgetGoals || []);
 
@@ -118,30 +133,38 @@ const lineChartData = computed(() => {
             </AppCard>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-            <AppCard class="lg:col-span-2">
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Daily Spending Trend</h3>
-                <LineChart :chartData="lineChartData" :height="240" />
-            </AppCard>
-
-            <!-- Accounts -->
+        <!-- Accounts -->
+        <div class="mb-6">
             <AppCard>
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Account Balances</h3>
-                <div class="space-y-3">
-                    <div v-for="acc in accounts" :key="acc.id" class="flex items-center justify-between p-3 rounded-lg bg-[#0F111A]">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: acc.color }" />
-                            <div>
-                                <p class="text-sm font-medium text-slate-100">{{ acc.name }}</p>
-                                <p class="text-xs text-slate-400">{{ acc.account_type?.name }}<span v-if="acc.person" :style="{ color: acc.person.color }"> · {{ acc.person.name }}</span></p>
+                <div v-for="group in groupedAccounts" :key="group.name" class="mb-6 last:mb-0">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" :style="{ color: group.color }">
+                        {{ group.name }}
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div v-for="acc in group.accounts" :key="acc.id" class="flex items-center justify-between p-4 rounded-lg bg-[#0F111A]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: acc.color }" />
+                                <div>
+                                    <p class="text-sm font-medium text-slate-100">{{ acc.name }}</p>
+                                    <p class="text-xs text-slate-400">{{ acc.account_type?.name }}</p>
+                                </div>
                             </div>
+                            <span :class="['text-sm font-semibold', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
+                                {{ formatPeso(acc.current_balance) }}
+                            </span>
                         </div>
-                        <span :class="['text-sm font-semibold', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
-                            {{ formatPeso(acc.current_balance) }}
-                        </span>
                     </div>
-                    <p v-if="!accounts.length" class="text-sm text-slate-400 text-center py-4">No accounts yet</p>
                 </div>
+                <p v-if="!groupedAccounts.length" class="text-sm text-slate-400 text-center py-4">No accounts yet</p>
+            </AppCard>
+        </div>
+
+        <!-- Daily Spending Trend -->
+        <div class="mb-6">
+            <AppCard>
+                <h3 class="text-sm font-semibold text-slate-100 mb-4">Daily Spending Trend</h3>
+                <LineChart :chartData="lineChartData" :height="240" />
             </AppCard>
         </div>
 

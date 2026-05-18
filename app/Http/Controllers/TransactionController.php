@@ -30,7 +30,7 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Index', [
             'transactions' => TransactionResource::collection($transactions),
             'filters' => $filters,
-            'accounts' => Account::active()->orderBy('name')->get(['id', 'name']),
+            'accounts' => Account::active()->with('person:id,name')->orderBy('name')->get(['id', 'name', 'person_id']),
             'categories' => Category::active()->orderBy('name')->get(['id', 'name', 'type']),
             'persons' => \App\Models\Person::active()->orderBy('name')->get(['id', 'name']),
         ]);
@@ -40,7 +40,7 @@ class TransactionController extends Controller
     public function create(): Response
     {
         return Inertia::render('Transactions/Form', [
-            'accounts' => Account::active()->with('accountType')->orderBy('name')->get(),
+            'accounts' => Account::active()->with(['accountType', 'person'])->orderBy('name')->get(),
             'categories' => Category::active()->orderBy('name')->get(),
         ]);
     }
@@ -55,7 +55,7 @@ class TransactionController extends Controller
     {
         return Inertia::render('Transactions/Form', [
             'transaction' => new TransactionResource($transaction->load(['account', 'category', 'transferToAccount'])),
-            'accounts' => Account::active()->with('accountType')->orderBy('name')->get(),
+            'accounts' => Account::active()->with(['accountType', 'person'])->orderBy('name')->get(),
             'categories' => Category::active()->orderBy('name')->get(),
         ]);
     }

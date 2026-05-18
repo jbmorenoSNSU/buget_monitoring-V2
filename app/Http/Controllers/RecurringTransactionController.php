@@ -27,7 +27,7 @@ class RecurringTransactionController extends Controller
     public function create(): Response
     {
         return Inertia::render('Recurring/Form', [
-            'accounts' => Account::active()->orderBy('name')->get(),
+            'accounts' => Account::active()->with('person')->orderBy('name')->get(),
             'categories' => Category::active()->orderBy('name')->get(),
         ]);
     }
@@ -42,7 +42,7 @@ class RecurringTransactionController extends Controller
     {
         return Inertia::render('Recurring/Form', [
             'recurring' => $recurring->load(['account', 'category']),
-            'accounts' => Account::active()->orderBy('name')->get(),
+            'accounts' => Account::active()->with('person')->orderBy('name')->get(),
             'categories' => Category::active()->orderBy('name')->get(),
         ]);
     }
