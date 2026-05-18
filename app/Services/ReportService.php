@@ -193,32 +193,169 @@ class ReportService
 
     public function dailySpendingTrend(int $month, int $year, ?int $personId = null): array
     {
-        $start = Carbon::create($year, $month, 1);
-        $end = $start->copy()->endOfMonth();
+        $currentStart = Carbon::create($year, $month, 1);
+        $currentEnd = $currentStart->copy()->endOfMonth();
         $today = now();
-        if ($end->gt($today)) $end = $today;
+        if ($currentEnd->gt($today)) $currentEnd = $today;
 
-        $query = Transaction::select(
-                DB::raw('DAY(transaction_date) as day'),
-                DB::raw('SUM(amount) as total')
-            )
+        $prevStart = $currentStart->copy()->subMonth()->startOfMonth();
+        $prevEnd = $currentStart->copy()->subMonth()->endOfMonth();
+
+        $query = Transaction::select('transaction_date', 'amount')
             ->where('type', 'expense')
-            ->forMonth($month, $year);
+            ->whereBetween('transaction_date', [$prevStart, $currentEnd]);
 
         if ($personId) {
             $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
         }
 
-        $data = $query->groupBy('day')
-            ->orderBy('day')
-            ->pluck('total', 'day')
-            ->toArray();
+        $transactions = $query->get();
+
+        $currentData = [];
+        $prevData = [];
+        foreach ($transactions as $t) {
+            $date = Carbon::parse($t->transaction_date);
+            if ($date->between($currentStart, $currentEnd)) {
+                $currentData[$date->day] = ($currentData[$date->day] ?? 0) + (float) $t->amount;
+            } elseif ($date->between($prevStart, $prevEnd)) {
+                $prevData[$date->day] = ($prevData[$date->day] ?? 0) + (float) $t->amount;
+            }
+        }
 
         $result = [];
-        for ($d = 1; $d <= $end->day; $d++) {
+        $runCurrent = 0;
+        $runPrev = 0;
+        $maxDays = $currentStart->daysInMonth;
+        
+        for ($d = 1; $d <= $maxDays; $d++) {
+            $runCurrent += $currentData[$d] ?? 0;
+            $runPrev += $prevData[$d] ?? 0;
+            
+            $isFuture = $d > $currentEnd->day && $currentStart->format('Y-m') === $today->format('Y-m');
+            
             $result[] = [
                 'day' => $d,
-                'amount' => (float) ($data[$d] ?? 0),
+                'label' => "Day $d",
+                'current_amount' => $isFuture ? null : round($runCurrent, 2),
+                'previous_amount' => round($runPrev, 2),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function weeklySpendingTrend(?int $personId = null): array
+    {
+        $today = now();
+        $currentStart = now()->subWeeks(11)->startOfWeek(); // 12 weeks total
+        $currentEnd = now()->endOfWeek();
+        if ($currentEnd->gt($today)) $currentEnd = $today;
+
+        $prevStart = $currentStart->copy()->subWeeks(12)->startOfWeek();
+        $prevEnd = $currentStart->copy()->subWeeks(1)->endOfWeek();
+
+        $query = Transaction::select('transaction_date', 'amount')
+            ->where('type', 'expense')
+            ->whereBetween('transaction_date', [$prevStart, $currentEnd]);
+
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $transactions = $query->get();
+
+        $currentBuckets = array_fill(0, 12, 0);
+        $prevBuckets = array_fill(0, 12, 0);
+        $labels = [];
+
+        $cursor = $currentStart->copy();
+        for ($i = 0; $i < 12; $i++) {
+            $labels[$i] = 'Wk ' . $cursor->format('M d');
+            $cursor->addWeek();
+        }
+
+        foreach ($transactions as $t) {
+            $date = Carbon::parse($t->transaction_date);
+            
+            if ($date->between($currentStart, $currentEnd)) {
+                $diffInWeeks = $date->diffInWeeks($currentStart);
+                if (isset($currentBuckets[$diffInWeeks])) {
+                    $currentBuckets[$diffInWeeks] += (float) $t->amount;
+                }
+            } elseif ($date->between($prevStart, $prevEnd)) {
+                $diffInWeeks = $date->diffInWeeks($prevStart);
+                if (isset($prevBuckets[$diffInWeeks])) {
+                    $prevBuckets[$diffInWeeks] += (float) $t->amount;
+                }
+            }
+        }
+
+        $result = [];
+        $runCurrent = 0;
+        $runPrev = 0;
+
+        for ($i = 0; $i < 12; $i++) {
+            $runCurrent += $currentBuckets[$i];
+            $runPrev += $prevBuckets[$i];
+            
+            $weekStart = $currentStart->copy()->addWeeks($i);
+            $isFuture = $weekStart->gt($today);
+            
+            $result[] = [
+                'label' => $labels[$i],
+                'current_amount' => $isFuture ? null : round($runCurrent, 2),
+                'previous_amount' => round($runPrev, 2),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function yearlySpendingTrend(int $year, ?int $personId = null): array
+    {
+        $currentStart = Carbon::create($year, 1, 1)->startOfYear();
+        $currentEnd = $currentStart->copy()->endOfYear();
+        $today = now();
+        if ($currentEnd->gt($today)) $currentEnd = $today;
+
+        $prevStart = $currentStart->copy()->subYear()->startOfYear();
+        $prevEnd = $currentStart->copy()->subYear()->endOfYear();
+
+        $query = Transaction::select('transaction_date', 'amount')
+            ->where('type', 'expense')
+            ->whereBetween('transaction_date', [$prevStart, $currentEnd]);
+
+        if ($personId) {
+            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $transactions = $query->get();
+
+        $currentData = [];
+        $prevData = [];
+        foreach ($transactions as $t) {
+            $date = Carbon::parse($t->transaction_date);
+            if ($date->between($currentStart, $currentEnd)) {
+                $currentData[$date->month] = ($currentData[$date->month] ?? 0) + (float) $t->amount;
+            } elseif ($date->between($prevStart, $prevEnd)) {
+                $prevData[$date->month] = ($prevData[$date->month] ?? 0) + (float) $t->amount;
+            }
+        }
+
+        $result = [];
+        $runCurrent = 0;
+        $runPrev = 0;
+
+        for ($m = 1; $m <= 12; $m++) {
+            $runCurrent += $currentData[$m] ?? 0;
+            $runPrev += $prevData[$m] ?? 0;
+            
+            $isFuture = $m > $currentEnd->month && $currentStart->year === $today->year;
+
+            $result[] = [
+                'label' => Carbon::create($year, $m, 1)->format('M'),
+                'current_amount' => $isFuture ? null : round($runCurrent, 2),
+                'previous_amount' => round($runPrev, 2),
             ];
         }
 

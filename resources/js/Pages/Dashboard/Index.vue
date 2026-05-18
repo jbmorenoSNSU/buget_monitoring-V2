@@ -41,10 +41,12 @@ const groupedAccounts = computed(() => {
             groups[personName] = {
                 name: personName,
                 color: acc.person?.color || '#94A3B8',
-                accounts: []
+                accounts: [],
+                total_balance: 0
             };
         }
         groups[personName].accounts.push(acc);
+        groups[personName].total_balance += Number(acc.current_balance) || 0;
     });
     return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
 });
@@ -68,8 +70,19 @@ const barChartData = computed(() => {
     return {
         labels: data.map(d => d.label),
         datasets: [
-            { label: 'Income', data: data.map(d => d.income), backgroundColor: '#10B981', borderRadius: 6 },
-            { label: 'Expense', data: data.map(d => d.expense), backgroundColor: '#F43F5E', borderRadius: 6 },
+            { 
+                type: 'line',
+                label: 'Net Savings',
+                data: data.map(d => d.net),
+                borderColor: '#3B82F6',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                tension: 0.4,
+                pointBackgroundColor: '#3B82F6',
+                order: 1
+            },
+            { label: 'Income', data: data.map(d => d.income), backgroundColor: '#10B981', borderRadius: 6, order: 2 },
+            { label: 'Expense', data: data.map(d => d.expense), backgroundColor: '#F43F5E', borderRadius: 6, order: 3 },
         ],
     };
 });
@@ -87,20 +100,47 @@ const doughnutData = computed(() => {
     };
 });
 
+const selectedTrendInterval = ref('daily');
+
 const lineChartData = computed(() => {
-    const data = props.chartData?.dailySpending || [];
+    const trendType = selectedTrendInterval.value;
+    const trendData = props.chartData?.spendingTrend || {};
+    const data = trendData[trendType] || [];
+    
+    let labels = [];
+    if (trendType === 'daily') {
+        labels = data.map(d => d.day !== undefined ? `Day ${d.day}` : d.label);
+    } else {
+        labels = data.map(d => d.label);
+    }
+
     return {
-        labels: data.map(d => `Day ${d.day}`),
-        datasets: [{
-            label: 'Daily Spending',
-            data: data.map(d => d.amount),
-            borderColor: '#6366F1',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 3,
-            pointBackgroundColor: '#6366F1',
-        }],
+        labels,
+        datasets: [
+            {
+                label: 'Current Period',
+                data: data.map(d => d.current_amount),
+                borderColor: '#6366F1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: '#6366F1',
+                order: 1,
+            },
+            {
+                label: 'Previous Period',
+                data: data.map(d => d.previous_amount),
+                borderColor: '#475569',
+                backgroundColor: 'transparent',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                order: 2,
+            }
+        ],
     };
 });
 </script>
@@ -129,30 +169,61 @@ const lineChartData = computed(() => {
             </AppCard>
             <AppCard>
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Expenses by Category (This Month)</h3>
-                <DoughnutChart :chartData="doughnutData" :height="280" />
+                <DoughnutChart :chartData="doughnutData" :height="280" :centerText="formatPeso(monthlyExpense)" />
             </AppCard>
         </div>
 
         <!-- Accounts -->
         <div class="mb-6">
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Account Balances</h3>
+                <h3 class="text-sm font-semibold text-slate-100 mb-5">Account Balances</h3>
                 <div v-for="group in groupedAccounts" :key="group.name" class="mb-6 last:mb-0">
-                    <h4 class="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" :style="{ color: group.color }">
-                        {{ group.name }}
-                    </h4>
+                    <!-- Premium Group Header -->
+                    <div class="flex items-center justify-between mb-4 bg-[#0F111A]/50 rounded-xl p-3 border border-[#232936]/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm" 
+                                 :style="{ backgroundColor: group.color + '20', color: group.color, border: `1px solid ${group.color}40` }">
+                                {{ group.name.substring(0, 1).toUpperCase() }}
+                            </div>
+                            <h4 class="text-sm font-semibold uppercase tracking-wider" :style="{ color: group.color }">
+                                {{ group.name }}
+                            </h4>
+                        </div>
+                        <div class="flex flex-col items-end px-2">
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Total Wealth</span>
+                            <span class="text-sm font-bold text-slate-100">{{ formatPeso(group.total_balance) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Glassmorphic Cards Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div v-for="acc in group.accounts" :key="acc.id" class="flex items-center justify-between p-4 rounded-lg bg-[#0F111A]">
-                            <div class="flex items-center gap-3">
-                                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: acc.color }" />
+                        <div v-for="acc in group.accounts" :key="acc.id" 
+                             class="group relative flex items-center justify-between p-4 rounded-xl bg-[#0F111A] border border-[#232936] hover:border-transparent transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                            
+                            <!-- Subtle Glow Background on Hover -->
+                            <div class="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"
+                                 :style="{ backgroundImage: `radial-gradient(circle at right top, ${acc.color || '#fff'}, transparent 70%)` }">
+                            </div>
+                            
+                            <!-- Subtle Glow Border on Hover -->
+                            <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-solid"
+                                 :style="{ borderColor: (acc.color || '#94A3B8') + '80' }">
+                            </div>
+
+                            <div class="flex items-center gap-3 relative z-10">
+                                <div class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: acc.color || '#94A3B8' }" />
                                 <div>
-                                    <p class="text-sm font-medium text-slate-100">{{ acc.name }}</p>
-                                    <p class="text-xs text-slate-400">{{ acc.account_type?.name }}</p>
+                                    <p class="text-sm font-semibold text-slate-100 group-hover:text-white transition-colors">{{ acc.name }}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">{{ acc.account_type?.name }}</p>
                                 </div>
                             </div>
-                            <span :class="['text-sm font-semibold', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
-                                {{ formatPeso(acc.current_balance) }}
-                            </span>
+                            
+                            <!-- Accentuated Balance -->
+                            <div class="relative z-10 text-right shrink-0 pl-3">
+                                <span :class="['text-[15px] font-bold tracking-tight', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
+                                    <span class="text-slate-500 font-medium mr-0.5 text-sm">₱</span>{{ formatPeso(acc.current_balance).replace('₱', '').trim() }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -163,7 +234,26 @@ const lineChartData = computed(() => {
         <!-- Daily Spending Trend -->
         <div class="mb-6">
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Daily Spending Trend</h3>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <h3 class="text-sm font-semibold text-slate-100">
+                        {{ selectedTrendInterval === 'weekly' ? 'Weekly Spending Trend' : selectedTrendInterval === 'monthly' ? 'Monthly Spending Trend' : 'Daily Spending Trend' }}
+                    </h3>
+                    <div class="flex bg-[#0F111A] rounded-lg p-0.5 border border-[#232936]">
+                        <button 
+                            v-for="interval in ['daily', 'weekly', 'monthly']" 
+                            :key="interval"
+                            @click="selectedTrendInterval = interval"
+                            :class="[
+                                'px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer capitalize border border-transparent',
+                                selectedTrendInterval === interval 
+                                    ? 'bg-[#1E293B] text-slate-100 shadow-sm border-[#232936]/40' 
+                                    : 'text-slate-400 hover:text-slate-200'
+                            ]"
+                        >
+                            {{ interval }}
+                        </button>
+                    </div>
+                </div>
                 <LineChart :chartData="lineChartData" :height="240" />
             </AppCard>
         </div>

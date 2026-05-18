@@ -46,6 +46,11 @@ class DashboardController extends Controller
                 'sixMonths' => $this->reportService->last6MonthsChart($personId),
                 'categoryExpense' => $this->reportService->categoryExpense($month, $year, $personId),
                 'dailySpending' => $this->reportService->dailySpendingTrend($month, $year, $personId),
+                'spendingTrend' => [
+                    'daily' => $this->reportService->dailySpendingTrend($month, $year, $personId),
+                    'weekly' => $this->reportService->weeklySpendingTrend($personId),
+                    'monthly' => $this->reportService->yearlySpendingTrend($year, $personId),
+                ],
             ],
             'persons' => Person::active()->orderBy('name')->get(['id', 'name', 'color']),
             'selectedPersonId' => $personId,
