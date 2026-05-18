@@ -41,7 +41,7 @@ class DashboardController extends Controller
             'accounts' => AccountResource::collection($this->accountService->getActive($personId)),
             'recentTransactions' => TransactionResource::collection($this->transactionService->getRecentTransactions(10, $personId)),
             'budgetGoals' => BudgetGoalResource::collection($this->budgetGoalService->getForMonth($month, $year)),
-            'upcomingRecurring' => $this->recurringService->getUpcoming(7),
+            'upcomingRecurring' => $this->recurringService->getUpcoming(30),
             'chartData' => [
                 'sixMonths' => $this->reportService->last6MonthsChart($personId),
                 'categoryExpense' => $this->reportService->categoryExpense($month, $year, $personId),

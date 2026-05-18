@@ -14,7 +14,7 @@ class RecurringTransactionService
 {
     public function getAll()
     {
-        return RecurringTransaction::with(['account', 'category'])
+        return RecurringTransaction::with(['account.person', 'category'])
             ->orderBy('next_due_date')->get();
     }
 
@@ -99,7 +99,7 @@ class RecurringTransactionService
 
     public function getUpcoming(int $days = 7)
     {
-        return RecurringTransaction::with(['account', 'category'])
+        return RecurringTransaction::with(['account.person', 'category'])
             ->active()
             ->where('next_due_date', '<=', now()->addDays($days)->toDateString())
             ->orderBy('next_due_date')

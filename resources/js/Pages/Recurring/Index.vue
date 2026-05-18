@@ -19,9 +19,12 @@ const { formatShortDate, formatRelative } = useDate();
 const items = computed(() => props.recurring || []);
 const deleteTarget = ref(null);
 const showDeleteModal = ref(false);
+const showGenerateModal = ref(false);
+const isGenerating = ref(false);
 
 const columns = [
     { key: 'description', label: 'Description' },
+    { key: 'account', label: 'Account' },
     { key: 'type', label: 'Type' },
     { key: 'amount', label: 'Amount', class: 'text-right', cellClass: 'text-right' },
     { key: 'frequency', label: 'Frequency' },
@@ -33,7 +36,14 @@ const columns = [
 const confirmDelete = (r) => { deleteTarget.value = r; showDeleteModal.value = true; };
 const doDelete = () => { router.delete(`/recurring/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
 const toggle = (r) => router.patch(`/recurring/${r.id}/toggle`);
-const generateNow = () => router.post('/recurring/generate-now');
+
+const confirmGenerate = () => { showGenerateModal.value = true; };
+const doGenerateNow = () => { 
+    router.post('/recurring/generate-now', {}, {
+        onStart: () => { isGenerating.value = true; },
+        onFinish: () => { isGenerating.value = false; showGenerateModal.value = false; },
+    }); 
+};
 </script>
 
 <template>
@@ -41,12 +51,22 @@ const generateNow = () => router.post('/recurring/generate-now');
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-[#F8FAFC]">Recurring Transactions</h2>
             <div class="flex gap-2">
-                <AppButton variant="secondary" @click="generateNow">⚡ Generate Now</AppButton>
+                <AppButton variant="secondary" @click="confirmGenerate">⚡ Generate Now</AppButton>
                 <Link href="/recurring/create"><AppButton>+ Add Recurring</AppButton></Link>
             </div>
         </div>
 
         <AppTable :columns="columns" :rows="items">
+            <template #cell-account="{ row }">
+                <div v-if="row.account" class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: row.account.color || '#94A3B8' }" />
+                    <span class="text-sm font-medium text-slate-200">
+                        {{ row.account.name }}
+                        <span v-if="row.account.person" :style="{ color: row.account.person.color }" class="font-bold opacity-90 text-xs"> ({{ row.account.person.name }})</span>
+                    </span>
+                </div>
+                <span v-else class="text-sm text-slate-500">-</span>
+            </template>
             <template #cell-type="{ row }">
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
@@ -78,6 +98,17 @@ const generateNow = () => router.post('/recurring/generate-now');
             <template #footer>
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
+            </template>
+        </AppModal>
+
+        <AppModal :show="showGenerateModal" title="Generate Due Transactions" @close="!isGenerating && (showGenerateModal = false)">
+            <p class="text-slate-400 mb-2">Are you sure you want to manually generate all recurring transactions that are currently due?</p>
+            <p class="text-sm text-[#F43F5E]">This action will instantly create ledger entries for any transactions due today or past due.</p>
+            <template #footer>
+                <AppButton variant="secondary" @click="showGenerateModal = false" :disabled="isGenerating">Cancel</AppButton>
+                <AppButton variant="primary" @click="doGenerateNow" :disabled="isGenerating">
+                    {{ isGenerating ? 'Generating...' : 'Yes, Generate Now' }}
+                </AppButton>
             </template>
         </AppModal>
     </AppLayout>

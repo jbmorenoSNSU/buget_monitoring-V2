@@ -155,10 +155,10 @@ const lineChartData = computed(() => {
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard label="Total Balance" :value="formatPeso(totalBalance)" accentColor="#6366F1" />
-            <StatCard label="Income This Month" :value="formatPeso(monthlyIncome)" accentColor="#10B981" />
-            <StatCard label="Expenses This Month" :value="formatPeso(monthlyExpense)" accentColor="#F43F5E" />
-            <StatCard label="Net Savings" :value="formatPeso(netSavings)" :accentColor="netSavings >= 0 ? '#10B981' : '#F43F5E'" />
+            <StatCard label="Total Balance" :value="formatPeso(totalBalance)" accentColor="#6366F1" icon="Wallet" />
+            <StatCard label="Income This Month" :value="formatPeso(monthlyIncome)" accentColor="#10B981" icon="TrendingUp" />
+            <StatCard label="Expenses This Month" :value="formatPeso(monthlyExpense)" accentColor="#F43F5E" icon="TrendingDown" />
+            <StatCard label="Net Savings" :value="formatPeso(netSavings)" :accentColor="netSavings >= 0 ? '#10B981' : '#F43F5E'" icon="PiggyBank" />
         </div>
 
         <!-- Charts Row -->
@@ -325,7 +325,17 @@ const lineChartData = computed(() => {
                         <div v-for="rec in upcomingRecurring" :key="rec.id" class="flex justify-between items-center p-2 rounded-lg bg-[#0F111A]">
                             <div>
                                 <p class="text-sm font-medium text-slate-100">{{ rec.description }}</p>
-                                <p class="text-xs text-slate-400">{{ formatRelative(rec.next_due_date) }}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span v-if="rec.account" class="flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: rec.account.color || '#94A3B8' }" />
+                                        <span class="text-xs font-semibold text-slate-400">
+                                            {{ rec.account.name }}
+                                            <span v-if="rec.account.person" :style="{ color: rec.account.person.color }" class="font-bold opacity-90"> ({{ rec.account.person.name }})</span>
+                                        </span>
+                                    </span>
+                                    <span class="text-slate-600 text-xs" v-if="rec.account">·</span>
+                                    <p class="text-xs text-slate-400">{{ formatRelative(rec.next_due_date) }}</p>
+                                </div>
                             </div>
                             <span :class="['text-sm font-semibold', rec.type === 'income' ? 'text-[#10B981]' : rec.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
                                 {{ rec.type === 'income' ? '+' : rec.type === 'transfer' ? '' : '-' }}{{ formatPeso(rec.amount) }}
