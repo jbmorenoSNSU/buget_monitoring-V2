@@ -5,13 +5,15 @@ cd /d %~dp0
 :: 0. Robust Early Exit: Only skip the wait if BOTH the Database and the App are confirmed ready.
 :: This prevents errors if the app server is running but the database is offline.
 php -r "try { new PDO('mysql:host=127.0.0.1;port=3306', 'root', ''); exit(0); } catch (Exception $e) { exit(1); }" > nul 2>&1
+if %errorlevel% neq 0 goto START_SEQUENCE
+
+netstat -ano | find "LISTENING" | find ":8000" > nul
 if %errorlevel% equ 0 (
-    netstat -ano | find "LISTENING" | find ":8000" > nul
-    if %errorlevel% equ 0 (
-        start chrome --app=http://localhost:8000
-        exit
-    )
+    start chrome --app=http://localhost:8000
+    exit
 )
+
+:START_SEQUENCE
 
 :: 1. Wait for WampServer MySQL (Port 3306) to be ready using an actual connection attempt
 echo Waiting for WampServer (Database) to be ready...

@@ -29,6 +29,10 @@ const chartData = computed(() => ({
     datasets: [{ data: props.data.map(d => d.amount), backgroundColor: props.data.map(d => d.category_color), borderWidth: 2, borderColor: '#161B26' }],
 }));
 
+const totalExpense = computed(() => {
+    return props.data.reduce((sum, item) => sum + Number(item.amount), 0);
+});
+
 const columns = [
     { key: 'category_name', label: 'Category' },
     { key: 'amount', label: 'Amount Spent', class: 'text-right', cellClass: 'text-right' },
@@ -59,7 +63,7 @@ const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=$
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <AppCard>
-                <DoughnutChart :chartData="chartData" :height="320" />
+                <DoughnutChart :chartData="chartData" :height="320" :centerText="formatPeso(totalExpense)" />
             </AppCard>
             <AppTable :columns="columns" :rows="data">
                 <template #cell-amount="{ value }"><span class="font-medium">{{ formatPeso(value) }}</span></template>

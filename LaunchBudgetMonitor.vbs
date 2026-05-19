@@ -9,6 +9,10 @@ If colProcessList.Count = 0 Then
     WshShell.Run chr(34) & "C:\wamp64\wampmanager.exe" & chr(34), 0, False
 End If
 
+' Get the folder containing this VBScript to run start_server.bat using its absolute path
+Set fso = CreateObject("Scripting.FileSystemObject")
+scriptDir = fso.GetParentFolderName(WScript.ScriptFullName)
+
 ' Run the batch file hidden (0)
-WshShell.Run chr(34) & "start_server.bat" & Chr(34), 0
+WshShell.Run chr(34) & scriptDir & "\start_server.bat" & Chr(34), 0
 Set WshShell = Nothing
