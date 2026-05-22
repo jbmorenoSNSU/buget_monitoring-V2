@@ -15,10 +15,14 @@ return new class extends Migration
         Schema::table('transactions', function (Blueprint $table) {
             if (!Schema::hasColumn('transactions', 'id')) return;
 
-            $indexesToCreate = [];
-
-            $existingIndexes = DB::select('SHOW INDEXES FROM transactions WHERE Key_name NOT IN ("PRIMARY")');
-            $existingIndexNames = collect($existingIndexes)->pluck('Key_name')->toArray();
+            $driver = Schema::getConnection()->getDriverName();
+            if ($driver === 'sqlite') {
+                $existingIndexes = DB::select("PRAGMA index_list('transactions')");
+                $existingIndexNames = collect($existingIndexes)->pluck('name')->toArray();
+            } else {
+                $existingIndexes = DB::select('SHOW INDEXES FROM transactions WHERE Key_name NOT IN ("PRIMARY")');
+                $existingIndexNames = collect($existingIndexes)->pluck('Key_name')->toArray();
+            }
 
             if (!in_array('transactions_transaction_date_index', $existingIndexNames)) {
                 $table->index('transaction_date');
@@ -41,8 +45,14 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $existingIndexes = DB::select('SHOW INDEXES FROM transactions WHERE Key_name NOT IN ("PRIMARY")');
-            $existingIndexNames = collect($existingIndexes)->pluck('Key_name')->toArray();
+            $driver = Schema::getConnection()->getDriverName();
+            if ($driver === 'sqlite') {
+                $existingIndexes = DB::select("PRAGMA index_list('transactions')");
+                $existingIndexNames = collect($existingIndexes)->pluck('name')->toArray();
+            } else {
+                $existingIndexes = DB::select('SHOW INDEXES FROM transactions WHERE Key_name NOT IN ("PRIMARY")');
+                $existingIndexNames = collect($existingIndexes)->pluck('Key_name')->toArray();
+            }
 
             if (in_array('transactions_transaction_date_index', $existingIndexNames)) {
                 $table->dropIndex(['transaction_date']);

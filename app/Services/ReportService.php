@@ -16,9 +16,13 @@ class ReportService
         $from = $from ? Carbon::parse($from)->startOfMonth() : now()->subMonths(5)->startOfMonth();
         $to = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
 
+        $driver = DB::connection()->getDriverName();
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', transaction_date)" : 'YEAR(transaction_date)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', transaction_date)" : 'MONTH(transaction_date)';
+
         $query = Transaction::select(
-                DB::raw('YEAR(transaction_date) as year'),
-                DB::raw('MONTH(transaction_date) as month'),
+                DB::raw("$yearExpr as year"),
+                DB::raw("$monthExpr as month"),
                 'type',
                 DB::raw('SUM(amount) as total')
             )

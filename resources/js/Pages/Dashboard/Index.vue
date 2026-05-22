@@ -197,14 +197,17 @@ onMounted(() => {
             if (entry.isIntersecting) {
                 const id = entry.target.dataset.chartId;
                 if (id) chartsVisible.value[id] = true;
+                observer.unobserve(entry.target);
             }
         });
-    }, { rootMargin: '50px' });
+    }, { rootMargin: '100px' });
 
-    ['bar', 'doughnut', 'line'].forEach(id => {
-        const el = document.querySelector(`[data-chart-id="${id}"]`);
-        if (el) observer.observe(el);
-    });
+    setTimeout(() => {
+        ['bar', 'doughnut', 'line'].forEach(id => {
+            const el = document.querySelector(`[data-chart-id="${id}"]`);
+            if (el) observer.observe(el);
+        });
+    }, 0);
 });
 </script>
 
