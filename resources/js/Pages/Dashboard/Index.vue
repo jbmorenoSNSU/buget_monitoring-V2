@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
@@ -34,22 +34,30 @@ const netSavings = computed(() => props.monthlyIncome - props.monthlyExpense);
 
 const groupedAccounts = computed(() => {
     const accs = props.accounts?.data || props.accounts || [];
-    const groups = {};
-    accs.forEach(acc => {
+    if (!accs.length) return [];
+
+    const groups = new Map();
+    for (let i = 0; i < accs.length; i++) {
+        const acc = accs[i];
         const personName = acc.person?.name || 'Shared / Unassigned';
-        if (!groups[personName]) {
-            groups[personName] = {
+
+        if (!groups.has(personName)) {
+            groups.set(personName, {
                 name: personName,
                 color: acc.person?.color || '#94A3B8',
                 accounts: [],
                 total_balance: 0
-            };
+            });
         }
-        groups[personName].accounts.push(acc);
-        groups[personName].total_balance += Number(acc.current_balance) || 0;
-    });
-    return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+
+        const group = groups.get(personName);
+        group.accounts.push(acc);
+        group.total_balance += Number(acc.current_balance) || 0;
+    }
+
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
 });
+
 const recentTxns = computed(() => props.recentTransactions?.data || props.recentTransactions || []);
 const goals = computed(() => props.budgetGoals?.data || props.budgetGoals || []);
 
@@ -67,13 +75,28 @@ const onPersonChange = () => {
 
 const barChartData = computed(() => {
     const data = props.chartData?.sixMonths || [];
+    if (!data.length) return { labels: [], datasets: [] };
+
+    const labels = new Array(data.length);
+    const incomeData = new Array(data.length);
+    const expenseData = new Array(data.length);
+    const netData = new Array(data.length);
+
+    for (let i = 0; i < data.length; i++) {
+        const d = data[i];
+        labels[i] = d.label;
+        incomeData[i] = d.income;
+        expenseData[i] = d.expense;
+        netData[i] = d.net;
+    }
+
     return {
-        labels: data.map(d => d.label),
+        labels,
         datasets: [
-            { 
+            {
                 type: 'line',
                 label: 'Net Savings',
-                data: data.map(d => d.net),
+                data: netData,
                 borderColor: '#3B82F6',
                 backgroundColor: 'transparent',
                 borderWidth: 2,
@@ -81,19 +104,31 @@ const barChartData = computed(() => {
                 pointBackgroundColor: '#3B82F6',
                 order: 1
             },
-            { label: 'Income', data: data.map(d => d.income), backgroundColor: '#10B981', borderRadius: 6, order: 2 },
-            { label: 'Expense', data: data.map(d => d.expense), backgroundColor: '#F43F5E', borderRadius: 6, order: 3 },
+            { label: 'Income', data: incomeData, backgroundColor: '#10B981', borderRadius: 6, order: 2 },
+            { label: 'Expense', data: expenseData, backgroundColor: '#F43F5E', borderRadius: 6, order: 3 },
         ],
     };
 });
 
 const doughnutData = computed(() => {
     const data = props.chartData?.categoryExpense || [];
+    if (!data.length) return { labels: [], datasets: [] };
+
+    const labels = new Array(data.length);
+    const amounts = new Array(data.length);
+    const colors = new Array(data.length);
+
+    for (let i = 0; i < data.length; i++) {
+        labels[i] = data[i].category_name;
+        amounts[i] = data[i].amount;
+        colors[i] = data[i].category_color;
+    }
+
     return {
-        labels: data.map(d => d.category_name),
+        labels,
         datasets: [{
-            data: data.map(d => d.amount),
-            backgroundColor: data.map(d => d.category_color),
+            data: amounts,
+            backgroundColor: colors,
             borderWidth: 2,
             borderColor: '#161B26',
         }],
@@ -106,12 +141,18 @@ const lineChartData = computed(() => {
     const trendType = selectedTrendInterval.value;
     const trendData = props.chartData?.spendingTrend || {};
     const data = trendData[trendType] || [];
-    
-    let labels = [];
-    if (trendType === 'daily') {
-        labels = data.map(d => d.day !== undefined ? `Day ${d.day}` : d.label);
-    } else {
-        labels = data.map(d => d.label);
+
+    if (!data.length) return { labels: [], datasets: [] };
+
+    const labels = new Array(data.length);
+    const currentData = new Array(data.length);
+    const previousData = new Array(data.length);
+
+    for (let i = 0; i < data.length; i++) {
+        const d = data[i];
+        labels[i] = trendType === 'daily' && d.day !== undefined ? `Day ${d.day}` : d.label;
+        currentData[i] = d.current_amount;
+        previousData[i] = d.previous_amount;
     }
 
     return {
@@ -119,7 +160,7 @@ const lineChartData = computed(() => {
         datasets: [
             {
                 label: 'Current Period',
-                data: data.map(d => d.current_amount),
+                data: currentData,
                 borderColor: '#6366F1',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 fill: true,
@@ -130,7 +171,7 @@ const lineChartData = computed(() => {
             },
             {
                 label: 'Previous Period',
-                data: data.map(d => d.previous_amount),
+                data: previousData,
                 borderColor: '#475569',
                 backgroundColor: 'transparent',
                 borderDash: [5, 5],
@@ -142,6 +183,28 @@ const lineChartData = computed(() => {
             }
         ],
     };
+});
+
+const chartsVisible = ref({
+    bar: false,
+    doughnut: false,
+    line: false,
+});
+
+onMounted(() => {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.dataset.chartId;
+                if (id) chartsVisible.value[id] = true;
+            }
+        });
+    }, { rootMargin: '50px' });
+
+    ['bar', 'doughnut', 'line'].forEach(id => {
+        const el = document.querySelector(`[data-chart-id="${id}"]`);
+        if (el) observer.observe(el);
+    });
 });
 </script>
 
@@ -163,13 +226,15 @@ const lineChartData = computed(() => {
 
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <AppCard>
+            <AppCard data-chart-id="bar">
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Income vs Expenses (Last 6 Months)</h3>
-                <BarChart :chartData="barChartData" :height="280" />
+                <BarChart v-if="chartsVisible.bar" :chartData="barChartData" :height="280" />
+                <div v-else class="h-[280px] bg-[#0F111A] rounded-lg animate-pulse" />
             </AppCard>
-            <AppCard>
+            <AppCard data-chart-id="doughnut">
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Expenses by Category (This Month)</h3>
-                <DoughnutChart :chartData="doughnutData" :height="280" :centerText="formatPeso(monthlyExpense)" />
+                <DoughnutChart v-if="chartsVisible.doughnut" :chartData="doughnutData" :height="280" :centerText="formatPeso(monthlyExpense)" />
+                <div v-else class="h-[280px] bg-[#0F111A] rounded-lg animate-pulse" />
             </AppCard>
         </div>
 
@@ -181,7 +246,7 @@ const lineChartData = computed(() => {
                     <!-- Premium Group Header -->
                     <div class="flex items-center justify-between mb-4 bg-[#0F111A]/50 rounded-xl p-3 border border-[#232936]/50">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm" 
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm"
                                  :style="{ backgroundColor: group.color + '20', color: group.color, border: `1px solid ${group.color}40` }">
                                 {{ group.name.substring(0, 1).toUpperCase() }}
                             </div>
@@ -197,14 +262,14 @@ const lineChartData = computed(() => {
 
                     <!-- Glassmorphic Cards Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div v-for="acc in group.accounts" :key="acc.id" 
-                             class="group relative flex items-center justify-between p-4 rounded-xl bg-[#0F111A] border border-[#232936] hover:border-transparent transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                            
+                        <div v-for="acc in group.accounts" :key="acc.id"
+                             class="account-card group relative flex items-center justify-between p-4 rounded-xl bg-[#0F111A] border border-[#232936] hover:border-transparent transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+
                             <!-- Subtle Glow Background on Hover -->
-                            <div class="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"
+                            <div class="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300 pointer-events-none"
                                  :style="{ backgroundImage: `radial-gradient(circle at right top, ${acc.color || '#fff'}, transparent 70%)` }">
                             </div>
-                            
+
                             <!-- Subtle Glow Border on Hover -->
                             <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-solid"
                                  :style="{ borderColor: (acc.color || '#94A3B8') + '80' }">
@@ -217,7 +282,7 @@ const lineChartData = computed(() => {
                                     <p class="text-xs text-slate-400 mt-0.5">{{ acc.account_type?.name }}</p>
                                 </div>
                             </div>
-                            
+
                             <!-- Accentuated Balance -->
                             <div class="relative z-10 text-right shrink-0 pl-3">
                                 <span :class="['text-[15px] font-bold tracking-tight', acc.current_balance >= 0 ? 'text-slate-100' : 'text-[#F43F5E]']">
@@ -233,20 +298,20 @@ const lineChartData = computed(() => {
 
         <!-- Daily Spending Trend -->
         <div class="mb-6">
-            <AppCard>
+            <AppCard data-chart-id="line">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                     <h3 class="text-sm font-semibold text-slate-100">
                         {{ selectedTrendInterval === 'weekly' ? 'Weekly Spending Trend' : selectedTrendInterval === 'monthly' ? 'Monthly Spending Trend' : 'Daily Spending Trend' }}
                     </h3>
                     <div class="flex bg-[#0F111A] rounded-lg p-0.5 border border-[#232936]">
-                        <button 
-                            v-for="interval in ['daily', 'weekly', 'monthly']" 
+                        <button
+                            v-for="interval in ['daily', 'weekly', 'monthly']"
                             :key="interval"
                             @click="selectedTrendInterval = interval"
                             :class="[
                                 'px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer capitalize border border-transparent',
-                                selectedTrendInterval === interval 
-                                    ? 'bg-[#1E293B] text-slate-100 shadow-sm border-[#232936]/40' 
+                                selectedTrendInterval === interval
+                                    ? 'bg-[#1E293B] text-slate-100 shadow-sm border-[#232936]/40'
                                     : 'text-slate-400 hover:text-slate-200'
                             ]"
                         >
@@ -254,7 +319,8 @@ const lineChartData = computed(() => {
                         </button>
                     </div>
                 </div>
-                <LineChart :chartData="lineChartData" :height="240" />
+                <LineChart v-if="chartsVisible.line" :chartData="lineChartData" :height="240" />
+                <div v-else class="h-[240px] bg-[#0F111A] rounded-lg animate-pulse" />
             </AppCard>
         </div>
 
@@ -268,17 +334,17 @@ const lineChartData = computed(() => {
                         <div class="flex items-center gap-2.5 min-w-0">
                             <!-- Category Color Dot -->
                             <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ backgroundColor: txn.category?.color || '#6366F1' }" />
-                            
+
                             <div class="min-w-0">
                                 <!-- First Line: Category Badge + Description -->
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="text-[9px] font-extrabold px-1 py-0.5 rounded uppercase tracking-wider shrink-0" 
+                                    <span class="text-[9px] font-extrabold px-1 py-0.5 rounded uppercase tracking-wider shrink-0"
                                         :style="{ backgroundColor: (txn.category?.color || '#6366F1') + '15', color: txn.category?.color || '#6366F1' }">
                                         {{ txn.category?.name || 'Transfer' }}
                                     </span>
                                     <span class="text-sm font-medium text-slate-200 truncate" :title="txn.description">{{ txn.description }}</span>
                                 </div>
-                                
+
                                 <!-- Second Line: Account & Owner · Date · "Notes" -->
                                 <p class="text-xs text-slate-400 mt-1 truncate">
                                     <span>{{ txn.account?.name }}</span>
@@ -292,7 +358,7 @@ const lineChartData = computed(() => {
                                 </p>
                             </div>
                         </div>
-                        
+
                         <!-- Amount -->
                         <span :class="['text-sm font-semibold shrink-0 pl-3', txn.type === 'income' ? 'text-[#10B981]' : txn.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
                             {{ txn.type === 'income' ? '+' : txn.type === 'transfer' ? '' : '-' }}{{ formatPeso(txn.amount) }}
@@ -348,3 +414,9 @@ const lineChartData = computed(() => {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.account-card {
+    contain: layout style paint;
+}
+</style>

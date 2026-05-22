@@ -19,7 +19,7 @@ class TransactionService
         }
 
         $query = Transaction::with(['account.person', 'category', 'transferToAccount'])
-            ->select('transactions.*'); // Critical: only select transaction fields to prevent join overlaps
+            ->select('transactions.*');
 
         if (!empty($filters['type'])) {
             $query->byType($filters['type']);
@@ -49,18 +49,12 @@ class TransactionService
             'description' => 'transactions.description',
             'type' => 'transactions.type',
             'amount' => 'transactions.amount',
-            'account' => 'accounts.name',
-            'category' => 'categories.name',
+            'account' => 'transactions.account_id',
+            'category' => 'transactions.category_id',
         ];
 
         if (array_key_exists($sortBy, $allowedSorts)) {
-            $dbField = $allowedSorts[$sortBy];
-            if ($sortBy === 'account') {
-                $query->leftJoin('accounts', 'transactions.account_id', '=', 'accounts.id');
-            } elseif ($sortBy === 'category') {
-                $query->leftJoin('categories', 'transactions.category_id', '=', 'categories.id');
-            }
-            $query->orderBy($dbField, $sortDirection);
+            $query->orderBy($allowedSorts[$sortBy], $sortDirection);
         } else {
             $query->orderBy('transactions.transaction_date', 'desc');
         }
@@ -102,16 +96,20 @@ class TransactionService
 
     private function applyBalanceEffect(Transaction $transaction): void
     {
-        $account = Account::find($transaction->account_id);
+        $account = $transaction->account;
+        if (!$account) {
+            $account = Account::findOrFail($transaction->account_id);
+        }
+
         $type = $transaction->type->value ?? $transaction->type;
 
         match ($type) {
             'income' => $account->increment('current_balance', (float)$transaction->amount),
             'expense' => $account->decrement('current_balance', (float)$transaction->amount),
-            'transfer' => (function () use ($account, $transaction) {
-                $account->decrement('current_balance', (float)$transaction->amount);
+            'transfer' => (function () use ($transaction) {
+                $transaction->account->decrement('current_balance', (float)$transaction->amount);
                 if ($transaction->transfer_to_account_id) {
-                    Account::find($transaction->transfer_to_account_id)
+                    Account::findOrFail($transaction->transfer_to_account_id)
                         ->increment('current_balance', (float)$transaction->amount);
                 }
             })(),
@@ -120,16 +118,20 @@ class TransactionService
 
     private function reverseBalanceEffect(Transaction $transaction): void
     {
-        $account = Account::find($transaction->account_id);
+        $account = $transaction->account;
+        if (!$account) {
+            $account = Account::findOrFail($transaction->account_id);
+        }
+
         $type = $transaction->type->value ?? $transaction->type;
 
         match ($type) {
             'income' => $account->decrement('current_balance', (float)$transaction->amount),
             'expense' => $account->increment('current_balance', (float)$transaction->amount),
-            'transfer' => (function () use ($account, $transaction) {
-                $account->increment('current_balance', (float)$transaction->amount);
+            'transfer' => (function () use ($transaction) {
+                $transaction->account->increment('current_balance', (float)$transaction->amount);
                 if ($transaction->transfer_to_account_id) {
-                    Account::find($transaction->transfer_to_account_id)
+                    Account::findOrFail($transaction->transfer_to_account_id)
                         ->decrement('current_balance', (float)$transaction->amount);
                 }
             })(),

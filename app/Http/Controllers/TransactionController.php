@@ -30,7 +30,7 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Index', [
             'transactions' => TransactionResource::collection($transactions),
             'filters' => $filters,
-            'accounts' => Account::active()->with('person:id,name')->orderBy('name')->get(['id', 'name', 'person_id']),
+            'accounts' => Account::active()->with('person:id,name,color')->orderBy('name')->get(['id', 'name', 'color', 'person_id']),
             'categories' => Category::active()->orderBy('name')->get(['id', 'name', 'type']),
             'persons' => \App\Models\Person::active()->orderBy('name')->get(['id', 'name']),
         ]);
