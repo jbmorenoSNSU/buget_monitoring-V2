@@ -6,21 +6,33 @@ namespace App\Services;
 
 use App\Models\BudgetGoal;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;
 
 class BudgetGoalService
 {
-    public function getForMonth(int $month, int $year)
+    public function getForMonth(int $month, int $year, ?int $personId = null)
     {
-        $goals = BudgetGoal::with('category')->forMonth($month, $year)->get();
+        $goals = BudgetGoal::with('category:id,name,icon')->forMonth($month, $year)->get();
 
-        return $goals->map(function ($goal) use ($month, $year) {
-            $spent = $this->getSpentAmount($goal->category_id, $month, $year);
+        $spentQuery = Transaction::where('type', 'expense')
+            ->forMonth($month, $year)
+            ->selectRaw('category_id, SUM(amount) as spent')
+            ->groupBy('category_id');
+
+        if ($personId) {
+            $spentQuery->whereHas('account', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        $spent = $spentQuery->pluck('spent', 'category_id');
+
+        return $goals->map(function ($goal) use ($spent) {
+            $spentAmount = (float) ($spent->get($goal->category_id) ?? 0);
             $limit = (float) $goal->limit_amount;
-            $remaining = $limit - $spent;
-            $percent = $limit > 0 ? round(($spent / $limit) * 100, 1) : 0;
+            $remaining = $limit - $spentAmount;
+            $percent = $limit > 0 ? round(($spentAmount / $limit) * 100, 1) : 0;
             $status = $percent < 75 ? 'safe' : ($percent < 90 ? 'warning' : 'danger');
 
-            $goal->spent = $spent;
+            $goal->spent = $spentAmount;
             $goal->remaining = $remaining;
             $goal->percent = $percent;
             $goal->status = $status;

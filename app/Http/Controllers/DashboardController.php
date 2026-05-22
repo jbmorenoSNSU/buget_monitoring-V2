@@ -34,20 +34,21 @@ class DashboardController extends Controller
         $year = $now->year;
         $personId = $request->filled('person_id') ? (int) $request->get('person_id') : null;
 
+        $dailyTrend = $this->reportService->dailySpendingTrend($month, $year, $personId);
+
         return Inertia::render('Dashboard/Index', [
             'totalBalance' => $this->accountService->getTotalBalance($personId),
             'monthlyIncome' => $this->transactionService->getMonthlyIncome($month, $year, $personId),
             'monthlyExpense' => $this->transactionService->getMonthlyExpense($month, $year, $personId),
             'accounts' => AccountResource::collection($this->accountService->getActive($personId)),
             'recentTransactions' => TransactionResource::collection($this->transactionService->getRecentTransactions(10, $personId)),
-            'budgetGoals' => BudgetGoalResource::collection($this->budgetGoalService->getForMonth($month, $year)),
+            'budgetGoals' => BudgetGoalResource::collection($this->budgetGoalService->getForMonth($month, $year, $personId)),
             'upcomingRecurring' => $this->recurringService->getUpcoming(30),
             'chartData' => [
                 'sixMonths' => $this->reportService->last6MonthsChart($personId),
                 'categoryExpense' => $this->reportService->categoryExpense($month, $year, $personId),
-                'dailySpending' => $this->reportService->dailySpendingTrend($month, $year, $personId),
                 'spendingTrend' => [
-                    'daily' => $this->reportService->dailySpendingTrend($month, $year, $personId),
+                    'daily' => $dailyTrend,
                     'weekly' => $this->reportService->weeklySpendingTrend($personId),
                     'monthly' => $this->reportService->yearlySpendingTrend($year, $personId),
                 ],

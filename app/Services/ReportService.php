@@ -65,11 +65,7 @@ class ReportService
 
     public function categoryExpense(int $month, int $year, ?int $personId = null): array
     {
-        $query = Transaction::select(
-                'category_id',
-                DB::raw('SUM(amount) as total')
-            )
-            ->with('category')
+        $query = Transaction::select('category_id', DB::raw('SUM(amount) as total'))
             ->where('type', 'expense')
             ->forMonth($month, $year);
 
@@ -77,7 +73,8 @@ class ReportService
             $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
         }
 
-        $data = $query->groupBy('category_id')
+        $data = $query->with('category:id,name,color,icon')
+            ->groupBy('category_id')
             ->orderByDesc('total')
             ->get();
 
@@ -140,32 +137,33 @@ class ReportService
 
     private function computeOpeningBalance(int $accountId, string $before): float
     {
-        $account = \App\Models\Account::find($accountId);
+        $account = \App\Models\Account::select('initial_balance')->find($accountId);
         $initial = (float) $account->initial_balance;
 
-        $income = Transaction::where('account_id', $accountId)
-            ->where('type', 'income')
-            ->where('transaction_date', '<', $before)->sum('amount');
-        $expense = Transaction::where('account_id', $accountId)
-            ->where('type', 'expense')
-            ->where('transaction_date', '<', $before)->sum('amount');
-        $tOut = Transaction::where('account_id', $accountId)
-            ->where('type', 'transfer')
-            ->where('transaction_date', '<', $before)->sum('amount');
-        $tIn = Transaction::where('transfer_to_account_id', $accountId)
-            ->where('type', 'transfer')
-            ->where('transaction_date', '<', $before)->sum('amount');
+        $totals = Transaction::where('transaction_date', '<', $before)
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN type = "income" AND account_id = ? THEN amount ELSE 0 END), 0) as income,
+                COALESCE(SUM(CASE WHEN type = "expense" AND account_id = ? THEN amount ELSE 0 END), 0) as expense,
+                COALESCE(SUM(CASE WHEN type = "transfer" AND account_id = ? THEN amount ELSE 0 END), 0) as transfer_out,
+                COALESCE(SUM(CASE WHEN type = "transfer" AND transfer_to_account_id = ? THEN amount ELSE 0 END), 0) as transfer_in
+            ', [$accountId, $accountId, $accountId, $accountId])
+            ->first();
 
-        return $initial + $income - $expense - $tOut + $tIn;
+        return $initial + (float)$totals->income - (float)$totals->expense - (float)$totals->transfer_out + (float)$totals->transfer_in;
     }
 
     public function budgetGoalReport(int $month, int $year): array
     {
-        $goals = BudgetGoal::with('category')->forMonth($month, $year)->get();
+        $goals = BudgetGoal::with('category:id,name,icon')->forMonth($month, $year)->get();
 
-        return $goals->map(function ($goal) use ($month, $year) {
-            $spent = (float) Transaction::where('category_id', $goal->category_id)
-                ->where('type', 'expense')->forMonth($month, $year)->sum('amount');
+        $spentByCategory = Transaction::where('type', 'expense')
+            ->forMonth($month, $year)
+            ->selectRaw('category_id, SUM(amount) as spent')
+            ->groupBy('category_id')
+            ->pluck('spent', 'category_id');
+
+        return $goals->map(function ($goal) use ($spentByCategory) {
+            $spent = (float) ($spentByCategory->get($goal->category_id) ?? 0);
             $limit = (float) $goal->limit_amount;
             $variance = $limit - $spent;
             $percent = $limit > 0 ? round(($spent / $limit) * 100, 1) : 0;
