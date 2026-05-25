@@ -4,13 +4,14 @@ import AppButton from '@/Components/UI/AppButton.vue';
 
 defineProps({
     title: { type: String, default: '' },
+    sidebarCollapsed: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['toggleSidebar']);
 </script>
 
 <template>
-    <header class="sticky top-0 z-30 bg-[#161B26] border-b border-[#232936] px-6 h-[65px] flex items-center justify-between">
+    <header class="bg-[#161B26] border-b border-[#232936] px-6 h-[65px] flex items-center justify-between transition-all duration-300">
         <div class="flex items-center gap-4">
             <button
                 @click="emit('toggleSidebar')"

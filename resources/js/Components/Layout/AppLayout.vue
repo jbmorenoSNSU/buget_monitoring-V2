@@ -58,12 +58,16 @@ onUnmounted(() => {
             </div>
         </Transition>
 
-        <!-- Main content -->
-        <div :class="['transition-all duration-300 ease-in-out', sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[260px]']">
-            <TopBar :title="title" @toggle-sidebar="toggleSidebar" />
-            <main class="p-4 sm:p-6 max-w-7xl mx-auto">
-                <slot />
-            </main>
+        <!-- TopBar - offset by sidebar width on desktop -->
+        <div class="pt-[65px]">
+            <TopBar :title="title" :sidebar-collapsed="sidebarCollapsed" @toggle-sidebar="toggleSidebar" :class="['fixed top-0 right-0 z-30 transition-all duration-300', sidebarCollapsed ? 'left-0 lg:left-16' : 'left-0 lg:left-60']" />
+
+            <!-- Main content with sidebar offset -->
+            <div :class="['transition-all duration-300 ease-in-out', sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60']">
+                <main class="p-4 sm:p-6 max-w-7xl mx-auto">
+                    <slot />
+                </main>
+            </div>
         </div>
     </div>
 </template>
