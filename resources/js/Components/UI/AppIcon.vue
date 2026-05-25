@@ -35,6 +35,11 @@ const lucideMapping = {
     'ellipsis-horizontal': 'MoreHorizontal',
     'wallet': 'Wallet',
     'gift': 'Gift',
+    'shirt': 'Shirt',
+    'hammer': 'Hammer',
+    'utensils': 'UtensilsCrossed',
+    'church': 'Church',
+    'piggy-bank': 'PiggyBank',
     
     // Fallbacks and UI icons
     'Home': 'Home',

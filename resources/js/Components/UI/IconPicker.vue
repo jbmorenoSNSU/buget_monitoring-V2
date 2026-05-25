@@ -14,6 +14,7 @@ const icons = [
     'chart-bar', 'computer-desktop', 'device-phone-mobile', 'film',
     'cake', 'sparkles', 'tag', 'plus-circle',
     'arrow-path', 'ellipsis-horizontal', 'wallet', 'gift',
+    'shirt', 'hammer', 'utensils', 'church', 'piggy-bank',
 ];
 </script>
 

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Personal Budget Monitoring System — Track income, expenses, and budget goals with ease.">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title inertia>Budget Monitor</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @inertiaHead
