@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Person extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /** @var string */
     protected $table = 'persons';
@@ -36,7 +37,7 @@ class Person extends Model
      */
     public function accounts(): HasMany
     {
-        return $this->hasMany(Account::class);
+        return $this->hasMany(Account::class, 'person_id', 'id');
     }
 
     /**
@@ -44,7 +45,7 @@ class Person extends Model
      */
     public function transactions(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
-        return $this->hasManyThrough(Transaction::class, Account::class);
+        return $this->hasManyThrough(Transaction::class, Account::class, 'person_id', 'account_id', 'id', 'id');
     }
 
     /**

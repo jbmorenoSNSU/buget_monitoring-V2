@@ -12,7 +12,7 @@ defineProps({
 </script>
 
 <template>
-    <div class="group relative bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden flex transition-all duration-300 hover:-translate-y-1 hover:border-transparent cursor-default">
+    <div class="group relative bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden flex transition-all duration-300 hover:-translate-y-1 hover:border-transparent cursor-default">
         
         <!-- Subtle Glow Background on Hover -->
         <div class="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300"
@@ -37,16 +37,16 @@ defineProps({
                 </div>
             </div>
             
-            <p class="text-2xl font-bold text-[#F8FAFC] tracking-tight flex items-baseline">
+            <p class="text-2xl font-bold text-slate-50 tracking-tight flex items-baseline">
                 <span class="text-slate-500 font-medium text-[1.1rem] mr-1" v-if="value.includes('₱')">₱</span>
                 {{ value.replace('₱', '').trim() }}
             </p>
 
             <div v-if="trend" class="mt-2 flex items-center gap-1.5">
-                <span :class="['flex items-center justify-center w-4 h-4 rounded-full text-[10px]', trendUp ? 'bg-[#10B981]/20 text-[#10B981]' : 'bg-[#F43F5E]/20 text-[#F43F5E]']">
+                <span :class="['flex items-center justify-center w-4 h-4 rounded-full text-[10px]', trendUp ? 'bg-income/20 text-income' : 'bg-expense/20 text-expense']">
                     {{ trendUp ? '↑' : '↓' }}
                 </span>
-                <span :class="['text-xs font-medium', trendUp ? 'text-[#10B981]' : 'text-[#F43F5E]']">
+                <span :class="['text-xs font-medium', trendUp ? 'text-income' : 'text-expense']">
                     {{ trend }}
                 </span>
             </div>

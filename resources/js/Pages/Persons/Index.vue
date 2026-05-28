@@ -47,7 +47,7 @@ onUnmounted(() => {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div v-for="person in items" :key="person.id"
-                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                class="bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
                 <div class="h-1" :style="{ backgroundColor: person.color }" />
                 
                 <div class="p-4">
@@ -66,42 +66,42 @@ onUnmounted(() => {
                         <!-- Dropdown Menu trigger -->
                         <div class="relative shrink-0">
                             <button @click="toggleDropdown(person.id, $event)" 
-                                class="p-1 rounded hover:bg-[#232936] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
                                 <AppIcon name="MoreVertical" size="16" />
                             </button>
                             
                             <!-- Dropdown List -->
                             <div v-if="activeDropdownId === person.id" 
-                                class="absolute right-0 top-7 w-32 bg-[#1A202C] border border-[#232936] rounded-lg shadow-xl py-1 z-10"
+                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
                                 @click.stop>
                                 <Link :href="`/persons/${person.id}/edit`" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left">
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left">
                                     <AppIcon name="Edit2" size="12" /> Edit
                                 </Link>
-                                <div class="border-t border-[#232936] my-1"></div>
+                                <div class="border-t border-border my-1"></div>
                                 <button @click="confirmDelete(person); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-[#232936] hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon name="Trash2" size="12" /> Delete
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-[#0F111A]/50 rounded-lg p-2.5 space-y-2">
+                    <div class="bg-page-bg/50 rounded-lg p-2.5 space-y-2">
                         <div>
                             <p class="text-[10px] text-slate-400 mb-0.5">Total Balance</p>
-                            <p :class="['text-lg font-bold', person.total_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
+                            <p :class="['text-lg font-bold', person.total_balance >= 0 ? 'text-slate-50' : 'text-expense']">
                                 {{ formatPeso(person.total_balance) }}
                             </p>
                         </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-[#232936]/50">
+                        <div class="flex items-center justify-between pt-2 border-t border-border/50">
                             <div>
                                 <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Income</p>
-                                <p class="text-xs font-semibold text-[#10B981]">{{ formatPeso(person.income_this_month) }}</p>
+                                <p class="text-xs font-semibold text-income">{{ formatPeso(person.income_this_month) }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Expense</p>
-                                <p class="text-xs font-semibold text-[#F43F5E]">{{ formatPeso(person.expense_this_month) }}</p>
+                                <p class="text-xs font-semibold text-expense">{{ formatPeso(person.expense_this_month) }}</p>
                             </div>
                         </div>
                     </div>

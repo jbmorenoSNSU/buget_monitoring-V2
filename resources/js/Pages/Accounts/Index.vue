@@ -74,7 +74,7 @@ onUnmounted(() => {
     <AppLayout title="Accounts">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
-                <StatCard label="Total Balance" :value="formatPeso(displayBalance)" accentColor="#1E40AF" class="flex-1 max-w-xs" />
+                <StatCard label="Total Balance" :value="formatPeso(displayBalance)" accentColor="#6366F1" class="flex-1 max-w-xs" />
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Filter by Owner:</span>
                     <AppSelect v-model="selectedPerson" :options="personOptions" class="w-44" />
@@ -87,7 +87,7 @@ onUnmounted(() => {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div v-for="acc in filteredItems" :key="acc.id"
-                class="bg-[#161B26] border border-[#232936] rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
+                class="bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
                 <!-- Color bar (Compact Option 1: h-1 instead of h-2) -->
                 <div class="h-1" :style="{ backgroundColor: acc.color }" />
                 
@@ -105,26 +105,26 @@ onUnmounted(() => {
                         <!-- Dropdown Menu trigger -->
                         <div class="relative shrink-0">
                             <button @click="toggleDropdown(acc.id, $event)" 
-                                class="p-1 rounded hover:bg-[#232936] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
                                 <AppIcon name="MoreVertical" size="16" />
                             </button>
                             
                             <!-- Dropdown List -->
                             <div v-if="activeDropdownId === acc.id" 
-                                class="absolute right-0 top-7 w-32 bg-[#1A202C] border border-[#232936] rounded-lg shadow-xl py-1 z-10"
+                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
                                 @click.stop>
                                 <Link :href="`/accounts/${acc.id}/edit`" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left">
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left">
                                     <AppIcon name="Edit2" size="12" /> Edit
                                 </Link>
                                 <button @click="toggle(acc); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-[#232936] hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon :name="acc.is_active ? 'EyeOff' : 'Eye'" size="12" />
                                     {{ acc.is_active ? 'Deactivate' : 'Activate' }}
                                 </button>
-                                <div class="border-t border-[#232936] my-1"></div>
+                                <div class="border-t border-border my-1"></div>
                                 <button @click="confirmDelete(acc); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-[#232936] hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon name="Trash2" size="12" /> Delete
                                 </button>
                             </div>
@@ -151,7 +151,7 @@ onUnmounted(() => {
                     <div v-else class="h-8"></div>
 
                     <!-- Balance -->
-                    <p :class="['text-xl font-bold mt-1', acc.current_balance >= 0 ? 'text-[#F8FAFC]' : 'text-[#F43F5E]']">
+                    <p :class="['text-xl font-bold mt-1', acc.current_balance >= 0 ? 'text-slate-50' : 'text-expense']">
                         {{ formatPeso(acc.current_balance) }}
                     </p>
                 </div>

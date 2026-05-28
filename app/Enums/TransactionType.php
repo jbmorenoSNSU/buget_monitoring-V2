@@ -24,28 +24,4 @@ enum TransactionType: string
             self::Transfer => 'Transfer',
         };
     }
-
-    /**
-     * Get the CSS color class for the transaction type.
-     */
-    public function color(): string
-    {
-        return match ($this) {
-            self::Income => 'text-green-600',
-            self::Expense => 'text-red-600',
-            self::Transfer => 'text-purple-600',
-        };
-    }
-
-    /**
-     * Get the background color class for badges.
-     */
-    public function badgeColor(): string
-    {
-        return match ($this) {
-            self::Income => 'bg-green-100 text-green-800',
-            self::Expense => 'bg-red-100 text-red-800',
-            self::Transfer => 'bg-purple-100 text-purple-800',
-        };
-    }
 }

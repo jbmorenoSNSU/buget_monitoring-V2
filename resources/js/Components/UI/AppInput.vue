@@ -25,9 +25,9 @@ const emit = defineEmits(['update:modelValue']);
             :disabled="disabled"
             @input="emit('update:modelValue', $event.target.value)"
             :class="[
-                'w-full px-3 py-2 border rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent text-slate-100 placeholder-slate-500',
-                error ? 'border-red-500 bg-red-900/20' : 'border-[#232936] bg-[#0F111A]',
-                disabled ? 'bg-[#161B26] text-slate-500 cursor-not-allowed' : '',
+                'w-full px-3 py-2 border rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-slate-100 placeholder-slate-500',
+                error ? 'border-red-500 bg-red-900/20' : 'border-border bg-page-bg',
+                disabled ? 'bg-card-bg text-slate-500 cursor-not-allowed' : '',
             ]"
         />
         <p v-if="error" class="mt-1 text-xs text-red-600">{{ error }}</p>

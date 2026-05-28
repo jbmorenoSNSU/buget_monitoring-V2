@@ -28,16 +28,16 @@ Route::resource('transactions', TransactionController::class)->except(['show']);
 
 Route::resource('recurring', RecurringTransactionController::class)->except(['show']);
 Route::patch('recurring/{recurring}/toggle', [RecurringTransactionController::class, 'toggle'])->name('recurring.toggle');
-Route::post('recurring/generate-now', [RecurringTransactionController::class, 'generateNow'])->name('recurring.generate-now');
+Route::post('recurring/generate-now', [RecurringTransactionController::class, 'generate_now'])->name('recurring.generate-now');
 
 Route::resource('budget-goals', BudgetGoalController::class)->except(['show']);
 
 Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('index');
-    Route::get('/income-expense', [ReportController::class, 'incomeExpense'])->name('income-expense');
-    Route::get('/category-expense', [ReportController::class, 'categoryExpense'])->name('category-expense');
-    Route::get('/account-statement', [ReportController::class, 'accountStatement'])->name('account-statement');
-    Route::get('/budget-goal', [ReportController::class, 'budgetGoal'])->name('budget-goal');
+    Route::get('/income-expense', [ReportController::class, 'income_expense'])->name('income-expense');
+    Route::get('/category-expense', [ReportController::class, 'category_expense'])->name('category-expense');
+    Route::get('/account-statement', [ReportController::class, 'account_statement'])->name('account-statement');
+    Route::get('/budget-goal', [ReportController::class, 'budget_goal'])->name('budget-goal');
     Route::get('/calendar', [ReportController::class, 'calendar'])->name('calendar');
     Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
 });

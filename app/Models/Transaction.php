@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\TransactionType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Transaction extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /** @var array<int, string> */
     protected $fillable = [
@@ -43,7 +44,7 @@ class Transaction extends Model
      */
     public function account(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Account::class, 'account_id');
     }
 
     /**
@@ -51,7 +52,7 @@ class Transaction extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     /**
@@ -81,17 +82,17 @@ class Transaction extends Model
     /**
      * Scope: filter by account.
      */
-    public function scopeByAccount(Builder $query, int $accountId): Builder
+    public function scopeByAccount(Builder $query, int $account_id): Builder
     {
-        return $query->where('account_id', $accountId);
+        return $query->where('account_id', $account_id);
     }
 
     /**
      * Scope: filter by category.
      */
-    public function scopeByCategory(Builder $query, int $categoryId): Builder
+    public function scopeByCategory(Builder $query, int $category_id): Builder
     {
-        return $query->where('category_id', $categoryId);
+        return $query->where('category_id', $category_id);
     }
 
     /**

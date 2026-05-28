@@ -1,11 +1,12 @@
 import './bootstrap';
 import '../css/app.css';
 
-import { createApp, h } from 'vue';
+import { createApp, h, type DefineComponent } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { ZiggyVue } from 'ziggy-js';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
+import { createPinia } from 'pinia';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Budget Monitor';
 
@@ -15,14 +16,17 @@ Chart.defaults.borderColor = '#232936';
 
 createInertiaApp({
     title: (title) => title ? `${title} — ${appName}` : appName,
-    resolve: (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
-        return pages[`./Pages/${name}.vue`];
+    resolve: name => {
+        const pages = import.meta.glob<DefineComponent>('./Pages/**/*.vue');
+        return pages[`./Pages/${name}.vue`]();
     },
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
+        const pinia = createPinia();
+        
         app.use(plugin);
         app.use(ZiggyVue);
+        app.use(pinia);
         app.use(Toast, {
             position: 'top-right',
             timeout: 3000,

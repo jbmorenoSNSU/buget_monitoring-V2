@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\BudgetGoalResource;
 use App\Http\Resources\TransactionResource;
-use App\Models\Person;
+use App\Interfaces\PersonRepositoryInterface;
 use App\Services\AccountService;
 use App\Services\BudgetGoalService;
 use App\Services\RecurringTransactionService;
@@ -25,6 +25,7 @@ class DashboardController extends Controller
         private BudgetGoalService $budgetGoalService,
         private ReportService $reportService,
         private RecurringTransactionService $recurringService,
+        private PersonRepositoryInterface $personRepository,
     ) {}
 
     public function index(Request $request): Response
@@ -32,29 +33,36 @@ class DashboardController extends Controller
         $now = now();
         $month = $now->month;
         $year = $now->year;
-        $personId = $request->filled('person_id') ? (int) $request->get('person_id') : null;
-
-        $dailyTrend = $this->reportService->dailySpendingTrend($month, $year, $personId);
-
+        $person_id = $request->filled('person_id') ? (int) $request->get('person_id') : null;
         return Inertia::render('Dashboard/Index', [
-            'totalBalance' => $this->accountService->getTotalBalance($personId),
-            'monthlyIncome' => $this->transactionService->getMonthlyIncome($month, $year, $personId),
-            'monthlyExpense' => $this->transactionService->getMonthlyExpense($month, $year, $personId),
-            'accounts' => AccountResource::collection($this->accountService->getActive($personId)),
-            'recentTransactions' => TransactionResource::collection($this->transactionService->getRecentTransactions(10, $personId)),
-            'budgetGoals' => BudgetGoalResource::collection($this->budgetGoalService->getForMonth($month, $year, $personId)),
-            'upcomingRecurring' => $this->recurringService->getUpcoming(30),
-            'chartData' => [
-                'sixMonths' => $this->reportService->last6MonthsChart($personId),
-                'categoryExpense' => $this->reportService->categoryExpense($month, $year, $personId),
-                'spendingTrend' => [
-                    'daily' => $dailyTrend,
-                    'weekly' => $this->reportService->weeklySpendingTrend($personId),
-                    'monthly' => $this->reportService->yearlySpendingTrend($year, $personId),
-                ],
+            'stats' => [
+                'totalBalance' => $this->accountService->get_total_balance($person_id),
+                'monthlyIncome' => $this->transactionService->get_monthly_income($month, $year, $person_id),
+                'monthlyExpense' => $this->transactionService->get_monthly_expense($month, $year, $person_id),
             ],
-            'persons' => Person::active()->orderBy('name')->get(['id', 'name', 'color']),
-            'selectedPersonId' => $personId,
+            'filters' => [
+                'persons' => $this->personRepository->all_active(),
+                'selectedPersonId' => $person_id,
+            ],
+            'accounts' => AccountResource::collection($this->accountService->get_active($person_id)),
+            'recentTransactions' => Inertia::defer(fn() => TransactionResource::collection(
+                $this->transactionService->get_recent_transactions(10, $person_id)
+            )),
+            'chartsAndGoals' => Inertia::defer(fn() => [
+                'budgetGoals' => BudgetGoalResource::collection(
+                    $this->budgetGoalService->get_for_month($month, $year, $person_id)
+                ),
+                'upcomingRecurring' => $this->recurringService->get_upcoming(30),
+                'chartData' => [
+                    'sixMonths' => $this->reportService->last_6_months_chart($person_id),
+                    'categoryExpense' => $this->reportService->category_expense($month, $year, $person_id),
+                    'spendingTrend' => [
+                        'daily' => $this->reportService->daily_spending_trend($month, $year, $person_id),
+                        'weekly' => $this->reportService->weekly_spending_trend($person_id),
+                        'monthly' => $this->reportService->yearly_spending_trend($year, $person_id),
+                    ],
+                ],
+            ]),
         ]);
     }
 }

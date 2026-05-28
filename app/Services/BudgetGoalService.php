@@ -4,35 +4,48 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\BudgetGoalRepositoryInterface;
+use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\BudgetGoal;
-use App\Models\Transaction;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
+/**
+ * Service class handling business logic for monthly budget goals.
+ */
 class BudgetGoalService
 {
-    public function getForMonth(int $month, int $year, ?int $personId = null)
+    /**
+     * Create a new BudgetGoalService instance.
+     *
+     * @param BudgetGoalRepositoryInterface $budgetGoalRepository
+     * @param TransactionRepositoryInterface $transactionRepository
+     */
+    public function __construct(
+        private BudgetGoalRepositoryInterface $budgetGoalRepository,
+        private TransactionRepositoryInterface $transactionRepository
+    ) {}
+
+    /**
+     * Get monthly budget goals with calculated actual spending and status warnings.
+     *
+     * @param int $month
+     * @param int $year
+     * @param int|null $person_id
+     * @return Collection<int, BudgetGoal>
+     */
+    public function get_for_month(int $month, int $year, ?int $person_id = null): Collection
     {
-        $goals = BudgetGoal::with('category:id,name,icon')->forMonth($month, $year)->get();
-
-        $spentQuery = Transaction::where('type', 'expense')
-            ->forMonth($month, $year)
-            ->selectRaw('category_id, SUM(amount) as spent')
-            ->groupBy('category_id');
-
-        if ($personId) {
-            $spentQuery->whereHas('account', fn ($q) => $q->where('person_id', $personId));
-        }
-
-        $spent = $spentQuery->pluck('spent', 'category_id');
+        $goals = $this->budgetGoalRepository->for_month($month, $year);
+        $spent = $this->transactionRepository->spent_by_category_map($month, $year, $person_id);
 
         return $goals->map(function ($goal) use ($spent) {
-            $spentAmount = (float) ($spent->get($goal->category_id) ?? 0);
+            $spent_amount = (float) ($spent[$goal->category_id] ?? 0);
             $limit = (float) $goal->limit_amount;
-            $remaining = $limit - $spentAmount;
-            $percent = $limit > 0 ? round(($spentAmount / $limit) * 100, 1) : 0;
+            $remaining = $limit - $spent_amount;
+            $percent = $limit > 0 ? round(($spent_amount / $limit) * 100, 1) : 0;
             $status = $percent < 75 ? 'safe' : ($percent < 90 ? 'warning' : 'danger');
 
-            $goal->spent = $spentAmount;
+            $goal->spent = $spent_amount;
             $goal->remaining = $remaining;
             $goal->percent = $percent;
             $goal->status = $status;
@@ -41,33 +54,63 @@ class BudgetGoalService
         });
     }
 
-    public function getSpentAmount(int $categoryId, int $month, int $year): float
+    /**
+     * Get actual spent amount for a specific category in a given month.
+     *
+     * @param int $category_id
+     * @param int $month
+     * @param int $year
+     * @return float
+     */
+    public function get_spent_amount(int $category_id, int $month, int $year): float
     {
-        return (float) Transaction::where('category_id', $categoryId)
-            ->where('type', 'expense')
-            ->forMonth($month, $year)
-            ->sum('amount');
+        return $this->budgetGoalRepository->spent_by_category($category_id, $month, $year);
     }
 
+    /**
+     * Create a new budget goal.
+     *
+     * @param array<string, mixed> $data
+     * @return BudgetGoal
+     */
     public function create(array $data): BudgetGoal
     {
-        return BudgetGoal::create($data);
+        return $this->budgetGoalRepository->create($data);
     }
 
+    /**
+     * Update an existing budget goal.
+     *
+     * @param BudgetGoal $goal
+     * @param array<string, mixed> $data
+     * @return BudgetGoal
+     */
     public function update(BudgetGoal $goal, array $data): BudgetGoal
     {
-        $goal->update($data);
-        return $goal->fresh();
+        return $this->budgetGoalRepository->update($goal, $data);
     }
 
+    /**
+     * Delete a budget goal.
+     *
+     * @param BudgetGoal $goal
+     * @return void
+     */
     public function delete(BudgetGoal $goal): void
     {
-        $goal->delete();
+        $this->budgetGoalRepository->delete($goal);
     }
 
-    public function hasWarnings(int $month, int $year): bool
+    /**
+     * Check if any budget goal has warning status (90%+ spent).
+     *
+     * @param int $month
+     * @param int $year
+     * @return bool
+     */
+    public function has_warnings(int $month, int $year): bool
     {
-        $goals = $this->getForMonth($month, $year);
+        $goals = $this->get_for_month($month, $year);
         return $goals->contains(fn ($g) => $g->percent >= 90);
     }
 }

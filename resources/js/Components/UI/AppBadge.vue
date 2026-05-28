@@ -5,15 +5,15 @@ defineProps({
 });
 
 const classes = {
-    income: 'bg-[#10B981]/10 text-[#10B981]',
-    expense: 'bg-[#F43F5E]/10 text-[#F43F5E]',
-    transfer: 'bg-[#6366F1]/10 text-[#6366F1]',
-    both: 'bg-[#3B82F6]/10 text-[#3B82F6]',
-    active: 'bg-[#10B981]/10 text-[#10B981]',
+    income: 'bg-income/10 text-income',
+    expense: 'bg-expense/10 text-expense',
+    transfer: 'bg-transfer/10 text-transfer',
+    both: 'bg-blue-500/10 text-blue-400',
+    active: 'bg-success/10 text-success',
     inactive: 'bg-slate-800/50 text-slate-500',
-    safe: 'bg-[#10B981]/10 text-[#10B981]',
-    warning: 'bg-[#F59E0B]/10 text-[#F59E0B]',
-    danger: 'bg-[#F43F5E]/10 text-[#F43F5E]',
+    safe: 'bg-success/10 text-success',
+    warning: 'bg-warning/10 text-warning',
+    danger: 'bg-danger/10 text-danger',
 };
 </script>
 

@@ -17,11 +17,11 @@ const reports = [
     <AppLayout title="Reports">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link v-for="r in reports" :key="r.href" :href="r.href" class="group">
-                <AppCard class="hover:shadow-md hover:border-[#6366F1]/50 transition-all duration-200">
+                <AppCard class="hover:shadow-md hover:border-primary/50 transition-all duration-200">
                     <div class="flex items-start gap-4">
                         <AppIcon :name="r.icon" size="32" class="text-slate-400" />
                         <div>
-                            <h3 class="font-semibold text-[#F8FAFC] group-hover:text-[#6366F1] transition-colors">{{ r.name }}</h3>
+                            <h3 class="font-semibold text-slate-50 group-hover:text-primary transition-colors">{{ r.name }}</h3>
                             <p class="text-sm text-slate-400 mt-1">{{ r.description }}</p>
                         </div>
                     </div>

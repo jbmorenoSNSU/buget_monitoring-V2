@@ -19,10 +19,10 @@ const handleHeaderClick = (col) => {
 </script>
 
 <template>
-    <div class="overflow-x-auto bg-[#161B26] rounded-xl border border-[#232936] shadow-sm">
+    <div class="overflow-x-auto bg-card-bg rounded-xl border border-border shadow-sm">
         <table class="w-full text-sm text-slate-100">
             <thead>
-                <tr class="border-b border-[#232936] bg-[#0F111A]/50">
+                <tr class="border-b border-border bg-page-bg/50">
                     <th
                         v-for="col in columns"
                         :key="col.key"
@@ -52,7 +52,7 @@ const handleHeaderClick = (col) => {
                 <tr
                     v-for="(row, index) in rows"
                     :key="row.id || index"
-                    class="border-b border-[#232936] hover:bg-[#232936]/50 transition-colors"
+                    class="border-b border-border hover:bg-border/50 transition-colors"
                 >
                     <td
                         v-for="col in columns"
@@ -71,7 +71,7 @@ const handleHeaderClick = (col) => {
                 </tr>
             </tbody>
         </table>
-        <div v-if="$slots.pagination" class="px-4 py-3 border-t border-[#232936] bg-[#0F111A]/50">
+        <div v-if="$slots.pagination" class="px-4 py-3 border-t border-border bg-page-bg/50">
             <slot name="pagination" />
         </div>
     </div>

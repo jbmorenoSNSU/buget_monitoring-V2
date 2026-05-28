@@ -4,19 +4,32 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Category\CreateCategoryAction;
+use App\Actions\Category\UpdateCategoryAction;
+use App\DTOs\CategoryDTO;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use App\Interfaces\CategoryRepositoryInterface;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Handles HTTP actions for category management.
+ */
 class CategoryController extends Controller
 {
+    public function __construct(
+        private CategoryRepositoryInterface $categoryRepository,
+        private CreateCategoryAction $createCategory,
+        private UpdateCategoryAction $updateCategory,
+    ) {}
+
     public function index(): Response
     {
         return Inertia::render('Categories/Index', [
-            'categories' => CategoryResource::collection(Category::orderBy('name')->get()),
+            'categories' => CategoryResource::collection($this->categoryRepository->all()),
         ]);
     }
 
@@ -27,7 +40,8 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        Category::create($request->validated());
+        $this->authorize('create', Category::class);
+        $this->createCategory->execute(CategoryDTO::fromArray($request->validated()));
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
@@ -40,22 +54,25 @@ class CategoryController extends Controller
 
     public function update(StoreCategoryRequest $request, Category $category): RedirectResponse
     {
-        $category->update($request->validated());
+        $this->authorize('update', $category);
+        $this->updateCategory->execute($category, CategoryDTO::fromArray($request->validated()));
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
     public function destroy(Category $category): RedirectResponse
     {
-        if ($category->transactions()->count() > 0) {
+        $this->authorize('delete', $category);
+        if ($this->categoryRepository->has_transactions($category)) {
             return redirect()->route('categories.index')->with('error', 'Cannot delete category with transactions. Deactivate it instead.');
         }
-        $category->delete();
+        $this->categoryRepository->delete($category);
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 
     public function toggle(Category $category): RedirectResponse
     {
-        $category->update(['is_active' => !$category->is_active]);
+        $this->authorize('update', $category);
+        $this->categoryRepository->update($category, ['is_active' => !$category->is_active]);
         $status = $category->fresh()->is_active ? 'activated' : 'deactivated';
         return redirect()->route('categories.index')->with('success', "Category {$status} successfully.");
     }

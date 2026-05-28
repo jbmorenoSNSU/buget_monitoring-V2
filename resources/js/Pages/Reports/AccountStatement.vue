@@ -71,7 +71,7 @@ const exportUrl = (type) => `/reports/export/${type}?account_id=${accountId.valu
             <AppTable :columns="columns" :rows="data.transactions">
                 <template #cell-type="{ value }"><span class="capitalize">{{ value }}</span></template>
                 <template #cell-amount="{ row }">
-                    <span :class="['font-medium', row.type === 'income' ? 'text-[#10B981]' : 'text-[#F43F5E]']">{{ formatPeso(row.amount) }}</span>
+                    <span :class="['font-medium', row.type === 'income' ? 'text-income' : 'text-expense']">{{ formatPeso(row.amount) }}</span>
                 </template>
                 <template #cell-balance="{ value }"><span class="font-medium">{{ formatPeso(value) }}</span></template>
             </AppTable>

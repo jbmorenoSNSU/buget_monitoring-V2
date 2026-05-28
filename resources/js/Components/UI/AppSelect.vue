@@ -23,9 +23,9 @@ const emit = defineEmits(['update:modelValue']);
             :disabled="disabled"
             @change="emit('update:modelValue', $event.target.value)"
             :class="[
-                'w-full px-3 py-2 border rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent appearance-none text-slate-100',
-                error ? 'border-red-500 bg-red-900/20' : 'border-[#232936] bg-[#0F111A]',
-                disabled ? 'bg-[#161B26] text-slate-500 cursor-not-allowed' : '',
+                'w-full px-3 py-2 border rounded-lg text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none text-slate-100',
+                error ? 'border-red-500 bg-red-900/20' : 'border-border bg-page-bg',
+                disabled ? 'bg-card-bg text-slate-500 cursor-not-allowed' : '',
             ]"
         >
             <option value="" disabled>{{ placeholder }}</option>

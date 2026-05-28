@@ -56,10 +56,10 @@ const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=$
             <template #cell-limit_amount="{ value }"><span class="font-medium">{{ formatPeso(value) }}</span></template>
             <template #cell-actual_spent="{ value }"><span class="font-medium">{{ formatPeso(value) }}</span></template>
             <template #cell-variance="{ row }">
-                <span :class="['font-semibold', row.variance >= 0 ? 'text-[#10B981]' : 'text-[#F43F5E]']">{{ formatPeso(row.variance) }}</span>
+                <span :class="['font-semibold', row.variance >= 0 ? 'text-success' : 'text-danger']">{{ formatPeso(row.variance) }}</span>
             </template>
             <template #cell-percent="{ row }">
-                <span :class="['font-semibold', row.status === 'safe' ? 'text-[#10B981]' : row.status === 'warning' ? 'text-[#F59E0B]' : 'text-[#F43F5E]']">
+                <span :class="['font-semibold', row.status === 'safe' ? 'text-success' : row.status === 'warning' ? 'text-warning' : 'text-danger']">
                     {{ row.percent }}%
                 </span>
             </template>

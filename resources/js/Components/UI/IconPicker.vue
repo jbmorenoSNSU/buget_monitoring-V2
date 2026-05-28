@@ -28,12 +28,12 @@ const icons = [
                 type="button"
                 @click="emit('update:modelValue', icon)"
                 :class="[
-                    'w-10 h-10 flex items-center justify-center rounded-lg border-2 text-lg transition-all duration-200 cursor-pointer hover:bg-[#232936]',
-                    modelValue === icon ? 'border-[#6366F1] bg-[#6366F1]/10 ring-2 ring-[#6366F1]/20' : 'border-[#232936]',
+                    'w-10 h-10 flex items-center justify-center rounded-lg border-2 text-lg transition-all duration-200 cursor-pointer hover:bg-border',
+                    modelValue === icon ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border',
                 ]"
                 :title="icon"
             >
-                <AppIcon :name="icon" size="20" :class="modelValue === icon ? 'text-[#6366F1]' : 'text-slate-400'" />
+                <AppIcon :name="icon" size="20" :class="modelValue === icon ? 'text-primary' : 'text-slate-400'" />
             </button>
         </div>
     </div>

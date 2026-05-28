@@ -9,12 +9,12 @@ const props = defineProps({
 });
 
 const color = computed(() => {
-    if (props.percent < 75) return 'bg-[#10B981]';
-    if (props.percent < 90) return 'bg-[#F59E0B]';
-    return 'bg-[#F43F5E]';
+    if (props.percent < 75) return 'bg-income';
+    if (props.percent < 90) return 'bg-warning';
+    return 'bg-danger';
 });
 
-const bgColor = computed(() => 'bg-[#0F111A]');
+const bgColor = computed(() => 'bg-page-bg');
 
 const clampedPercent = computed(() => Math.min(props.percent, 100));
 </script>
@@ -23,7 +23,7 @@ const clampedPercent = computed(() => Math.min(props.percent, 100));
     <div>
         <div v-if="label || showPercent" class="flex justify-between items-center mb-1">
             <span v-if="label" class="text-sm text-slate-400">{{ label }}</span>
-            <span v-if="showPercent" class="text-sm font-medium" :class="percent >= 90 ? 'text-[#F43F5E]' : percent >= 75 ? 'text-[#F59E0B]' : 'text-[#10B981]'">
+            <span v-if="showPercent" class="text-sm font-medium" :class="percent >= 90 ? 'text-danger' : percent >= 75 ? 'text-warning' : 'text-income'">
                 {{ percent.toFixed(1) }}%
             </span>
         </div>

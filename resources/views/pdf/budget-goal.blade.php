@@ -22,7 +22,7 @@
     <div class="header">
         <h1>Personal Budget Monitoring System</h1>
         <p>{{ $title }}</p>
-        <p>Generated: {{ $generatedAt }}</p>
+        <p>Generated: {{ $generated_at }}</p>
     </div>
     <table>
         <thead><tr><th>Category</th><th class="text-right">Budget (₱)</th><th class="text-right">Spent (₱)</th><th class="text-right">Variance (₱)</th><th class="text-right">% Used</th></tr></thead>

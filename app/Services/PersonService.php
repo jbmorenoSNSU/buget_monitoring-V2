@@ -4,64 +4,52 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Person;
 use Illuminate\Database\Eloquent\Collection;
 
 class PersonService
 {
+    public function __construct(
+        private PersonRepositoryInterface $personRepository
+    ) {}
+
     /**
      * Get all persons with aggregated account data.
-     * Uses withCount and withSum for optimized single-query aggregation.
      */
-    public function getAll(): Collection
+    public function get_all(): Collection
     {
-        $startOfMonth = now()->startOfMonth();
-        $endOfMonth = now()->endOfMonth();
-
-        return Person::withCount(['accounts' => fn ($q) => $q->where('is_active', true)])
-            ->withSum(['accounts' => fn ($q) => $q->where('is_active', true)], 'current_balance')
-            ->withSum(['transactions as income_this_month' => function ($q) use ($startOfMonth, $endOfMonth) {
-                $q->where('transactions.type', 'income')
-                  ->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth]);
-            }], 'amount')
-            ->withSum(['transactions as expense_this_month' => function ($q) use ($startOfMonth, $endOfMonth) {
-                $q->where('transactions.type', 'expense')
-                  ->whereBetween('transactions.transaction_date', [$startOfMonth, $endOfMonth]);
-            }], 'amount')
-            ->orderBy('name')
-            ->get();
+        return $this->personRepository->all();
     }
 
     /**
      * Get only active persons (for dropdowns).
      */
-    public function getActive(): Collection
+    public function get_active(): Collection
     {
-        return Person::active()->orderBy('name')->get(['id', 'name', 'color']);
+        return $this->personRepository->all_active();
     }
 
     public function create(array $data): Person
     {
-        return Person::create($data);
+        return $this->personRepository->create($data);
     }
 
     public function update(Person $person, array $data): Person
     {
-        $person->update($data);
-        return $person->fresh();
+        return $this->personRepository->update($person, $data);
     }
 
-    public function canDelete(Person $person): bool
+    public function can_delete(Person $person): bool
     {
-        return $person->accounts()->count() === 0;
+        return !$this->personRepository->has_accounts($person);
     }
 
     public function delete(Person $person): bool
     {
-        if (!$this->canDelete($person)) {
+        if (!$this->can_delete($person)) {
             return false;
         }
-        $person->delete();
-        return true;
+        return $this->personRepository->delete($person);
     }
 }

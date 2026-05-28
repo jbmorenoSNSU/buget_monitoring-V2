@@ -37,7 +37,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#0F111A]">
+    <div class="min-h-screen bg-page-bg">
         <!-- Desktop Sidebar -->
         <div class="hidden lg:block">
             <Sidebar :collapsed="sidebarCollapsed" @toggle="toggleSidebar" />

@@ -8,11 +8,11 @@ defineProps({
 });
 
 const variantClasses = {
-    primary: 'bg-[#6366F1] text-white hover:bg-[#4F46E5] focus:ring-[#6366F1]',
-    secondary: 'bg-[#161B26] text-slate-200 border border-[#232936] hover:bg-[#232936] focus:ring-slate-500',
-    danger: 'bg-[#F43F5E] text-white hover:bg-[#E11D48] focus:ring-red-500',
-    success: 'bg-[#10B981] text-white hover:bg-[#059669] focus:ring-green-500',
-    ghost: 'bg-transparent text-slate-400 hover:bg-[#161B26] hover:text-white focus:ring-slate-500',
+    primary: 'bg-primary text-white hover:bg-primary-hover focus:ring-primary',
+    secondary: 'bg-card-bg text-slate-200 border border-border hover:bg-border focus:ring-slate-500',
+    danger: 'bg-danger text-white hover:bg-red-600 focus:ring-red-500',
+    success: 'bg-success text-white hover:bg-emerald-600 focus:ring-green-500',
+    ghost: 'bg-transparent text-slate-400 hover:bg-card-bg hover:text-white focus:ring-slate-500',
 };
 
 const sizeClasses = {

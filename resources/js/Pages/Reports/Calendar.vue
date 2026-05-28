@@ -61,9 +61,9 @@ const resetFilters = () => {
 };
 
 const getTransactionColor = (type) => {
-    if (type === 'income') return 'text-[#10B981]';
-    if (type === 'expense') return 'text-[#F43F5E]';
-    return 'text-[#6366F1]';
+    if (type === 'income') return 'text-income';
+    if (type === 'expense') return 'text-expense';
+    return 'text-transfer';
 };
 </script>
 
@@ -78,46 +78,46 @@ const getTransactionColor = (type) => {
             
             <div class="flex gap-4">
                 <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-[#10B981]"></div>
+                    <div class="w-2 h-2 rounded-full bg-income"></div>
                     <span class="text-xs text-slate-400">Income</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-[#F43F5E]"></div>
+                    <div class="w-2 h-2 rounded-full bg-expense"></div>
                     <span class="text-xs text-slate-400">Expense</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <div class="w-2 h-2 rounded-full bg-[#6366F1]"></div>
+                    <div class="w-2 h-2 rounded-full bg-transfer"></div>
                     <span class="text-xs text-slate-400">Transfer</span>
                 </div>
             </div>
         </div>
 
-        <AppCard class="p-0 overflow-hidden border-[#232936] shadow-2xl">
+        <AppCard class="p-0 overflow-hidden border-border shadow-2xl">
             <!-- Scrollable container for mobile -->
             <div class="overflow-x-auto">
                 <!-- Calendar Grid -->
-                <div class="grid grid-cols-7 bg-[#0F111A] min-w-[600px] md:min-w-0">
+                <div class="grid grid-cols-7 bg-page-bg min-w-[600px] md:min-w-0">
                     <!-- Header -->
                     <div v-for="day in weekDays" :key="day" 
-                        class="py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest bg-[#161B26] border-b border-r border-[#232936] last:border-r-0">
+                        class="py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest bg-card-bg border-b border-r border-border last:border-r-0">
                         {{ day }}
                     </div>
 
                     <!-- Padding for start of month -->
                     <div v-for="p in paddingStart" :key="'p'+p" 
-                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
+                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-border bg-card-bg/10">
                     </div>
                     
                     <!-- Day Cells -->
                     <div v-for="day in calendarDays" :key="day.date" 
                         :class="[
-                            'min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] p-3 transition-all duration-300 group flex flex-col',
-                            day.is_today ? 'bg-[#6366F1]/5' : 'hover:bg-[#161B26]'
+                            'min-h-[120px] md:min-h-[160px] border-b border-r border-border p-3 transition-all duration-300 group flex flex-col',
+                            day.is_today ? 'bg-primary/5' : 'hover:bg-card-bg'
                         ]">
                         <div class="flex justify-between items-start mb-2">
                             <span :class="[
                                 'text-sm font-bold transition-colors',
-                                day.is_today ? 'flex items-center justify-center w-7 h-7 rounded-full bg-[#6366F1] text-white shadow-lg shadow-[#6366F1]/20' : 'text-slate-500 group-hover:text-slate-300'
+                                day.is_today ? 'flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 group-hover:text-slate-300'
                             ]">
                                 {{ day.day }}
                             </span>
@@ -125,10 +125,10 @@ const getTransactionColor = (type) => {
 
                         <!-- Daily Summaries -->
                         <div class="flex-1 space-y-1.5 overflow-hidden">
-                            <div v-if="day.income > 0" class="text-[10px] md:text-xs font-bold text-[#10B981] flex items-center gap-1">
+                            <div v-if="day.income > 0" class="text-[10px] md:text-xs font-bold text-income flex items-center gap-1">
                                 <span class="opacity-50 font-medium">+</span>{{ formatPeso(day.income) }}
                             </div>
-                            <div v-if="day.expense > 0" class="text-[10px] md:text-xs font-bold text-[#F43F5E] flex items-center gap-1">
+                            <div v-if="day.expense > 0" class="text-[10px] md:text-xs font-bold text-expense flex items-center gap-1">
                                 <span class="opacity-50 font-medium">-</span>{{ formatPeso(day.expense) }}
                             </div>
                             
@@ -148,14 +148,14 @@ const getTransactionColor = (type) => {
                         <!-- Daily Balance Indicator (Subtle) -->
                         <div v-if="day.income > 0 || day.expense > 0" class="mt-auto pt-2">
                             <div class="h-0.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#10B981]" :style="{ width: (day.income / (day.income + day.expense) * 100) + '%' }"></div>
+                                <div class="h-full bg-income" :style="{ width: (day.income / (day.income + day.expense) * 100) + '%' }"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Padding for end of month -->
                     <div v-for="p in paddingEnd" :key="'pe'+p" 
-                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-[#232936] bg-[#161B26]/10">
+                        class="min-h-[120px] md:min-h-[160px] border-b border-r border-border bg-card-bg/10">
                     </div>
                 </div>
             </div>

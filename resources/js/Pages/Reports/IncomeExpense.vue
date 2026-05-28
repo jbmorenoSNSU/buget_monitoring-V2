@@ -64,9 +64,9 @@ const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.
         </AppCard>
 
         <AppTable :columns="columns" :rows="data">
-            <template #cell-income="{ value }"><span class="text-[#10B981] font-medium">{{ formatPeso(value) }}</span></template>
-            <template #cell-expense="{ value }"><span class="text-[#F43F5E] font-medium">{{ formatPeso(value) }}</span></template>
-            <template #cell-net="{ value }"><span :class="['font-semibold', value >= 0 ? 'text-[#10B981]' : 'text-[#F43F5E]']">{{ formatPeso(value) }}</span></template>
+            <template #cell-income="{ value }"><span class="text-income font-medium">{{ formatPeso(value) }}</span></template>
+            <template #cell-expense="{ value }"><span class="text-expense font-medium">{{ formatPeso(value) }}</span></template>
+            <template #cell-net="{ value }"><span :class="['font-semibold', value >= 0 ? 'text-income' : 'text-expense']">{{ formatPeso(value) }}</span></template>
         </AppTable>
     </AppLayout>
 </template>

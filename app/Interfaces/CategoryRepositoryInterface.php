@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Interfaces;
+
+use App\Models\Category;
+use Illuminate\Database\Eloquent\Collection;
+
+interface CategoryRepositoryInterface
+{
+    public function all(): Collection;
+
+    public function all_active(): Collection;
+
+    public function all_active_expense(): Collection;
+
+    public function find(int $id): ?Category;
+
+    public function create(array $data): Category;
+
+    public function update(Category $category, array $data): Category;
+
+    public function delete(Category $category): bool;
+
+    public function has_transactions(Category $category): bool;
+}

@@ -170,18 +170,18 @@ const perPageOptions = [
             <Link href="/categories/create"><AppButton>+ Add Category</AppButton></Link>
         </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-[#232936] pb-2 md:pb-0">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-border pb-2 md:pb-0">
             <!-- Tabs -->
             <div class="flex gap-2">
                 <button
                     @click="activeTab = 'expense'"
-                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'expense' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
+                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'expense' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
                 >
                     Expense Categories
                 </button>
                 <button
                     @click="activeTab = 'income'"
-                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'income' ? 'border-[#6366F1] text-[#6366F1]' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-[#232936]']"
+                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'income' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
                 >
                     Income Categories
                 </button>
@@ -215,7 +215,7 @@ const perPageOptions = [
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
             <template #cell-color="{ row }">
-                <div class="w-6 h-6 rounded-full border border-[#232936]" :style="{ backgroundColor: row.color }" />
+                <div class="w-6 h-6 rounded-full border border-border" :style="{ backgroundColor: row.color }" />
             </template>
             <template #cell-is_active="{ row }">
                 <AppBadge :type="row.is_active ? 'active' : 'inactive'" :label="row.is_active ? 'Active' : 'Inactive'" />

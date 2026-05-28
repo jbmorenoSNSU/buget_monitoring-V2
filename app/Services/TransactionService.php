@@ -4,165 +4,110 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Account;
+use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Transaction;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Service class handling core business operations for individual transactions.
+ */
 class TransactionService
 {
-    public function getPaginated(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    /**
+     * Create a new TransactionService instance.
+     *
+     * @param TransactionRepositoryInterface $transactionRepository
+     */
+    public function __construct(
+        private TransactionRepositoryInterface $transactionRepository
+    ) {}
+
+    /**
+     * Get paginated transactions matching selected filters.
+     *
+     * @param array<string, mixed> $filters
+     * @param int $per_page
+     * @return CursorPaginator
+     */
+    public function get_paginated(array $filters = [], int $per_page = 15): CursorPaginator
     {
-        // Handle custom per-page limits from filters
         if (!empty($filters['per_page'])) {
-            $perPage = (int) $filters['per_page'];
+            $per_page = (int) $filters['per_page'];
         }
 
-        $query = Transaction::with(['account.person', 'category', 'transferToAccount'])
-            ->select('transactions.*');
-
-        if (!empty($filters['type'])) {
-            $query->byType($filters['type']);
-        }
-        if (!empty($filters['account_id'])) {
-            $query->byAccount((int) $filters['account_id']);
-        }
-        if (!empty($filters['person_id'])) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', (int) $filters['person_id']));
-        }
-        if (!empty($filters['category_id'])) {
-            $query->byCategory((int) $filters['category_id']);
-        }
-        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->byDateRange($filters['date_from'], $filters['date_to']);
-        }
-        if (!empty($filters['search'])) {
-            $query->where('transactions.description', 'like', '%' . $filters['search'] . '%');
-        }
-
-        // Whitelisted dynamic sorting
-        $sortBy = $filters['sort_by'] ?? 'transaction_date';
-        $sortDirection = isset($filters['sort_direction']) && strtolower($filters['sort_direction']) === 'asc' ? 'asc' : 'desc';
-
-        $allowedSorts = [
-            'transaction_date' => 'transactions.transaction_date',
-            'description' => 'transactions.description',
-            'type' => 'transactions.type',
-            'amount' => 'transactions.amount',
-            'account' => 'transactions.account_id',
-            'category' => 'transactions.category_id',
-        ];
-
-        if (array_key_exists($sortBy, $allowedSorts)) {
-            $query->orderBy($allowedSorts[$sortBy], $sortDirection);
-        } else {
-            $query->orderBy('transactions.transaction_date', 'desc');
-        }
-
-        // Secondary stable order to guarantee correct pagination sequence
-        $query->orderBy('transactions.id', 'desc');
-
-        return $query->paginate($perPage)->withQueryString();
+        return $this->transactionRepository->paginate($filters, $per_page);
     }
 
-
+    /**
+     * Create a new transaction.
+     *
+     * @param array<string, mixed> $data
+     * @return Transaction
+     */
     public function create(array $data): Transaction
     {
-        return DB::transaction(function () use ($data) {
-            $transaction = Transaction::create($data);
-            $this->applyBalanceEffect($transaction);
-            return $transaction;
-        });
+        return $this->transactionRepository->create($data);
     }
 
+    /**
+     * Update an existing transaction.
+     *
+     * @param Transaction $transaction
+     * @param array<string, mixed> $data
+     * @return Transaction
+     */
     public function update(Transaction $transaction, array $data): Transaction
     {
-        return DB::transaction(function () use ($transaction, $data) {
-            $this->reverseBalanceEffect($transaction);
-            $transaction->update($data);
-            $transaction->refresh();
-            $this->applyBalanceEffect($transaction);
-            return $transaction;
-        });
+        return $this->transactionRepository->update($transaction, $data);
     }
 
+    /**
+     * Delete a transaction.
+     *
+     * @param Transaction $transaction
+     * @return void
+     */
     public function delete(Transaction $transaction): void
     {
-        DB::transaction(function () use ($transaction) {
-            $this->reverseBalanceEffect($transaction);
-            $transaction->delete();
-        });
+        $this->transactionRepository->delete($transaction);
     }
 
-    private function applyBalanceEffect(Transaction $transaction): void
+    /**
+     * Get the sum of all income transactions for a specific month/year.
+     *
+     * @param int $month
+     * @param int $year
+     * @param int|null $person_id
+     * @return float
+     */
+    public function get_monthly_income(int $month, int $year, ?int $person_id = null): float
     {
-        $account = $transaction->account;
-        if (!$account) {
-            $account = Account::findOrFail($transaction->account_id);
-        }
-
-        $type = $transaction->type->value ?? $transaction->type;
-
-        match ($type) {
-            'income' => $account->increment('current_balance', (float)$transaction->amount),
-            'expense' => $account->decrement('current_balance', (float)$transaction->amount),
-            'transfer' => (function () use ($transaction) {
-                $transaction->account->decrement('current_balance', (float)$transaction->amount);
-                if ($transaction->transfer_to_account_id) {
-                    Account::findOrFail($transaction->transfer_to_account_id)
-                        ->increment('current_balance', (float)$transaction->amount);
-                }
-            })(),
-        };
+        return $this->transactionRepository->monthly_sum('income', $month, $year, $person_id);
     }
 
-    private function reverseBalanceEffect(Transaction $transaction): void
+    /**
+     * Get the sum of all expense transactions for a specific month/year.
+     *
+     * @param int $month
+     * @param int $year
+     * @param int|null $person_id
+     * @return float
+     */
+    public function get_monthly_expense(int $month, int $year, ?int $person_id = null): float
     {
-        $account = $transaction->account;
-        if (!$account) {
-            $account = Account::findOrFail($transaction->account_id);
-        }
-
-        $type = $transaction->type->value ?? $transaction->type;
-
-        match ($type) {
-            'income' => $account->decrement('current_balance', (float)$transaction->amount),
-            'expense' => $account->increment('current_balance', (float)$transaction->amount),
-            'transfer' => (function () use ($transaction) {
-                $transaction->account->increment('current_balance', (float)$transaction->amount);
-                if ($transaction->transfer_to_account_id) {
-                    Account::findOrFail($transaction->transfer_to_account_id)
-                        ->decrement('current_balance', (float)$transaction->amount);
-                }
-            })(),
-        };
+        return $this->transactionRepository->monthly_sum('expense', $month, $year, $person_id);
     }
 
-    public function getMonthlyIncome(int $month, int $year, ?int $personId = null): float
+    /**
+     * Get the most recent transactions.
+     *
+     * @param int $limit
+     * @param int|null $person_id
+     * @return Collection<int, Transaction>
+     */
+    public function get_recent_transactions(int $limit = 10, ?int $person_id = null): Collection
     {
-        $query = Transaction::byType('income')->forMonth($month, $year);
-        if ($personId) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
-        }
-        return (float) $query->sum('amount');
-    }
-
-    public function getMonthlyExpense(int $month, int $year, ?int $personId = null): float
-    {
-        $query = Transaction::byType('expense')->forMonth($month, $year);
-        if ($personId) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
-        }
-        return (float) $query->sum('amount');
-    }
-
-    public function getRecentTransactions(int $limit = 10, ?int $personId = null)
-    {
-        $query = Transaction::with(['account.person', 'category'])
-            ->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
-        if ($personId) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $personId));
-        }
-        return $query->limit($limit)->get();
+        return $this->transactionRepository->recent($limit, $person_id);
     }
 }

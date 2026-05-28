@@ -50,7 +50,7 @@ const navigate = (url) => {
                     :class="[
                         'px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer select-none',
                         link.active
-                            ? 'bg-[#1E40AF] text-white font-medium'
+                            ? 'bg-primary text-white font-medium'
                             : link.url
                                 ? 'text-slate-400 hover:bg-slate-700/60'
                                 : 'text-slate-600 cursor-not-allowed',

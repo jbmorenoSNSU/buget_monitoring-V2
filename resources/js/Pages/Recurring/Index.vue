@@ -49,7 +49,7 @@ const doGenerateNow = () => {
 <template>
     <AppLayout title="Recurring Transactions">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 class="text-lg font-semibold text-[#F8FAFC]">Recurring Transactions</h2>
+            <h2 class="text-lg font-semibold text-slate-50">Recurring Transactions</h2>
             <div class="flex gap-2">
                 <AppButton variant="secondary" @click="confirmGenerate">⚡ Generate Now</AppButton>
                 <Link href="/recurring/create"><AppButton>+ Add Recurring</AppButton></Link>
@@ -71,7 +71,7 @@ const doGenerateNow = () => {
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
             <template #cell-amount="{ row }">
-                <span :class="['font-semibold', row.type === 'income' ? 'text-[#10B981]' : row.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
+                <span :class="['font-semibold', row.type === 'income' ? 'text-income' : row.type === 'transfer' ? 'text-transfer' : 'text-expense']">
                     {{ row.type === 'income' ? '+' : row.type === 'transfer' ? '' : '-' }}{{ formatPeso(row.amount) }}
                 </span>
             </template>
@@ -103,7 +103,7 @@ const doGenerateNow = () => {
 
         <AppModal :show="showGenerateModal" title="Generate Due Transactions" @close="!isGenerating && (showGenerateModal = false)">
             <p class="text-slate-400 mb-2">Are you sure you want to manually generate all recurring transactions that are currently due?</p>
-            <p class="text-sm text-[#F43F5E]">This action will instantly create ledger entries for any transactions due today or past due.</p>
+            <p class="text-sm text-expense">This action will instantly create ledger entries for any transactions due today or past due.</p>
             <template #footer>
                 <AppButton variant="secondary" @click="showGenerateModal = false" :disabled="isGenerating">Cancel</AppButton>
                 <AppButton variant="primary" @click="doGenerateNow" :disabled="isGenerating">

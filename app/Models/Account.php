@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Account extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /** @var array<int, string> */
     protected $fillable = [
@@ -41,7 +42,7 @@ class Account extends Model
      */
     public function accountType(): BelongsTo
     {
-        return $this->belongsTo(AccountType::class);
+        return $this->belongsTo(AccountType::class, 'account_type_id');
     }
 
     /**
@@ -49,7 +50,7 @@ class Account extends Model
      */
     public function person(): BelongsTo
     {
-        return $this->belongsTo(Person::class);
+        return $this->belongsTo(Person::class, 'person_id');
     }
 
     /**
@@ -57,7 +58,7 @@ class Account extends Model
      */
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'account_id', 'id');
     }
 
     /**

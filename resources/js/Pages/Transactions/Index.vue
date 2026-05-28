@@ -120,7 +120,7 @@ const perPageOptions = [
         </div>
 
         <!-- Filters -->
-        <div class="bg-[#161B26] border border-[#232936] rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-3 items-center">
+        <div class="bg-card-bg border border-border rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-3 items-center">
             <AppInput v-model="search" placeholder="Search..." @keyup.enter="applyFilters" />
             <AppSelect v-model="type" :options="typeOptions" placeholder="Type" @change="applyFilters" />
             <AppSelect v-model="personId" :options="personOptions" placeholder="Person" @change="applyFilters" />
@@ -179,7 +179,7 @@ const perPageOptions = [
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
             <template #cell-amount="{ row }">
-                <span :class="['font-semibold', row.type === 'income' ? 'text-[#10B981]' : row.type === 'transfer' ? 'text-[#6366F1]' : 'text-[#F43F5E]']">
+                <span :class="['font-semibold', row.type === 'income' ? 'text-income' : row.type === 'transfer' ? 'text-transfer' : 'text-expense']">
                     {{ row.type === 'income' ? '+' : row.type === 'transfer' ? '' : '-' }}{{ formatPeso(row.amount) }}
                 </span>
             </template>

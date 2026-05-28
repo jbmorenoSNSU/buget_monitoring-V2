@@ -68,8 +68,8 @@ const submit = () => {
                                 :class="[
                                     'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer',
                                     form.type === opt.value
-                                        ? opt.value === 'income' ? 'bg-[#10B981] text-white' : opt.value === 'expense' ? 'bg-[#F43F5E] text-white' : 'bg-[#6366F1] text-white'
-                                        : 'bg-[#0F111A] text-slate-400 hover:bg-[#232936]',
+                                        ? opt.value === 'income' ? 'bg-income text-white' : opt.value === 'expense' ? 'bg-expense text-white' : 'bg-primary text-white'
+                                        : 'bg-page-bg text-slate-400 hover:bg-border',
                                 ]"
                             >{{ opt.label }}</button>
                         </div>

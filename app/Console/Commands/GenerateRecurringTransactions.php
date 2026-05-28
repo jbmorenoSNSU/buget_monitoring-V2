@@ -14,7 +14,7 @@ class GenerateRecurringTransactions extends Command
 
     public function handle(RecurringTransactionService $service): int
     {
-        $count = $service->generateDue();
+        $count = $service->generate_due();
         $this->info("Generated {$count} recurring transaction(s).");
         return self::SUCCESS;
     }

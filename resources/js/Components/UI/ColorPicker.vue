@@ -25,7 +25,7 @@ const presetColors = [
                 @click="emit('update:modelValue', color)"
                 :class="[
                     'w-8 h-8 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:scale-110',
-                    modelValue === color ? 'border-white ring-2 ring-offset-2 ring-offset-[#161B26] ring-[#6366F1] scale-110' : 'border-transparent',
+                    modelValue === color ? 'border-white ring-2 ring-offset-2 ring-offset-card-bg ring-primary scale-110' : 'border-transparent',
                 ]"
                 :style="{ backgroundColor: color }"
             />

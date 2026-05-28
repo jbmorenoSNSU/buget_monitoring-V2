@@ -5,7 +5,7 @@ defineProps({
 </script>
 
 <template>
-    <div :class="['bg-[#161B26] border border-[#232936] rounded-xl shadow-sm text-[#F8FAFC]', padding]">
+    <div :class="['bg-card-bg border border-border rounded-xl shadow-sm text-slate-50', padding]">
         <slot />
     </div>
 </template>

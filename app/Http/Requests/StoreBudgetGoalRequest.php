@@ -14,7 +14,7 @@ class StoreBudgetGoalRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $goalId = $this->route('budget_goal')?->id ?? null;
+        $goal_id = $this->route('budget_goal')?->id ?? null;
 
         return [
             'category_id' => [
@@ -22,7 +22,7 @@ class StoreBudgetGoalRequest extends FormRequest
                 Rule::unique('budget_goals')->where(function ($query) {
                     $query->where('month', $this->input('month'))
                           ->where('year', $this->input('year'));
-                })->ignore($goalId),
+                })->ignore($goal_id),
             ],
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2020|max:2099',
