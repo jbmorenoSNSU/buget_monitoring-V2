@@ -25,8 +25,8 @@ const emit = defineEmits(['toggleSidebar']);
         </div>
         <div class="flex items-center gap-4">
             <span class="text-sm text-slate-500 hidden xl:block">{{ new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-            <Link href="/transactions/create">
-                <AppButton size="sm" class="rounded-full px-3 sm:px-5 shadow-lg shadow-indigo-500/20">
+            <Link href="/transactions?action=add">
+                <AppButton size="sm" class="px-3 sm:px-4">
                     <span class="sm:mr-1">+</span> <span class="hidden sm:inline">Add Transaction</span>
                 </AppButton>
             </Link>

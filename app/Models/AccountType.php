@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AccountType extends Model
 {
     use HasFactory;
+
     /** @var array<int, string> */
     protected $fillable = [
         'name',

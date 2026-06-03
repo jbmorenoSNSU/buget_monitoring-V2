@@ -6,13 +6,17 @@ import AppButton from '@/Components/UI/AppButton.vue';
 import AppBadge from '@/Components/UI/AppBadge.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
+import AppInput from '@/Components/UI/AppInput.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 
 const props = defineProps({
     accounts: { type: Object, default: () => ({ data: [] }) },
     totalBalance: { type: Number, default: 0 },
+    accountTypes: { type: Array, default: () => [] },
+    persons: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
@@ -53,6 +57,51 @@ const doDelete = () => {
 };
 const toggle = (acc) => router.patch(`/accounts/${acc.id}/toggle`);
 
+const typeOptions = computed(() => props.accountTypes.map(t => ({ value: t.id, label: t.name })));
+const formPersonOptions = computed(() => [
+    { value: '', label: 'No Owner (Shared)' },
+    ...props.persons.map(p => ({ value: p.id, label: p.name }))
+]);
+
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    account_type_id: '',
+    person_id: '',
+    name: '',
+    description: '',
+    initial_balance: 0,
+});
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    showFormModal.value = true;
+};
+
+const openEditModal = (acc) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = acc.id;
+    form.account_type_id = acc.account_type_id || acc.accountType?.id || acc.account_type?.id || '';
+    form.person_id = acc.person_id || acc.person?.id || '';
+    form.name = acc.name;
+    form.description = acc.description;
+    form.initial_balance = acc.initial_balance;
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/accounts/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+    } else {
+        form.post('/accounts', { onSuccess: () => { showFormModal.value = false; } });
+    }
+};
+
 // Dropdown state
 const activeDropdownId = ref(null);
 const toggleDropdown = (id, event) => {
@@ -80,9 +129,7 @@ onUnmounted(() => {
                     <AppSelect v-model="selectedPerson" :options="personOptions" class="w-44" />
                 </div>
             </div>
-            <Link href="/accounts/create">
-                <AppButton>+ Add Account</AppButton>
-            </Link>
+            <AppButton @click="openAddModal">+ Add Account</AppButton>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -113,10 +160,10 @@ onUnmounted(() => {
                             <div v-if="activeDropdownId === acc.id" 
                                 class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
                                 @click.stop>
-                                <Link :href="`/accounts/${acc.id}/edit`" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left">
+                                <button @click="openEditModal(acc); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon name="Edit2" size="12" /> Edit
-                                </Link>
+                                </button>
                                 <button @click="toggle(acc); activeDropdownId = null" 
                                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon :name="acc.is_active ? 'EyeOff' : 'Eye'" size="12" />
@@ -168,6 +215,20 @@ onUnmounted(() => {
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Account' : 'Add Account'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <AppSelect v-model="form.account_type_id" label="Account Type" :options="typeOptions" :error="form.errors.account_type_id" required />
+                <AppSelect v-model="form.person_id" label="Owner" :options="formPersonOptions" :error="form.errors.person_id" />
+                <AppInput v-model="form.name" label="Account Name" placeholder="e.g. BDO Savings" :error="form.errors.name" required />
+                <AppInput v-model="form.description" label="Description" placeholder="Optional description" :error="form.errors.description" />
+                <AppInput v-if="!isEdit" v-model="form.initial_balance" label="Initial Balance" type="number" step="0.01" :error="form.errors.initial_balance" required />
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update Account' : 'Create Account' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

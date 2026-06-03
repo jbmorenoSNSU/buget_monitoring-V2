@@ -39,12 +39,14 @@ class EloquentRecurringTransactionRepository implements RecurringTransactionRepo
     public function create(array $data): RecurringTransaction
     {
         $data['next_due_date'] = $data['start_date'];
+
         return RecurringTransaction::create($data);
     }
 
     public function update(RecurringTransaction $recurring, array $data): RecurringTransaction
     {
         $recurring->update($data);
+
         return $recurring->fresh();
     }
 

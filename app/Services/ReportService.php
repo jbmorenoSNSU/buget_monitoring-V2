@@ -11,9 +11,6 @@ class ReportService
 {
     /**
      * Create a new ReportService instance.
-     *
-     * @param ChartReportService $chartReportService
-     * @param StatementReportService $statementReportService
      */
     public function __construct(
         private ChartReportService $chartReportService,

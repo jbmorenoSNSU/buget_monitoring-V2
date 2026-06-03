@@ -17,8 +17,9 @@ class CategoryExpenseExport implements FromArray, WithHeadings, WithTitle
     {
         $service = app(ReportService::class);
         $data = $service->categoryExpense($this->month, $this->year);
+
         return array_map(fn ($row) => [
-            $row['category_name'], number_format($row['amount'], 2), $row['percentage'] . '%',
+            $row['category_name'], number_format($row['amount'], 2), $row['percentage'].'%',
         ], $data);
     }
 
@@ -27,5 +28,8 @@ class CategoryExpenseExport implements FromArray, WithHeadings, WithTitle
         return ['Category', 'Amount Spent (₱)', '% of Total'];
     }
 
-    public function title(): string { return 'Expense by Category'; }
+    public function title(): string
+    {
+        return 'Expense by Category';
+    }
 }

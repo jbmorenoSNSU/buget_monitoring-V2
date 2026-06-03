@@ -38,6 +38,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
     public function update(Category $category, array $data): Category
     {
         $category->update($data);
+
         return $category->fresh();
     }
 

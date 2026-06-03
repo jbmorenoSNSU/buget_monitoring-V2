@@ -5,6 +5,9 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import AppInput from '@/Components/UI/AppInput.vue';
+import ColorPicker from '@/Components/UI/ColorPicker.vue';
+import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 
 const props = defineProps({
@@ -19,6 +22,39 @@ const showDeleteModal = ref(false);
 const confirmDelete = (person) => { deleteTarget.value = person; showDeleteModal.value = true; };
 const doDelete = () => {
     router.delete(`/persons/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
+};
+
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    name: '',
+    color: '#6366F1',
+});
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    showFormModal.value = true;
+};
+
+const openEditModal = (person) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = person.id;
+    form.name = person.name;
+    form.color = person.color;
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/persons/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+    } else {
+        form.post('/persons', { onSuccess: () => { showFormModal.value = false; } });
+    }
 };
 
 // Dropdown state
@@ -42,7 +78,7 @@ onUnmounted(() => {
     <AppLayout title="Persons">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-slate-100">Manage Persons</h2>
-            <Link href="/persons/create"><AppButton>+ Add Person</AppButton></Link>
+            <AppButton @click="openAddModal">+ Add Person</AppButton>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,10 +110,10 @@ onUnmounted(() => {
                             <div v-if="activeDropdownId === person.id" 
                                 class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
                                 @click.stop>
-                                <Link :href="`/persons/${person.id}/edit`" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left">
+                                <button @click="openEditModal(person); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon name="Edit2" size="12" /> Edit
-                                </Link>
+                                </button>
                                 <div class="border-t border-border my-1"></div>
                                 <button @click="confirmDelete(person); activeDropdownId = null" 
                                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
@@ -117,6 +153,17 @@ onUnmounted(() => {
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Person' : 'Add Person'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <AppInput v-model="form.name" label="Person Name" placeholder="e.g. Andrew" :error="form.errors.name" required />
+                <ColorPicker v-model="form.color" label="Color" />
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update Person' : 'Create Person' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

@@ -30,26 +30,17 @@ class PersonService
         return $this->personRepository->all_active();
     }
 
-    public function create(array $data): Person
-    {
-        return $this->personRepository->create($data);
-    }
-
-    public function update(Person $person, array $data): Person
-    {
-        return $this->personRepository->update($person, $data);
-    }
-
     public function can_delete(Person $person): bool
     {
-        return !$this->personRepository->has_accounts($person);
+        return ! $this->personRepository->has_accounts($person);
     }
 
     public function delete(Person $person): bool
     {
-        if (!$this->can_delete($person)) {
+        if (! $this->can_delete($person)) {
             return false;
         }
+
         return $this->personRepository->delete($person);
     }
 }

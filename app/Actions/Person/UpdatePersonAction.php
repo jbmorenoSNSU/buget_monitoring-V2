@@ -13,19 +13,12 @@ use App\Models\Person;
  */
 class UpdatePersonAction
 {
-    /**
-     * @param PersonRepositoryInterface $personRepository
-     */
     public function __construct(
         private PersonRepositoryInterface $personRepository
     ) {}
 
     /**
      * Execute the person update.
-     *
-     * @param Person $person
-     * @param PersonDTO $dto
-     * @return Person
      */
     public function execute(Person $person, PersonDTO $dto): Person
     {

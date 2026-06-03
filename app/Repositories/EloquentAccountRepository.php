@@ -6,7 +6,6 @@ namespace App\Repositories;
 
 use App\Interfaces\AccountRepositoryInterface;
 use App\Models\Account;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentAccountRepository implements AccountRepositoryInterface
@@ -39,6 +38,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
     public function create(array $data): Account
     {
         $data['current_balance'] = $data['initial_balance'] ?? 0;
+
         return Account::create($data);
     }
 
@@ -46,6 +46,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
     {
         unset($data['initial_balance']);
         $account->update($data);
+
         return $account->fresh();
     }
 
@@ -60,6 +61,7 @@ class EloquentAccountRepository implements AccountRepositoryInterface
         if ($person_id) {
             $query->where('person_id', $person_id);
         }
+
         return (float) $query->sum('current_balance');
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -43,7 +44,7 @@ class Person extends Model
     /**
      * Get all transactions for this person's accounts.
      */
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function transactions(): HasManyThrough
     {
         return $this->hasManyThrough(Transaction::class, Account::class, 'person_id', 'account_id', 'id', 'id');
     }

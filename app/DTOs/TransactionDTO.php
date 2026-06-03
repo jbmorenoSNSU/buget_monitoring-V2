@@ -9,17 +9,6 @@ namespace App\DTOs;
  */
 final class TransactionDTO
 {
-    /**
-     * @param int $account_id
-     * @param string $type
-     * @param float $amount
-     * @param string $transaction_date
-     * @param string $description
-     * @param int|null $category_id
-     * @param string|null $notes
-     * @param string|null $reference_number
-     * @param int|null $transfer_to_account_id
-     */
     public function __construct(
         public readonly int $account_id,
         public readonly string $type,
@@ -35,8 +24,7 @@ final class TransactionDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -63,14 +51,14 @@ final class TransactionDTO
     public function toArray(): array
     {
         return [
-            'account_id'             => $this->account_id,
-            'type'                   => $this->type,
-            'amount'                 => $this->amount,
-            'transaction_date'       => $this->transaction_date,
-            'description'            => $this->description,
-            'category_id'            => $this->category_id,
-            'notes'                  => $this->notes,
-            'reference_number'       => $this->reference_number,
+            'account_id' => $this->account_id,
+            'type' => $this->type,
+            'amount' => $this->amount,
+            'transaction_date' => $this->transaction_date,
+            'description' => $this->description,
+            'category_id' => $this->category_id,
+            'notes' => $this->notes,
+            'reference_number' => $this->reference_number,
             'transfer_to_account_id' => $this->transfer_to_account_id,
         ];
     }

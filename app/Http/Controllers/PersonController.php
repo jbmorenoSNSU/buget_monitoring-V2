@@ -33,39 +33,34 @@ class PersonController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        return Inertia::render('Persons/Form');
-    }
+
 
     public function store(StorePersonRequest $request): RedirectResponse
     {
         $this->authorize('create', Person::class);
         $this->createPerson->execute(PersonDTO::fromArray($request->validated()));
+
         return redirect()->route('persons.index')->with('success', 'Person created successfully.');
     }
 
-    public function edit(Person $person): Response
-    {
-        return Inertia::render('Persons/Form', [
-            'person' => new PersonResource($person),
-        ]);
-    }
+
 
     public function update(StorePersonRequest $request, Person $person): RedirectResponse
     {
         $this->authorize('update', $person);
         $this->updatePerson->execute($person, PersonDTO::fromArray($request->validated()));
+
         return redirect()->route('persons.index')->with('success', 'Person updated successfully.');
     }
 
     public function destroy(Person $person): RedirectResponse
     {
         $this->authorize('delete', $person);
-        if (!$this->service->can_delete($person)) {
+        if (! $this->service->can_delete($person)) {
             return redirect()->route('persons.index')->with('error', 'Cannot delete person with linked accounts. Reassign their accounts first.');
         }
         $this->service->delete($person);
+
         return redirect()->route('persons.index')->with('success', 'Person deleted successfully.');
     }
 }

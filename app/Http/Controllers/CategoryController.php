@@ -33,29 +33,23 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        return Inertia::render('Categories/Form');
-    }
+
 
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         $this->authorize('create', Category::class);
         $this->createCategory->execute(CategoryDTO::fromArray($request->validated()));
+
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
-    public function edit(Category $category): Response
-    {
-        return Inertia::render('Categories/Form', [
-            'category' => new CategoryResource($category),
-        ]);
-    }
+
 
     public function update(StoreCategoryRequest $request, Category $category): RedirectResponse
     {
         $this->authorize('update', $category);
         $this->updateCategory->execute($category, CategoryDTO::fromArray($request->validated()));
+
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
@@ -66,14 +60,16 @@ class CategoryController extends Controller
             return redirect()->route('categories.index')->with('error', 'Cannot delete category with transactions. Deactivate it instead.');
         }
         $this->categoryRepository->delete($category);
+
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 
     public function toggle(Category $category): RedirectResponse
     {
         $this->authorize('update', $category);
-        $this->categoryRepository->update($category, ['is_active' => !$category->is_active]);
+        $this->categoryRepository->update($category, ['is_active' => ! $category->is_active]);
         $status = $category->fresh()->is_active ? 'activated' : 'deactivated';
+
         return redirect()->route('categories.index')->with('success', "Category {$status} successfully.");
     }
 }

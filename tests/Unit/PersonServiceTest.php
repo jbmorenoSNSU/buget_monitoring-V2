@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Actions\Person\CreatePersonAction;
+use App\DTOs\PersonDTO;
 use App\Models\Person;
 use App\Services\PersonService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,7 +37,8 @@ it('prevents deletion of a person who owns accounts', function () {
 });
 
 it('creates a person', function () {
-    $person = $this->service->create(['name' => 'Charlie', 'color' => '#ff0000']);
+    $action = app(CreatePersonAction::class);
+    $person = $action->execute(PersonDTO::fromArray(['name' => 'Charlie', 'color' => '#ff0000']));
 
     expect($person->name)->toBe('Charlie')
         ->and($person->color)->toBe('#ff0000');

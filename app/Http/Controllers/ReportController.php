@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exports\AccountStatementExport;
+use App\Exports\BudgetGoalExport;
+use App\Exports\CategoryExpenseExport;
+use App\Exports\IncomeExpenseExport;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Services\ReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\IncomeExpenseExport;
-use App\Exports\CategoryExpenseExport;
-use App\Exports\AccountStatementExport;
-use App\Exports\BudgetGoalExport;
 
 class ReportController extends Controller
 {
@@ -106,28 +106,28 @@ class ReportController extends Controller
                 'title' => 'Income vs Expense Report',
             ], "income-expense-{$date}.pdf"),
             'category-expense-excel' => Excel::download(
-                new CategoryExpenseExport((int)$request->get('month', now()->month), (int)$request->get('year', now()->year)),
+                new CategoryExpenseExport((int) $request->get('month', now()->month), (int) $request->get('year', now()->year)),
                 "category-expense-{$date}.xlsx"
             ),
             'category-expense-pdf' => $this->export_pdf('pdf.category-expense', [
-                'data' => $this->service->category_expense((int)$request->get('month', now()->month), (int)$request->get('year', now()->year)),
+                'data' => $this->service->category_expense((int) $request->get('month', now()->month), (int) $request->get('year', now()->year)),
                 'title' => 'Expense by Category Report',
             ], "category-expense-{$date}.pdf"),
             'account-statement-excel' => Excel::download(
-                new AccountStatementExport((int)$request->get('account_id'), $request->get('from'), $request->get('to')),
+                new AccountStatementExport((int) $request->get('account_id'), $request->get('from'), $request->get('to')),
                 "account-statement-{$date}.xlsx"
             ),
             'account-statement-pdf' => $this->export_pdf('pdf.account-statement', [
-                'data' => $this->service->account_statement((int)$request->get('account_id'), $request->get('from'), $request->get('to')),
+                'data' => $this->service->account_statement((int) $request->get('account_id'), $request->get('from'), $request->get('to')),
                 'title' => 'Account Statement Report',
                 'account' => $this->accountRepository->find((int) $request->get('account_id')),
             ], "account-statement-{$date}.pdf"),
             'budget-goal-excel' => Excel::download(
-                new BudgetGoalExport((int)$request->get('month', now()->month), (int)$request->get('year', now()->year)),
+                new BudgetGoalExport((int) $request->get('month', now()->month), (int) $request->get('year', now()->year)),
                 "budget-goal-{$date}.xlsx"
             ),
             'budget-goal-pdf' => $this->export_pdf('pdf.budget-goal', [
-                'data' => $this->service->budget_goal_report((int)$request->get('month', now()->month), (int)$request->get('year', now()->year)),
+                'data' => $this->service->budget_goal_report((int) $request->get('month', now()->month), (int) $request->get('year', now()->year)),
                 'title' => 'Budget Goals vs Actual Report',
             ], "budget-goal-{$date}.pdf"),
             default => abort(404),
@@ -138,6 +138,7 @@ class ReportController extends Controller
     {
         $data['generated_at'] = now()->format('F j, Y g:i A');
         $pdf = Pdf::loadView($view, $data)->setPaper('a4', 'landscape');
+
         return $pdf->download($filename);
     }
 }

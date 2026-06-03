@@ -33,49 +33,41 @@ class AccountController extends Controller
     public function index(): Response
     {
         return Inertia::render('Accounts/Index', [
-            'accounts'     => AccountResource::collection($this->service->get_all()),
+            'accounts' => AccountResource::collection($this->service->get_all()),
             'totalBalance' => $this->service->get_total_balance(),
+            'accountTypes' => $this->accountTypeRepository->all(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 
-    public function create(): Response
-    {
-        return Inertia::render('Accounts/Form', [
-            'accountTypes' => $this->accountTypeRepository->all(),
-            'persons'      => $this->personRepository->all_active(),
-        ]);
-    }
+
 
     public function store(StoreAccountRequest $request): RedirectResponse
     {
         $this->authorize('create', Account::class);
         $this->createAccount->execute(AccountDTO::fromArray($request->validated()));
+
         return redirect()->route('accounts.index')->with('success', 'Account created successfully.');
     }
 
-    public function edit(Account $account): Response
-    {
-        return Inertia::render('Accounts/Form', [
-            'account'      => new AccountResource($account->load(['accountType:id,name', 'person:id,name,color'])),
-            'accountTypes' => $this->accountTypeRepository->all(),
-            'persons'      => $this->personRepository->all_active(),
-        ]);
-    }
+
 
     public function update(StoreAccountRequest $request, Account $account): RedirectResponse
     {
         $this->authorize('update', $account);
         $this->updateAccount->execute($account, AccountDTO::fromArray($request->validated()));
+
         return redirect()->route('accounts.index')->with('success', 'Account updated successfully.');
     }
 
     public function destroy(Account $account): RedirectResponse
     {
         $this->authorize('delete', $account);
-        if (!$this->service->can_delete($account)) {
+        if (! $this->service->can_delete($account)) {
             return redirect()->route('accounts.index')->with('error', 'Cannot delete account with transactions. Deactivate it instead.');
         }
         $this->service->delete($account);
+
         return redirect()->route('accounts.index')->with('success', 'Account deleted successfully.');
     }
 
@@ -84,6 +76,7 @@ class AccountController extends Controller
         $this->authorize('update', $account);
         $this->service->toggle($account);
         $status = $account->fresh()->is_active ? 'activated' : 'deactivated';
+
         return redirect()->route('accounts.index')->with('success', "Account {$status} successfully.");
     }
 }

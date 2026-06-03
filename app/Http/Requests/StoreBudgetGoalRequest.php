@@ -9,7 +9,10 @@ use Illuminate\Validation\Rule;
 
 class StoreBudgetGoalRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     /** @return array<string, mixed> */
     public function rules(): array
@@ -21,7 +24,7 @@ class StoreBudgetGoalRequest extends FormRequest
                 'required', 'exists:categories,id',
                 Rule::unique('budget_goals')->where(function ($query) {
                     $query->where('month', $this->input('month'))
-                          ->where('year', $this->input('year'));
+                        ->where('year', $this->input('year'));
                 })->ignore($goal_id),
             ],
             'month' => 'required|integer|min:1|max:12',

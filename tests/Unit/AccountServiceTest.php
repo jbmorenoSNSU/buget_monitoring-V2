@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Actions\Account\CreateAccountAction;
+use App\DTOs\AccountDTO;
 use App\Models\Account;
 use App\Models\AccountType;
 use App\Models\Person;
@@ -16,7 +18,7 @@ beforeEach(function () {
 
 it('returns all accounts ordered by name', function () {
     $person = Person::factory()->create();
-    $type   = AccountType::factory()->create();
+    $type = AccountType::factory()->create();
 
     Account::factory()->for($person)->for($type)->create(['name' => 'Zebra Bank']);
     Account::factory()->for($person)->for($type)->create(['name' => 'Alpha Bank']);
@@ -29,7 +31,7 @@ it('returns all accounts ordered by name', function () {
 
 it('returns only active accounts', function () {
     $person = Person::factory()->create();
-    $type   = AccountType::factory()->create();
+    $type = AccountType::factory()->create();
 
     Account::factory()->for($person)->for($type)->create(['is_active' => true, 'name' => 'Active']);
     Account::factory()->for($person)->for($type)->create(['is_active' => false, 'name' => 'Inactive']);
@@ -42,7 +44,7 @@ it('returns only active accounts', function () {
 
 it('calculates total balance correctly', function () {
     $person = Person::factory()->create();
-    $type   = AccountType::factory()->create();
+    $type = AccountType::factory()->create();
 
     Account::factory()->for($person)->for($type)->create(['is_active' => true, 'current_balance' => 1000]);
     Account::factory()->for($person)->for($type)->create(['is_active' => true, 'current_balance' => 500]);
@@ -53,31 +55,32 @@ it('calculates total balance correctly', function () {
 
 it('creates an account with initial balance set as current balance', function () {
     $person = Person::factory()->create();
-    $type   = AccountType::factory()->create();
+    $type = AccountType::factory()->create();
 
-    $account = $this->service->create([
-        'person_id'       => $person->id,
+    $action = app(CreateAccountAction::class);
+    $account = $action->execute(AccountDTO::fromArray([
+        'person_id' => $person->id,
         'account_type_id' => $type->id,
-        'name'            => 'Test Account',
+        'name' => 'Test Account',
         'initial_balance' => 2500.00,
-        'is_active'       => true,
-    ]);
+        'is_active' => true,
+    ]));
 
     expect($account->current_balance)->toEqual('2500.00')
         ->and($account->name)->toBe('Test Account');
 });
 
 it('prevents deletion of an account that has transactions', function () {
-    $person  = Person::factory()->create();
-    $type    = AccountType::factory()->create();
+    $person = Person::factory()->create();
+    $type = AccountType::factory()->create();
     $account = Account::factory()->for($person)->for($type)->create();
 
     // Simulate a linked transaction count
     $account->transactions()->create([
-        'type'             => 'income',
-        'amount'           => 100,
+        'type' => 'income',
+        'amount' => 100,
         'transaction_date' => now(),
-        'description'      => 'Test',
+        'description' => 'Test',
     ]);
 
     expect($this->service->can_delete($account))->toBeFalse();

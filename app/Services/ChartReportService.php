@@ -14,8 +14,6 @@ class ChartReportService
 {
     /**
      * Create a new ChartReportService instance.
-     *
-     * @param TransactionRepositoryInterface $transactionRepository
      */
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository
@@ -24,9 +22,6 @@ class ChartReportService
     /**
      * Generate income vs expense aggregates grouped by month.
      *
-     * @param string|null $from
-     * @param string|null $to
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function income_vs_expense(?string $from = null, ?string $to = null, ?int $person_id = null): array
@@ -56,7 +51,7 @@ class ChartReportService
         }
 
         foreach ($data as $row) {
-            $key = sprintf('%04d-%02d', (int)$row->year, (int)$row->month);
+            $key = sprintf('%04d-%02d', (int) $row->year, (int) $row->month);
             if (isset($months[$key])) {
                 $type_str = $row->type instanceof \UnitEnum ? $row->type->value : $row->type;
                 $months[$key][$type_str] = (float) $row->total;
@@ -73,9 +68,6 @@ class ChartReportService
     /**
      * Generate expense breakdown aggregates grouped by category.
      *
-     * @param int $month
-     * @param int $year
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function category_expense(int $month, int $year, ?int $person_id = null): array
@@ -96,7 +88,6 @@ class ChartReportService
     /**
      * Helper to get income vs expense for the last 6 months.
      *
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function last_6_months_chart(?int $person_id = null): array
@@ -111,9 +102,6 @@ class ChartReportService
     /**
      * Compute the daily spending trend for a specific month and year.
      *
-     * @param int $month
-     * @param int $year
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function daily_spending_trend(int $month, int $year, ?int $person_id = null): array
@@ -121,7 +109,9 @@ class ChartReportService
         $current_start = Carbon::create($year, $month, 1);
         $current_end = $current_start->copy()->endOfMonth();
         $today = now();
-        if ($current_end->gt($today)) $current_end = $today;
+        if ($current_end->gt($today)) {
+            $current_end = $today;
+        }
 
         $prev_start = $current_start->copy()->subMonth()->startOfMonth();
         $prev_end = $current_start->copy()->subMonth()->endOfMonth();
@@ -168,7 +158,6 @@ class ChartReportService
     /**
      * Compute the weekly spending trend over a rolling 12-week window.
      *
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function weekly_spending_trend(?int $person_id = null): array
@@ -176,7 +165,9 @@ class ChartReportService
         $today = now();
         $current_start = now()->subWeeks(11)->startOfWeek();
         $current_end = now()->endOfWeek();
-        if ($current_end->gt($today)) $current_end = $today;
+        if ($current_end->gt($today)) {
+            $current_end = $today;
+        }
 
         $prev_start = $current_start->copy()->subWeeks(12)->startOfWeek();
         $prev_end = $current_start->copy()->subWeeks(1)->endOfWeek();
@@ -193,7 +184,7 @@ class ChartReportService
 
         $cursor = $current_start->copy();
         for ($i = 0; $i < 12; $i++) {
-            $labels[$i] = 'Wk ' . $cursor->format('M d');
+            $labels[$i] = 'Wk '.$cursor->format('M d');
             $cursor->addWeek();
         }
 
@@ -237,8 +228,6 @@ class ChartReportService
     /**
      * Compute the yearly spending trend grouped by calendar months.
      *
-     * @param int $year
-     * @param int|null $person_id
      * @return array<int, array<string, mixed>>
      */
     public function yearly_spending_trend(int $year, ?int $person_id = null): array
@@ -246,7 +235,9 @@ class ChartReportService
         $current_start = Carbon::create($year, 1, 1)->startOfYear();
         $current_end = $current_start->copy()->endOfYear();
         $today = now();
-        if ($current_end->gt($today)) $current_end = $today;
+        if ($current_end->gt($today)) {
+            $current_end = $today;
+        }
 
         $prev_start = $current_start->copy()->subYear()->startOfYear();
         $prev_end = $current_start->copy()->subYear()->endOfYear();

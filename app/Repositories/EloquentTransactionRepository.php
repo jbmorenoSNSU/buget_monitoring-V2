@@ -32,35 +32,35 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
                 'transactions.updated_at',
             ]);
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->byType($filters['type']);
         }
-        if (!empty($filters['account_id'])) {
+        if (! empty($filters['account_id'])) {
             $query->byAccount((int) $filters['account_id']);
         }
-        if (!empty($filters['person_id'])) {
+        if (! empty($filters['person_id'])) {
             $query->whereHas('account', fn ($q) => $q->where('person_id', (int) $filters['person_id']));
         }
-        if (!empty($filters['category_id'])) {
+        if (! empty($filters['category_id'])) {
             $query->byCategory((int) $filters['category_id']);
         }
-        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
+        if (! empty($filters['date_from']) && ! empty($filters['date_to'])) {
             $query->byDateRange($filters['date_from'], $filters['date_to']);
         }
-        if (!empty($filters['search'])) {
-            $query->where('transactions.description', 'like', $filters['search'] . '%');
+        if (! empty($filters['search'])) {
+            $query->where('transactions.description', 'like', $filters['search'].'%');
         }
 
         $allowed_sorts = [
             'transaction_date' => 'transactions.transaction_date',
-            'description'      => 'transactions.description',
-            'type'             => 'transactions.type',
-            'amount'           => 'transactions.amount',
-            'account'          => 'transactions.account_id',
-            'category'         => 'transactions.category_id',
+            'description' => 'transactions.description',
+            'type' => 'transactions.type',
+            'amount' => 'transactions.amount',
+            'account' => 'transactions.account_id',
+            'category' => 'transactions.category_id',
         ];
 
-        $sort_by        = $filters['sort_by'] ?? 'transaction_date';
+        $sort_by = $filters['sort_by'] ?? 'transaction_date';
         $sort_direction = isset($filters['sort_direction']) && strtolower($filters['sort_direction']) === 'asc' ? 'asc' : 'desc';
 
         $query->orderBy($allowed_sorts[$sort_by] ?? 'transactions.transaction_date', $sort_direction);
@@ -79,6 +79,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return DB::transaction(function () use ($data) {
             $transaction = Transaction::create($data);
             $this->apply_balance_effect($transaction);
+
             return $transaction;
         });
     }
@@ -90,6 +91,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             $transaction->update($data);
             $transaction->refresh();
             $this->apply_balance_effect($transaction);
+
             return $transaction;
         });
     }
@@ -108,6 +110,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         if ($person_id) {
             $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
         }
+
         return (float) $query->sum('amount');
     }
 
@@ -119,17 +122,18 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         if ($person_id) {
             $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
         }
+
         return $query->limit($limit)->get();
     }
 
     private function apply_balance_effect(Transaction $transaction): void
     {
         $account = $transaction->account ?? Account::findOrFail($transaction->account_id);
-        $type    = $transaction->type->value ?? $transaction->type;
+        $type = $transaction->type->value ?? $transaction->type;
 
         match ($type) {
-            'income'   => $account->increment('current_balance', (float) $transaction->amount),
-            'expense'  => $account->decrement('current_balance', (float) $transaction->amount),
+            'income' => $account->increment('current_balance', (float) $transaction->amount),
+            'expense' => $account->decrement('current_balance', (float) $transaction->amount),
             'transfer' => (function () use ($transaction) {
                 $transaction->account->decrement('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
@@ -143,11 +147,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     private function reverse_balance_effect(Transaction $transaction): void
     {
         $account = $transaction->account ?? Account::findOrFail($transaction->account_id);
-        $type    = $transaction->type->value ?? $transaction->type;
+        $type = $transaction->type->value ?? $transaction->type;
 
         match ($type) {
-            'income'   => $account->decrement('current_balance', (float) $transaction->amount),
-            'expense'  => $account->increment('current_balance', (float) $transaction->amount),
+            'income' => $account->decrement('current_balance', (float) $transaction->amount),
+            'expense' => $account->increment('current_balance', (float) $transaction->amount),
             'transfer' => (function () use ($transaction) {
                 $transaction->account->increment('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
@@ -166,6 +170,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         } else {
             $query->where('account_id', $accountId);
         }
+
         return (float) $query->where('type', $type)->sum('amount');
     }
 
@@ -190,8 +195,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             $year_expr = "strftime('%Y', transaction_date)";
             $month_expr = "strftime('%m', transaction_date)";
         } else {
-            $year_expr = "YEAR(transaction_date)";
-            $month_expr = "MONTH(transaction_date)";
+            $year_expr = 'YEAR(transaction_date)';
+            $month_expr = 'MONTH(transaction_date)';
         }
 
         $query = Transaction::select(
@@ -200,8 +205,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             'type',
             DB::raw('SUM(amount) as total')
         )
-        ->whereIn('type', ['income', 'expense'])
-        ->whereBetween('transaction_date', [$from, $to]);
+            ->whereIn('type', ['income', 'expense'])
+            ->whereBetween('transaction_date', [$from, $to]);
 
         if ($person_id) {
             $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
@@ -234,7 +239,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return Transaction::with('category:id,name,icon,color')
             ->where(function ($q) use ($account_id) {
                 $q->where('account_id', $account_id)
-                  ->orWhere('transfer_to_account_id', $account_id);
+                    ->orWhere('transfer_to_account_id', $account_id);
             })
             ->whereBetween('transaction_date', [$from, $to])
             ->orderBy('transaction_date')
@@ -253,7 +258,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ', [$account_id, $account_id, $account_id, $account_id])
             ->first();
 
-        return $initial_balance + (float)$totals->income - (float)$totals->expense - (float)$totals->transfer_out + (float)$totals->transfer_in;
+        return $initial_balance + (float) $totals->income - (float) $totals->expense - (float) $totals->transfer_out + (float) $totals->transfer_in;
     }
 
     public function expense_by_date_range(string $from, string $to, ?int $person_id = null): Collection

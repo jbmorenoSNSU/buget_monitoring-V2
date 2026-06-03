@@ -9,17 +9,6 @@ namespace App\DTOs;
  */
 final class RecurringTransactionDTO
 {
-    /**
-     * @param int $account_id
-     * @param int $category_id
-     * @param string $type
-     * @param float $amount
-     * @param string $description
-     * @param string $frequency
-     * @param string $start_date
-     * @param string|null $end_date
-     * @param bool $is_active
-     */
     public function __construct(
         public readonly int $account_id,
         public readonly int $category_id,
@@ -35,8 +24,7 @@ final class RecurringTransactionDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -61,15 +49,15 @@ final class RecurringTransactionDTO
     public function toArray(): array
     {
         return [
-            'account_id'  => $this->account_id,
+            'account_id' => $this->account_id,
             'category_id' => $this->category_id,
-            'type'        => $this->type,
-            'amount'      => $this->amount,
+            'type' => $this->type,
+            'amount' => $this->amount,
             'description' => $this->description,
-            'frequency'   => $this->frequency,
-            'start_date'  => $this->start_date,
-            'end_date'    => $this->end_date,
-            'is_active'   => $this->is_active,
+            'frequency' => $this->frequency,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'is_active' => $this->is_active,
         ];
     }
 }

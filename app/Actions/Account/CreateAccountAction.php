@@ -13,18 +13,12 @@ use App\Models\Account;
  */
 class CreateAccountAction
 {
-    /**
-     * @param AccountRepositoryInterface $accountRepository
-     */
     public function __construct(
         private AccountRepositoryInterface $accountRepository
     ) {}
 
     /**
      * Execute the account creation.
-     *
-     * @param AccountDTO $dto
-     * @return Account
      */
     public function execute(AccountDTO $dto): Account
     {

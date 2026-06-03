@@ -9,13 +9,6 @@ namespace App\DTOs;
  */
 final class CategoryDTO
 {
-    /**
-     * @param string $name
-     * @param string $type
-     * @param string $icon
-     * @param string $color
-     * @param bool $is_active
-     */
     public function __construct(
         public readonly string $name,
         public readonly string $type,
@@ -27,8 +20,7 @@ final class CategoryDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -49,10 +41,10 @@ final class CategoryDTO
     public function toArray(): array
     {
         return [
-            'name'      => $this->name,
-            'type'      => $this->type,
-            'icon'      => $this->icon,
-            'color'     => $this->color,
+            'name' => $this->name,
+            'type' => $this->type,
+            'icon' => $this->icon,
+            'color' => $this->color,
             'is_active' => $this->is_active,
         ];
     }

@@ -29,9 +29,6 @@ class EloquentAccountTypeRepository implements AccountTypeRepositoryInterface
 
     /**
      * Find a specific account type by ID.
-     *
-     * @param int $id
-     * @return AccountType|null
      */
     public function find(int $id): ?AccountType
     {

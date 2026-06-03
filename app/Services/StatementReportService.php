@@ -16,10 +16,6 @@ class StatementReportService
 {
     /**
      * Create a new StatementReportService instance.
-     *
-     * @param TransactionRepositoryInterface $transactionRepository
-     * @param BudgetGoalRepositoryInterface $budgetGoalRepository
-     * @param AccountRepositoryInterface $accountRepository
      */
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
@@ -30,9 +26,6 @@ class StatementReportService
     /**
      * Compile a running statement for a specific financial account over a date range.
      *
-     * @param int $account_id
-     * @param string $from
-     * @param string $to
      * @return array<string, mixed>
      */
     public function account_statement(int $account_id, string $from, string $to): array
@@ -77,8 +70,6 @@ class StatementReportService
     /**
      * Compute budget variance analysis for a specific month and year.
      *
-     * @param int $month
-     * @param int $year
      * @return array<int, array<string, mixed>>
      */
     public function budget_goal_report(int $month, int $year): array
@@ -107,8 +98,6 @@ class StatementReportService
     /**
      * Generate calendar-view daily aggregates for a month.
      *
-     * @param int $month
-     * @param int $year
      * @return array<string, array<string, mixed>>
      */
     public function calendar_report(int $month, int $year): array
@@ -119,7 +108,7 @@ class StatementReportService
         $day_transactions_grouped = $this->transactionRepository->calendar_transactions(
             $start->format('Y-m-d'),
             $end->format('Y-m-d')
-        )->groupBy(fn($t) => $t->transaction_date->format('Y-m-d'));
+        )->groupBy(fn ($t) => $t->transaction_date->format('Y-m-d'));
 
         $calendar = [];
         $cursor = $start->copy();
@@ -135,7 +124,7 @@ class StatementReportService
                 'income' => (float) $day_transactions->where('type', 'income')->sum('amount'),
                 'expense' => (float) $day_transactions->where('type', 'expense')->sum('amount'),
                 'transfer' => (float) $day_transactions->where('type', 'transfer')->sum('amount'),
-                'items' => $day_transactions->map(fn($t) => [
+                'items' => $day_transactions->map(fn ($t) => [
                     'id' => $t->id,
                     'description' => $t->description,
                     'amount' => (float) $t->amount,

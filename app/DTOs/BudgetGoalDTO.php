@@ -9,12 +9,6 @@ namespace App\DTOs;
  */
 final class BudgetGoalDTO
 {
-    /**
-     * @param int $category_id
-     * @param int $month
-     * @param int $year
-     * @param float $limit_amount
-     */
     public function __construct(
         public readonly int $category_id,
         public readonly int $month,
@@ -25,8 +19,7 @@ final class BudgetGoalDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -46,9 +39,9 @@ final class BudgetGoalDTO
     public function toArray(): array
     {
         return [
-            'category_id'  => $this->category_id,
-            'month'        => $this->month,
-            'year'         => $this->year,
+            'category_id' => $this->category_id,
+            'month' => $this->month,
+            'year' => $this->year,
             'limit_amount' => $this->limit_amount,
         ];
     }

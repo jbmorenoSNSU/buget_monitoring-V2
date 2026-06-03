@@ -8,6 +8,8 @@ import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import ProgressBar from '@/Components/UI/ProgressBar.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import AppInput from '@/Components/UI/AppInput.vue';
+import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
 
@@ -15,6 +17,7 @@ const props = defineProps({
     goals: { type: Object, default: () => ({ data: [] }) },
     month: { type: Number, default: new Date().getMonth() + 1 },
     year: { type: Number, default: new Date().getFullYear() },
+    categories: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
@@ -28,6 +31,47 @@ const showDeleteModal = ref(false);
 
 const monthOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(2000, i).toLocaleString('en', { month: 'long' }) }));
 const yearOptions = Array.from({ length: 6 }, (_, i) => ({ value: 2023 + i, label: String(2023 + i) }));
+
+const catOptions = computed(() => props.categories.map(c => ({ value: c.id, label: c.name })));
+
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    category_id: '',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    limit_amount: '',
+});
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    form.month = selectedMonth.value;
+    form.year = selectedYear.value;
+    showFormModal.value = true;
+};
+
+const openEditModal = (goal) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = goal.id;
+    form.category_id = goal.category_id || (goal.category?.id || '');
+    form.month = goal.month;
+    form.year = goal.year;
+    form.limit_amount = goal.limit_amount;
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/budget-goals/${form.id}`, { onSuccess: () => { showFormModal.value = false; filter(); } });
+    } else {
+        form.post('/budget-goals', { onSuccess: () => { showFormModal.value = false; filter(); } });
+    }
+};
 
 const filter = () => {
     router.get('/budget-goals', { month: selectedMonth.value, year: selectedYear.value }, { preserveState: true });
@@ -60,7 +104,7 @@ onUnmounted(() => {
                 <AppSelect v-model="selectedMonth" :options="monthOptions" @change="filter" />
                 <AppSelect v-model="selectedYear" :options="yearOptions" @change="filter" />
             </div>
-            <Link href="/budget-goals/create"><AppButton>+ Add Goal</AppButton></Link>
+            <AppButton @click="openAddModal">+ Add Goal</AppButton>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -86,10 +130,10 @@ onUnmounted(() => {
                         <div v-if="activeDropdownId === goal.id" 
                             class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
                             @click.stop>
-                            <Link :href="`/budget-goals/${goal.id}/edit`" 
-                                class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left">
+                            <button @click="openEditModal(goal); activeDropdownId = null" 
+                                class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                 <AppIcon name="Edit2" size="12" /> Edit
-                            </Link>
+                            </button>
                             <div class="border-t border-border my-1"></div>
                             <button @click="confirmDelete(goal); activeDropdownId = null" 
                                 class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
@@ -126,6 +170,21 @@ onUnmounted(() => {
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Budget Goal' : 'Add Budget Goal'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <AppSelect v-model="form.category_id" label="Category (Expense Only)" :options="catOptions" :error="form.errors.category_id" required />
+                <div class="grid grid-cols-2 gap-4">
+                    <AppSelect v-model="form.month" label="Month" :options="monthOptions" :error="form.errors.month" required />
+                    <AppSelect v-model="form.year" label="Year" :options="yearOptions" :error="form.errors.year" required />
+                </div>
+                <AppInput v-model="form.limit_amount" label="Limit Amount (₱)" type="number" step="0.01" :error="form.errors.limit_amount" required />
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update' : 'Create' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

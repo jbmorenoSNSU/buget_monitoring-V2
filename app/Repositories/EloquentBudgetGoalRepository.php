@@ -31,6 +31,7 @@ class EloquentBudgetGoalRepository implements BudgetGoalRepositoryInterface
     public function update(BudgetGoal $goal, array $data): BudgetGoal
     {
         $goal->update($data);
+
         return $goal->fresh();
     }
 

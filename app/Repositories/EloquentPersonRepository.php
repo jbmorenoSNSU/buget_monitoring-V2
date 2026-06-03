@@ -13,17 +13,17 @@ class EloquentPersonRepository implements PersonRepositoryInterface
     public function all(): Collection
     {
         $start_of_month = now()->startOfMonth();
-        $end_of_month   = now()->endOfMonth();
+        $end_of_month = now()->endOfMonth();
 
         return Person::withCount(['accounts' => fn ($q) => $q->where('is_active', true)])
             ->withSum(['accounts' => fn ($q) => $q->where('is_active', true)], 'current_balance')
             ->withSum(['transactions as income_this_month' => function ($q) use ($start_of_month, $end_of_month) {
                 $q->where('transactions.type', 'income')
-                  ->whereBetween('transactions.transaction_date', [$start_of_month, $end_of_month]);
+                    ->whereBetween('transactions.transaction_date', [$start_of_month, $end_of_month]);
             }], 'amount')
             ->withSum(['transactions as expense_this_month' => function ($q) use ($start_of_month, $end_of_month) {
                 $q->where('transactions.type', 'expense')
-                  ->whereBetween('transactions.transaction_date', [$start_of_month, $end_of_month]);
+                    ->whereBetween('transactions.transaction_date', [$start_of_month, $end_of_month]);
             }], 'amount')
             ->orderBy('name')
             ->get();
@@ -47,6 +47,7 @@ class EloquentPersonRepository implements PersonRepositoryInterface
     public function update(Person $person, array $data): Person
     {
         $person->update($data);
+
         return $person->fresh();
     }
 

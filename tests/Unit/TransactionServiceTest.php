@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Actions\Transaction\CreateTransactionAction;
+use App\DTOs\TransactionDTO;
 use App\Models\Account;
 use App\Models\AccountType;
 use App\Models\Category;
@@ -14,8 +16,8 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->service = app(TransactionService::class);
-    $this->person  = Person::factory()->create();
-    $this->type    = AccountType::factory()->create();
+    $this->person = Person::factory()->create();
+    $this->type = AccountType::factory()->create();
     $this->account = Account::factory()
         ->for($this->person)
         ->for($this->type)
@@ -24,14 +26,15 @@ beforeEach(function () {
 });
 
 it('creates an income transaction and increments account balance', function () {
-    $transaction = $this->service->create([
-        'account_id'       => $this->account->id,
-        'category_id'      => $this->category->id,
-        'type'             => 'income',
-        'amount'           => 500.00,
+    $action = app(CreateTransactionAction::class);
+    $transaction = $action->execute(TransactionDTO::fromArray([
+        'account_id' => $this->account->id,
+        'category_id' => $this->category->id,
+        'type' => 'income',
+        'amount' => 500.00,
         'transaction_date' => now()->toDateString(),
-        'description'      => 'Salary',
-    ]);
+        'description' => 'Salary',
+    ]));
 
     expect($transaction->id)->toBeInt()
         ->and($this->account->fresh()->current_balance)->toEqual('500.00');
@@ -41,22 +44,23 @@ it('creates an expense transaction and decrements account balance', function () 
     $this->account->update(['current_balance' => 1000]);
     $expense_cat = Category::factory()->create(['type' => 'expense']);
 
-    $this->service->create([
-        'account_id'       => $this->account->id,
-        'category_id'      => $expense_cat->id,
-        'type'             => 'expense',
-        'amount'           => 300.00,
+    $action = app(CreateTransactionAction::class);
+    $action->execute(TransactionDTO::fromArray([
+        'account_id' => $this->account->id,
+        'category_id' => $expense_cat->id,
+        'type' => 'expense',
+        'amount' => 300.00,
         'transaction_date' => now()->toDateString(),
-        'description'      => 'Groceries',
-    ]);
+        'description' => 'Groceries',
+    ]));
 
     expect($this->account->fresh()->current_balance)->toEqual('700.00');
 });
 
 it('calculates monthly income correctly', function () {
     Transaction::factory()->for($this->account)->for($this->category)->create([
-        'type'             => 'income',
-        'amount'           => 1000,
+        'type' => 'income',
+        'amount' => 1000,
         'transaction_date' => now()->startOfMonth(),
     ]);
 
@@ -66,14 +70,15 @@ it('calculates monthly income correctly', function () {
 });
 
 it('deletes a transaction and reverses the balance effect', function () {
-    $transaction = $this->service->create([
-        'account_id'       => $this->account->id,
-        'category_id'      => $this->category->id,
-        'type'             => 'income',
-        'amount'           => 200.00,
+    $action = app(CreateTransactionAction::class);
+    $transaction = $action->execute(TransactionDTO::fromArray([
+        'account_id' => $this->account->id,
+        'category_id' => $this->category->id,
+        'type' => 'income',
+        'amount' => 200.00,
         'transaction_date' => now()->toDateString(),
-        'description'      => 'Bonus',
-    ]);
+        'description' => 'Bonus',
+    ]));
 
     $this->service->delete($transaction);
 

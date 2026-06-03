@@ -34,6 +34,7 @@ class DashboardController extends Controller
         $month = $now->month;
         $year = $now->year;
         $person_id = $request->filled('person_id') ? (int) $request->get('person_id') : null;
+
         return Inertia::render('Dashboard/Index', [
             'stats' => [
                 'totalBalance' => $this->accountService->get_total_balance($person_id),
@@ -45,10 +46,10 @@ class DashboardController extends Controller
                 'selectedPersonId' => $person_id,
             ],
             'accounts' => AccountResource::collection($this->accountService->get_active($person_id)),
-            'recentTransactions' => Inertia::defer(fn() => TransactionResource::collection(
+            'recentTransactions' => Inertia::defer(fn () => TransactionResource::collection(
                 $this->transactionService->get_recent_transactions(10, $person_id)
             )),
-            'chartsAndGoals' => Inertia::defer(fn() => [
+            'chartsAndGoals' => Inertia::defer(fn () => [
                 'budgetGoals' => BudgetGoalResource::collection(
                     $this->budgetGoalService->get_for_month($month, $year, $person_id)
                 ),

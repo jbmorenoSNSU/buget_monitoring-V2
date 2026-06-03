@@ -13,18 +13,12 @@ use App\Models\Transaction;
  */
 class CreateTransactionAction
 {
-    /**
-     * @param TransactionRepositoryInterface $transactionRepository
-     */
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository
     ) {}
 
     /**
      * Execute the transaction creation.
-     *
-     * @param TransactionDTO $dto
-     * @return Transaction
      */
     public function execute(TransactionDTO $dto): Transaction
     {

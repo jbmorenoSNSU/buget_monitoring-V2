@@ -17,6 +17,7 @@ class IncomeExpenseExport implements FromArray, WithHeadings, WithTitle
     {
         $service = app(ReportService::class);
         $data = $service->incomeVsExpense($this->from, $this->to);
+
         return array_map(fn ($row) => [
             $row['label'], number_format($row['income'], 2), number_format($row['expense'], 2), number_format($row['net'], 2),
         ], $data);
@@ -27,5 +28,8 @@ class IncomeExpenseExport implements FromArray, WithHeadings, WithTitle
         return ['Month', 'Income (₱)', 'Expense (₱)', 'Net Savings (₱)'];
     }
 
-    public function title(): string { return 'Income vs Expense'; }
+    public function title(): string
+    {
+        return 'Income vs Expense';
+    }
 }

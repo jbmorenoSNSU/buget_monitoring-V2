@@ -38,9 +38,9 @@ const maxWidthClass = {
                 >
                     <div
                         v-if="show"
-                        :class="['relative bg-card-bg rounded-xl shadow-2xl w-full overflow-hidden text-slate-200 border border-border', maxWidthClass[maxWidth]]"
+                        :class="['relative bg-card-bg rounded-xl shadow-2xl w-full flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden text-slate-200 border border-border', maxWidthClass[maxWidth]]"
                     >
-                        <div v-if="title" class="px-6 py-4 border-b border-border">
+                        <div v-if="title" class="px-6 py-4 border-b border-border shrink-0">
                             <h3 class="text-lg font-semibold text-slate-50">{{ title }}</h3>
                             <button @click="emit('close')" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 cursor-pointer">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,10 +48,10 @@ const maxWidthClass = {
                                 </svg>
                             </button>
                         </div>
-                        <div class="p-6">
+                        <div class="p-6 overflow-y-auto">
                             <slot />
                         </div>
-                        <div v-if="$slots.footer" class="px-6 py-4 border-t border-border bg-page-bg/50 flex justify-end gap-3">
+                        <div v-if="$slots.footer" class="px-6 py-4 border-t border-border bg-page-bg/50 flex justify-end gap-3 shrink-0">
                             <slot name="footer" />
                         </div>
                     </div>

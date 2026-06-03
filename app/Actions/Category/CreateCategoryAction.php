@@ -13,18 +13,12 @@ use App\Models\Category;
  */
 class CreateCategoryAction
 {
-    /**
-     * @param CategoryRepositoryInterface $categoryRepository
-     */
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository
     ) {}
 
     /**
      * Execute the category creation.
-     *
-     * @param CategoryDTO $dto
-     * @return Category
      */
     public function execute(CategoryDTO $dto): Category
     {

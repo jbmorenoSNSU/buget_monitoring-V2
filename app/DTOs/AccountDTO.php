@@ -9,14 +9,6 @@ namespace App\DTOs;
  */
 final class AccountDTO
 {
-    /**
-     * @param int $account_type_id
-     * @param string $name
-     * @param int|null $person_id
-     * @param string|null $description
-     * @param float $initial_balance
-     * @param bool $is_active
-     */
     public function __construct(
         public readonly int $account_type_id,
         public readonly string $name,
@@ -29,8 +21,7 @@ final class AccountDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -53,11 +44,11 @@ final class AccountDTO
     {
         return [
             'account_type_id' => $this->account_type_id,
-            'name'            => $this->name,
-            'person_id'       => $this->person_id,
-            'description'     => $this->description,
+            'name' => $this->name,
+            'person_id' => $this->person_id,
+            'description' => $this->description,
             'initial_balance' => $this->initial_balance,
-            'is_active'       => $this->is_active,
+            'is_active' => $this->is_active,
         ];
     }
 }

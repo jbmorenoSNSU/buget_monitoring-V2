@@ -11,6 +11,9 @@ import AppIcon from '@/Components/UI/AppIcon.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppPagination from '@/Components/UI/AppPagination.vue';
+import ColorPicker from '@/Components/UI/ColorPicker.vue';
+import IconPicker from '@/Components/UI/IconPicker.vue';
+import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     categories: { type: Object, default: () => ({ data: [] }) },
@@ -18,6 +21,49 @@ const props = defineProps({
 
 const items = computed(() => props.categories?.data || []);
 const activeTab = ref('expense');
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    name: '',
+    type: 'expense',
+    icon: 'tag',
+    color: '#6366F1',
+});
+
+const typeOptions = [
+    { value: 'income', label: 'Income' },
+    { value: 'expense', label: 'Expense' },
+    { value: 'both', label: 'Both' },
+];
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    form.type = activeTab.value === 'both' ? 'expense' : activeTab.value;
+    showFormModal.value = true;
+};
+
+const openEditModal = (cat) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = cat.id;
+    form.name = cat.name;
+    form.type = cat.type;
+    form.icon = cat.icon;
+    form.color = cat.color;
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/categories/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+    } else {
+        form.post('/categories', { onSuccess: () => { showFormModal.value = false; } });
+    }
+};
 
 // Client-Side Datatable States
 const search = ref('');
@@ -167,7 +213,7 @@ const perPageOptions = [
     <AppLayout title="Categories">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Categories</h2>
-            <Link href="/categories/create"><AppButton>+ Add Category</AppButton></Link>
+            <AppButton @click="openAddModal">+ Add Category</AppButton>
         </div>
 
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-border pb-2 md:pb-0">
@@ -222,7 +268,7 @@ const perPageOptions = [
             </template>
             <template #cell-actions="{ row }">
                 <div class="flex gap-2">
-                    <Link :href="`/categories/${row.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
+                    <AppButton variant="secondary" size="sm" @click="openEditModal(row)">Edit</AppButton>
                     <AppButton variant="ghost" size="sm" @click="toggle(row)">{{ row.is_active ? 'Disable' : 'Enable' }}</AppButton>
                     <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
                 </div>
@@ -243,6 +289,19 @@ const perPageOptions = [
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Category' : 'Add Category'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <AppInput v-model="form.name" label="Category Name" placeholder="e.g. Food & Dining" :error="form.errors.name" required />
+                <AppSelect v-model="form.type" label="Type" :options="typeOptions" :error="form.errors.type" required />
+                <ColorPicker v-model="form.color" label="Color" />
+                <IconPicker v-model="form.icon" label="Icon" />
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update' : 'Create' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

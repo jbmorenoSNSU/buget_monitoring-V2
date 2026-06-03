@@ -16,21 +16,21 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::resource('persons', PersonController::class)->except(['show']);
+Route::resource('persons', PersonController::class)->except(['show', 'create', 'edit']);
 
-Route::resource('accounts', AccountController::class)->except(['show']);
+Route::resource('accounts', AccountController::class)->except(['show', 'create', 'edit']);
 Route::patch('accounts/{account}/toggle', [AccountController::class, 'toggle'])->name('accounts.toggle');
 
-Route::resource('categories', CategoryController::class)->except(['show']);
+Route::resource('categories', CategoryController::class)->except(['show', 'create', 'edit']);
 Route::patch('categories/{category}/toggle', [CategoryController::class, 'toggle'])->name('categories.toggle');
 
-Route::resource('transactions', TransactionController::class)->except(['show']);
+Route::resource('transactions', TransactionController::class)->except(['show', 'create', 'edit']);
 
-Route::resource('recurring', RecurringTransactionController::class)->except(['show']);
+Route::resource('recurring', RecurringTransactionController::class)->except(['show', 'create', 'edit']);
 Route::patch('recurring/{recurring}/toggle', [RecurringTransactionController::class, 'toggle'])->name('recurring.toggle');
 Route::post('recurring/generate-now', [RecurringTransactionController::class, 'generate_now'])->name('recurring.generate-now');
 
-Route::resource('budget-goals', BudgetGoalController::class)->except(['show']);
+Route::resource('budget-goals', BudgetGoalController::class)->except(['show', 'create', 'edit']);
 
 Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('index');

@@ -13,19 +13,12 @@ use App\Models\RecurringTransaction;
  */
 class UpdateRecurringTransactionAction
 {
-    /**
-     * @param RecurringTransactionRepositoryInterface $recurringRepository
-     */
     public function __construct(
         private RecurringTransactionRepositoryInterface $recurringRepository
     ) {}
 
     /**
      * Execute the recurring transaction update.
-     *
-     * @param RecurringTransaction $recurring
-     * @param RecurringTransactionDTO $dto
-     * @return RecurringTransaction
      */
     public function execute(RecurringTransaction $recurring, RecurringTransactionDTO $dto): RecurringTransaction
     {

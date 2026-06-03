@@ -9,10 +9,6 @@ namespace App\DTOs;
  */
 final class PersonDTO
 {
-    /**
-     * @param string $name
-     * @param string $color
-     */
     public function __construct(
         public readonly string $name,
         public readonly string $color,
@@ -21,8 +17,7 @@ final class PersonDTO
     /**
      * Construct from a validated Form Request data array.
      *
-     * @param array<string, mixed> $validated
-     * @return self
+     * @param  array<string, mixed>  $validated
      */
     public static function fromArray(array $validated): self
     {
@@ -40,7 +35,7 @@ final class PersonDTO
     public function toArray(): array
     {
         return [
-            'name'  => $this->name,
+            'name' => $this->name,
             'color' => $this->color,
         ];
     }

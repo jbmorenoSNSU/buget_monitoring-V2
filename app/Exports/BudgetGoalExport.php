@@ -17,10 +17,11 @@ class BudgetGoalExport implements FromArray, WithHeadings, WithTitle
     {
         $service = app(ReportService::class);
         $data = $service->budgetGoalReport($this->month, $this->year);
+
         return array_map(fn ($row) => [
             $row['category_name'], number_format($row['limit_amount'], 2),
             number_format($row['actual_spent'], 2), number_format($row['variance'], 2),
-            $row['percent'] . '%',
+            $row['percent'].'%',
         ], $data);
     }
 
@@ -29,5 +30,8 @@ class BudgetGoalExport implements FromArray, WithHeadings, WithTitle
         return ['Category', 'Budget Limit (₱)', 'Actual Spent (₱)', 'Variance (₱)', '% Used'];
     }
 
-    public function title(): string { return 'Budget Goals vs Actual'; }
+    public function title(): string
+    {
+        return 'Budget Goals vs Actual';
+    }
 }

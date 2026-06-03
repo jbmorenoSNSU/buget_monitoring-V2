@@ -16,9 +16,6 @@ class BudgetGoalService
 {
     /**
      * Create a new BudgetGoalService instance.
-     *
-     * @param BudgetGoalRepositoryInterface $budgetGoalRepository
-     * @param TransactionRepositoryInterface $transactionRepository
      */
     public function __construct(
         private BudgetGoalRepositoryInterface $budgetGoalRepository,
@@ -28,9 +25,6 @@ class BudgetGoalService
     /**
      * Get monthly budget goals with calculated actual spending and status warnings.
      *
-     * @param int $month
-     * @param int $year
-     * @param int|null $person_id
      * @return Collection<int, BudgetGoal>
      */
     public function get_for_month(int $month, int $year, ?int $person_id = null): Collection
@@ -56,11 +50,6 @@ class BudgetGoalService
 
     /**
      * Get actual spent amount for a specific category in a given month.
-     *
-     * @param int $category_id
-     * @param int $month
-     * @param int $year
-     * @return float
      */
     public function get_spent_amount(int $category_id, int $month, int $year): float
     {
@@ -68,33 +57,7 @@ class BudgetGoalService
     }
 
     /**
-     * Create a new budget goal.
-     *
-     * @param array<string, mixed> $data
-     * @return BudgetGoal
-     */
-    public function create(array $data): BudgetGoal
-    {
-        return $this->budgetGoalRepository->create($data);
-    }
-
-    /**
-     * Update an existing budget goal.
-     *
-     * @param BudgetGoal $goal
-     * @param array<string, mixed> $data
-     * @return BudgetGoal
-     */
-    public function update(BudgetGoal $goal, array $data): BudgetGoal
-    {
-        return $this->budgetGoalRepository->update($goal, $data);
-    }
-
-    /**
      * Delete a budget goal.
-     *
-     * @param BudgetGoal $goal
-     * @return void
      */
     public function delete(BudgetGoal $goal): void
     {
@@ -103,14 +66,11 @@ class BudgetGoalService
 
     /**
      * Check if any budget goal has warning status (90%+ spent).
-     *
-     * @param int $month
-     * @param int $year
-     * @return bool
      */
     public function has_warnings(int $month, int $year): bool
     {
         $goals = $this->get_for_month($month, $year);
+
         return $goals->contains(fn ($g) => $g->percent >= 90);
     }
 }

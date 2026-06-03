@@ -10,6 +10,7 @@ import AppPagination from '@/Components/UI/AppPagination.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
 
@@ -28,6 +29,76 @@ const items = computed(() => props.transactions?.data || []);
 const links = computed(() => props.transactions?.meta?.links || props.transactions?.links || []);
 const deleteTarget = ref(null);
 const showDeleteModal = ref(false);
+
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    type: 'expense',
+    account_id: '',
+    category_id: '',
+    amount: '',
+    transaction_date: new Date().toISOString().split('T')[0],
+    description: '',
+    notes: '',
+    reference_number: '',
+    transfer_to_account_id: '',
+});
+
+const formAccountOptions = computed(() => props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name
+})));
+
+const filteredCategories = computed(() => {
+    if (form.type === 'transfer') return [];
+    return props.categories
+        .filter(c => c.type === form.type || c.type === 'both')
+        .map(c => ({ value: c.id, label: c.name }));
+});
+
+const isTransfer = computed(() => form.type === 'transfer');
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    form.transaction_date = new Date().toISOString().split('T')[0];
+    showFormModal.value = true;
+};
+
+watch(() => props.filters.action, (newAction) => {
+    if (newAction === 'add') {
+        openAddModal();
+        // Remove action from URL to prevent reopening on reload
+        router.get('/transactions', { ...props.filters, action: undefined }, { preserveState: true, replace: true });
+    }
+}, { immediate: true });
+
+const openEditModal = (txn) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = txn.id;
+    form.type = txn.type;
+    form.account_id = txn.account_id || (txn.account?.id || '');
+    form.category_id = txn.category_id || (txn.category?.id || '');
+    form.amount = txn.amount;
+    form.transaction_date = txn.transaction_date;
+    form.description = txn.description;
+    form.notes = txn.notes;
+    form.reference_number = txn.reference_number;
+    form.transfer_to_account_id = txn.transfer_to_account_id || (txn.transferToAccount?.id || '');
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/transactions/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+    } else {
+        form.post('/transactions', { onSuccess: () => { showFormModal.value = false; } });
+    }
+};
 
 const search = ref(props.filters.search || '');
 const type = ref(props.filters.type || '');
@@ -116,7 +187,7 @@ const perPageOptions = [
     <AppLayout title="Transactions">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Transactions</h2>
-            <Link href="/transactions/create"><AppButton>+ Add Transaction</AppButton></Link>
+            <AppButton @click="openAddModal">+ Add Transaction</AppButton>
         </div>
 
         <!-- Filters -->
@@ -185,7 +256,7 @@ const perPageOptions = [
             </template>
             <template #cell-actions="{ row }">
                 <div class="flex gap-1">
-                    <Link :href="`/transactions/${row.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
+                    <AppButton variant="secondary" size="sm" @click="openEditModal(row)">Edit</AppButton>
                     <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
                 </div>
             </template>
@@ -200,6 +271,40 @@ const perPageOptions = [
                 <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Transaction' : 'Add Transaction'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <!-- Type Toggle -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Transaction Type</label>
+                    <div class="flex gap-2">
+                        <button v-for="opt in typeOptions" :key="opt.value" type="button" v-show="opt.value !== ''"
+                            @click="form.type = opt.value"
+                            :class="[
+                                'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer',
+                                form.type === opt.value
+                                    ? opt.value === 'income' ? 'bg-income text-white' : opt.value === 'expense' ? 'bg-expense text-white' : 'bg-primary text-white'
+                                    : 'bg-page-bg text-slate-400 hover:bg-border',
+                            ]"
+                        >{{ opt.label }}</button>
+                    </div>
+                </div>
+
+                <AppSelect v-model="form.account_id" :label="isTransfer ? 'From Account' : 'Account'" :options="formAccountOptions" :error="form.errors.account_id" required />
+                <AppSelect v-if="isTransfer" v-model="form.transfer_to_account_id" label="To Account" :options="formAccountOptions" :error="form.errors.transfer_to_account_id" required />
+                <AppSelect v-if="!isTransfer" v-model="form.category_id" label="Category" :options="filteredCategories" :error="form.errors.category_id" required />
+                <AppInput v-model="form.amount" label="Amount (₱)" type="number" step="0.01" min="0.01" :error="form.errors.amount" required />
+                <AppInput v-model="form.transaction_date" label="Date" type="date" :error="form.errors.transaction_date" required />
+                <AppInput v-model="form.description" label="Description" placeholder="e.g. Grocery shopping" :error="form.errors.description" required />
+                <AppInput v-model="form.notes" label="Notes (Optional)" placeholder="Additional notes" />
+                <AppInput v-model="form.reference_number" label="Reference Number (Optional)" placeholder="e.g. INV-001" />
+
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update' : 'Create' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

@@ -13,19 +13,12 @@ use App\Models\Category;
  */
 class UpdateCategoryAction
 {
-    /**
-     * @param CategoryRepositoryInterface $categoryRepository
-     */
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository
     ) {}
 
     /**
      * Execute the category update.
-     *
-     * @param Category $category
-     * @param CategoryDTO $dto
-     * @return Category
      */
     public function execute(Category $category, CategoryDTO $dto): Category
     {

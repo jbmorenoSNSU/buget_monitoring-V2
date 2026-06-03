@@ -13,18 +13,12 @@ use App\Models\Person;
  */
 class CreatePersonAction
 {
-    /**
-     * @param PersonRepositoryInterface $personRepository
-     */
     public function __construct(
         private PersonRepositoryInterface $personRepository
     ) {}
 
     /**
      * Execute the person creation.
-     *
-     * @param PersonDTO $dto
-     * @return Person
      */
     public function execute(PersonDTO $dto): Person
     {

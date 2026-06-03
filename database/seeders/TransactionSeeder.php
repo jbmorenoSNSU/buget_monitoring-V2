@@ -97,8 +97,8 @@ class TransactionSeeder extends Seeder
             ]);
             $acc = Account::find($accId);
             $acc->current_balance = $type === 'income'
-                ? (float)$acc->current_balance + $amt
-                : (float)$acc->current_balance - $amt;
+                ? (float) $acc->current_balance + $amt
+                : (float) $acc->current_balance - $amt;
             $acc->save();
         }
     }

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            if (!Schema::hasColumn('transactions', 'description')) return;
+            if (! Schema::hasColumn('transactions', 'description')) {
+                return;
+            }
 
             $driver = Schema::getConnection()->getDriverName();
             if ($driver === 'sqlite') {
@@ -24,7 +26,7 @@ return new class extends Migration
                 $existingIndexNames = collect($existingIndexes)->pluck('Key_name')->toArray();
             }
 
-            if (!in_array('transactions_description_index', $existingIndexNames)) {
+            if (! in_array('transactions_description_index', $existingIndexNames)) {
                 if ($driver === 'sqlite') {
                     $table->index('description', 'transactions_description_index');
                 } else {

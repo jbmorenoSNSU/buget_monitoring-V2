@@ -24,7 +24,7 @@ class AccountFactory extends Factory
         return [
             'account_type_id' => AccountType::factory(),
             'person_id' => Person::factory(),
-            'name' => fake()->word() . ' Account',
+            'name' => fake()->word().' Account',
             'description' => fake()->sentence(),
             'initial_balance' => 0.00,
             'current_balance' => 0.00,

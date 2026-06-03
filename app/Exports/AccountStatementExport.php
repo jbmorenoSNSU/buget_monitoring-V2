@@ -17,6 +17,7 @@ class AccountStatementExport implements FromArray, WithHeadings, WithTitle
     {
         $service = app(ReportService::class);
         $data = $service->accountStatement($this->accountId, $this->from, $this->to);
+
         return array_map(fn ($row) => [
             $row['date'], $row['description'], $row['category'], ucfirst($row['type']),
             number_format($row['amount'], 2), number_format($row['balance'], 2),
@@ -28,5 +29,8 @@ class AccountStatementExport implements FromArray, WithHeadings, WithTitle
         return ['Date', 'Description', 'Category', 'Type', 'Amount (₱)', 'Balance (₱)'];
     }
 
-    public function title(): string { return 'Account Statement'; }
+    public function title(): string
+    {
+        return 'Account Statement';
+    }
 }

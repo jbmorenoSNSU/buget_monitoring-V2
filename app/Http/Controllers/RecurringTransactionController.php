@@ -33,37 +33,28 @@ class RecurringTransactionController extends Controller
     {
         return Inertia::render('Recurring/Index', [
             'recurring' => $this->service->get_all(),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Recurring/Form', [
-            'accounts'   => $this->accountRepository->all_active(),
+            'accounts' => $this->accountRepository->all_active(),
             'categories' => $this->categoryRepository->all_active(),
         ]);
     }
+
+
 
     public function store(StoreRecurringTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', RecurringTransaction::class);
         $this->createRecurring->execute(RecurringTransactionDTO::fromArray($request->validated()));
+
         return redirect()->route('recurring.index')->with('success', 'Recurring transaction created successfully.');
     }
 
-    public function edit(RecurringTransaction $recurring): Response
-    {
-        return Inertia::render('Recurring/Form', [
-            'recurring'  => $recurring->load(['account:id,name', 'category:id,name,icon']),
-            'accounts'   => $this->accountRepository->all_active(),
-            'categories' => $this->categoryRepository->all_active(),
-        ]);
-    }
+
 
     public function update(StoreRecurringTransactionRequest $request, RecurringTransaction $recurring): RedirectResponse
     {
         $this->authorize('update', $recurring);
         $this->updateRecurring->execute($recurring, RecurringTransactionDTO::fromArray($request->validated()));
+
         return redirect()->route('recurring.index')->with('success', 'Recurring transaction updated successfully.');
     }
 
@@ -71,6 +62,7 @@ class RecurringTransactionController extends Controller
     {
         $this->authorize('delete', $recurring);
         $this->service->delete($recurring);
+
         return redirect()->route('recurring.index')->with('success', 'Recurring transaction deleted successfully.');
     }
 
@@ -79,6 +71,7 @@ class RecurringTransactionController extends Controller
         $this->authorize('update', $recurring);
         $this->service->toggle($recurring);
         $status = $recurring->fresh()->is_active ? 'activated' : 'paused';
+
         return redirect()->route('recurring.index')->with('success', "Recurring transaction {$status}.");
     }
 
@@ -86,6 +79,7 @@ class RecurringTransactionController extends Controller
     {
         $this->authorize('create', RecurringTransaction::class);
         $count = $this->service->generate_due();
+
         return redirect()->route('recurring.index')->with('success', "{$count} recurring transaction(s) generated.");
     }
 }

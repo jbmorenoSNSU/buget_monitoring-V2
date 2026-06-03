@@ -32,41 +32,33 @@ class BudgetGoalController extends Controller
     public function index(Request $request): Response
     {
         $month = (int) $request->get('month', now()->month);
-        $year  = (int) $request->get('year', now()->year);
+        $year = (int) $request->get('year', now()->year);
 
         return Inertia::render('BudgetGoals/Index', [
             'goals' => BudgetGoalResource::collection($this->service->get_for_month($month, $year)),
             'month' => $month,
-            'year'  => $year,
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('BudgetGoals/Form', [
+            'year' => $year,
             'categories' => $this->categoryRepository->all_active_expense(),
         ]);
     }
+
+
 
     public function store(StoreBudgetGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', BudgetGoal::class);
         $this->createBudgetGoal->execute(BudgetGoalDTO::fromArray($request->validated()));
+
         return redirect()->route('budget-goals.index')->with('success', 'Budget goal created successfully.');
     }
 
-    public function edit(BudgetGoal $budgetGoal): Response
-    {
-        return Inertia::render('BudgetGoals/Form', [
-            'goal'       => new BudgetGoalResource($budgetGoal->load('category:id,name,icon,color')),
-            'categories' => $this->categoryRepository->all_active_expense(),
-        ]);
-    }
+
 
     public function update(StoreBudgetGoalRequest $request, BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('update', $budgetGoal);
         $this->updateBudgetGoal->execute($budgetGoal, BudgetGoalDTO::fromArray($request->validated()));
+
         return redirect()->route('budget-goals.index')->with('success', 'Budget goal updated successfully.');
     }
 
@@ -74,6 +66,7 @@ class BudgetGoalController extends Controller
     {
         $this->authorize('delete', $budgetGoal);
         $this->service->delete($budgetGoal);
+
         return redirect()->route('budget-goals.index')->with('success', 'Budget goal deleted successfully.');
     }
 }

@@ -109,7 +109,7 @@ class Transaction extends Model
     public function scopeThisMonth(Builder $query): Builder
     {
         return $query->whereMonth('transaction_date', now()->month)
-                     ->whereYear('transaction_date', now()->year);
+            ->whereYear('transaction_date', now()->year);
     }
 
     /**
@@ -118,6 +118,6 @@ class Transaction extends Model
     public function scopeForMonth(Builder $query, int $month, int $year): Builder
     {
         return $query->whereMonth('transaction_date', $month)
-                     ->whereYear('transaction_date', $year);
+            ->whereYear('transaction_date', $year);
     }
 }

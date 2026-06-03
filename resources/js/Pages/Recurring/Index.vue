@@ -6,11 +6,16 @@ import AppButton from '@/Components/UI/AppButton.vue';
 import AppBadge from '@/Components/UI/AppBadge.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
+import AppInput from '@/Components/UI/AppInput.vue';
+import AppSelect from '@/Components/UI/AppSelect.vue';
+import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
 
 const props = defineProps({
     recurring: { type: Array, default: () => [] },
+    accounts: { type: Array, default: () => [] },
+    categories: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
@@ -21,6 +26,67 @@ const deleteTarget = ref(null);
 const showDeleteModal = ref(false);
 const showGenerateModal = ref(false);
 const isGenerating = ref(false);
+
+// Form state
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const form = useForm({
+    id: null,
+    type: 'expense',
+    account_id: '',
+    category_id: '',
+    amount: '',
+    description: '',
+    frequency: 'monthly',
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: '',
+});
+
+const typeOptions = [{ value: 'income', label: 'Income' }, { value: 'expense', label: 'Expense' }];
+const freqOptions = [
+    { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' },
+];
+
+const accountOptions = computed(() => props.accounts.map(a => ({
+    value: a.id,
+    label: a.person ? `${a.name} (${a.person.name})` : a.name
+})));
+
+const categoryOptions = computed(() =>
+    props.categories.filter(c => c.type === form.type || c.type === 'both').map(c => ({ value: c.id, label: c.name }))
+);
+
+const openAddModal = () => {
+    isEdit.value = false;
+    form.reset();
+    form.clearErrors();
+    form.start_date = new Date().toISOString().split('T')[0];
+    showFormModal.value = true;
+};
+
+const openEditModal = (rec) => {
+    isEdit.value = true;
+    form.clearErrors();
+    form.id = rec.id;
+    form.type = rec.type;
+    form.account_id = rec.account_id || (rec.account?.id || '');
+    form.category_id = rec.category_id || (rec.category?.id || '');
+    form.amount = rec.amount;
+    form.description = rec.description;
+    form.frequency = rec.frequency;
+    form.start_date = rec.start_date?.split('T')[0];
+    form.end_date = rec.end_date?.split('T')[0] || '';
+    showFormModal.value = true;
+};
+
+const submitForm = () => {
+    if (isEdit.value) {
+        form.put(`/recurring/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+    } else {
+        form.post('/recurring', { onSuccess: () => { showFormModal.value = false; } });
+    }
+};
 
 const columns = [
     { key: 'description', label: 'Description' },
@@ -52,7 +118,7 @@ const doGenerateNow = () => {
             <h2 class="text-lg font-semibold text-slate-50">Recurring Transactions</h2>
             <div class="flex gap-2">
                 <AppButton variant="secondary" @click="confirmGenerate">⚡ Generate Now</AppButton>
-                <Link href="/recurring/create"><AppButton>+ Add Recurring</AppButton></Link>
+                <AppButton @click="openAddModal">+ Add Recurring</AppButton>
             </div>
         </div>
 
@@ -86,7 +152,7 @@ const doGenerateNow = () => {
             </template>
             <template #cell-actions="{ row }">
                 <div class="flex gap-1">
-                    <Link :href="`/recurring/${row.id}/edit`"><AppButton variant="secondary" size="sm">Edit</AppButton></Link>
+                    <AppButton variant="secondary" size="sm" @click="openEditModal(row)">Edit</AppButton>
                     <AppButton variant="ghost" size="sm" @click="toggle(row)">{{ row.is_active ? 'Pause' : 'Resume' }}</AppButton>
                     <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
                 </div>
@@ -110,6 +176,23 @@ const doGenerateNow = () => {
                     {{ isGenerating ? 'Generating...' : 'Yes, Generate Now' }}
                 </AppButton>
             </template>
+        </AppModal>
+
+        <AppModal :show="showFormModal" :title="isEdit ? 'Edit Recurring' : 'Add Recurring'" @close="showFormModal = false">
+            <form @submit.prevent="submitForm" class="space-y-5">
+                <AppSelect v-model="form.type" label="Type" :options="typeOptions" :error="form.errors.type" required />
+                <AppSelect v-model="form.account_id" label="Account" :options="accountOptions" :error="form.errors.account_id" required />
+                <AppSelect v-model="form.category_id" label="Category" :options="categoryOptions" :error="form.errors.category_id" required />
+                <AppInput v-model="form.amount" label="Amount (₱)" type="number" step="0.01" :error="form.errors.amount" required />
+                <AppInput v-model="form.description" label="Description" :error="form.errors.description" required />
+                <AppSelect v-model="form.frequency" label="Frequency" :options="freqOptions" :error="form.errors.frequency" required />
+                <AppInput v-model="form.start_date" label="Start Date" type="date" :error="form.errors.start_date" required />
+                <AppInput v-model="form.end_date" label="End Date (Optional)" type="date" :error="form.errors.end_date" />
+                <div class="flex gap-3 pt-4">
+                    <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update' : 'Create' }}</AppButton>
+                    <AppButton type="button" variant="secondary" @click="showFormModal = false">Cancel</AppButton>
+                </div>
+            </form>
         </AppModal>
     </AppLayout>
 </template>

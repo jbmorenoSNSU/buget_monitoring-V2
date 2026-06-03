@@ -18,9 +18,6 @@ class RecurringTransactionService
 {
     /**
      * Create a new RecurringTransactionService instance.
-     *
-     * @param RecurringTransactionRepositoryInterface $recurringRepository
-     * @param TransactionRepositoryInterface $transactionRepository
      */
     public function __construct(
         private RecurringTransactionRepositoryInterface $recurringRepository,
@@ -38,44 +35,15 @@ class RecurringTransactionService
     }
 
     /**
-     * Create a new recurring transaction template.
-     *
-     * @param array<string, mixed> $data
-     * @return RecurringTransaction
-     */
-    public function create(array $data): RecurringTransaction
-    {
-        return $this->recurringRepository->create($data);
-    }
-
-    /**
-     * Update an existing recurring transaction template.
-     *
-     * @param RecurringTransaction $recurring
-     * @param array<string, mixed> $data
-     * @return RecurringTransaction
-     */
-    public function update(RecurringTransaction $recurring, array $data): RecurringTransaction
-    {
-        return $this->recurringRepository->update($recurring, $data);
-    }
-
-    /**
      * Toggle the active status of a recurring transaction template.
-     *
-     * @param RecurringTransaction $recurring
-     * @return RecurringTransaction
      */
     public function toggle(RecurringTransaction $recurring): RecurringTransaction
     {
-        return $this->recurringRepository->update($recurring, ['is_active' => !$recurring->is_active]);
+        return $this->recurringRepository->update($recurring, ['is_active' => ! $recurring->is_active]);
     }
 
     /**
      * Delete a recurring transaction template.
-     *
-     * @param RecurringTransaction $recurring
-     * @return void
      */
     public function delete(RecurringTransaction $recurring): void
     {
@@ -101,7 +69,7 @@ class RecurringTransactionService
                     'type' => $recurring->type->value ?? $recurring->type,
                     'amount' => $recurring->amount,
                     'transaction_date' => $recurring->next_due_date->toDateString(),
-                    'description' => $recurring->description . ' (Auto)',
+                    'description' => $recurring->description.' (Auto)',
                     'recurring_id' => $recurring->id,
                 ]);
 
@@ -125,9 +93,6 @@ class RecurringTransactionService
 
     /**
      * Calculate the next due date based on the recurring interval frequency.
-     *
-     * @param RecurringTransaction $recurring
-     * @return Carbon
      */
     private function compute_next_date(RecurringTransaction $recurring): Carbon
     {
@@ -145,7 +110,6 @@ class RecurringTransactionService
     /**
      * Get upcoming recurring transactions due in the specified number of days.
      *
-     * @param int $days
      * @return Collection<int, RecurringTransaction>
      */
     public function get_upcoming(int $days = 7): Collection

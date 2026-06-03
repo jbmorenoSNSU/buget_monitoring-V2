@@ -13,18 +13,12 @@ use App\Models\BudgetGoal;
  */
 class CreateBudgetGoalAction
 {
-    /**
-     * @param BudgetGoalRepositoryInterface $budgetGoalRepository
-     */
     public function __construct(
         private BudgetGoalRepositoryInterface $budgetGoalRepository
     ) {}
 
     /**
      * Execute the budget goal creation.
-     *
-     * @param BudgetGoalDTO $dto
-     * @return BudgetGoal
      */
     public function execute(BudgetGoalDTO $dto): BudgetGoal
     {

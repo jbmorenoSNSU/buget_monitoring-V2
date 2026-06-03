@@ -13,19 +13,12 @@ use App\Models\Transaction;
  */
 class UpdateTransactionAction
 {
-    /**
-     * @param TransactionRepositoryInterface $transactionRepository
-     */
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository
     ) {}
 
     /**
      * Execute the transaction update.
-     *
-     * @param Transaction $transaction
-     * @param TransactionDTO $dto
-     * @return Transaction
      */
     public function execute(Transaction $transaction, TransactionDTO $dto): Transaction
     {
