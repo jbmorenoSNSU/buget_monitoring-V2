@@ -5,8 +5,9 @@ Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 Set colProcessList = objWMIService.ExecQuery("Select * from Win32_Process Where Name = 'wampmanager.exe'")
 
 If colProcessList.Count = 0 Then
-    ' Start WampServer ONLY if not already running
-    WshShell.Run chr(34) & "C:\wamp64\wampmanager.exe" & chr(34), 0, False
+    ' Start WampServer ONLY if not already running (Requires elevation)
+    Set objShell = CreateObject("Shell.Application")
+    objShell.ShellExecute "C:\wamp64\wampmanager.exe", "", "", "runas", 1
 End If
 
 ' Get the folder containing this VBScript to run start_server.bat using its absolute path
