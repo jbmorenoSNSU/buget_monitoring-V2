@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Interfaces\TransactionRepositoryInterface;
+use App\Models\Transaction;
 use Carbon\Carbon;
 
 /**
@@ -277,5 +278,76 @@ class ChartReportService
         }
 
         return $result;
+    }
+
+    /**
+     * Compute a Year-in-Review summary for a given year.
+     *
+     * @return array<string, mixed>
+     */
+    public function year_in_review(int $year): array
+    {
+        $start = Carbon::create($year, 1, 1)->startOfYear();
+        $end = $start->copy()->endOfYear();
+
+        $today = now();
+        if ($end->gt($today)) {
+            $end = $today;
+        }
+
+        // Get all transactions for the year
+        $transactions = $this->transactionRepository->expense_by_date_range($start->format('Y-m-d'), $end->format('Y-m-d'));
+        // wait, expense_by_date_range only returns expenses. Let's use a new query or just hit DB here.
+        // Actually we can just query the DB directly here for ease since this is an aggregated report.
+        $all_txns = Transaction::whereBetween('transaction_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->whereIn('type', ['income', 'expense'])
+            ->get();
+
+        $total_income = $all_txns->where('type', 'income')->sum('amount');
+        $total_expense = $all_txns->where('type', 'expense')->sum('amount');
+        $net_savings = $total_income - $total_expense;
+
+        // Top categories
+        $categories = $all_txns->where('type', 'expense')
+            ->groupBy('category_id')
+            ->map(function ($group) {
+                $first = $group->first();
+
+                return [
+                    'category_name' => $first->category?->name ?? 'Unknown',
+                    'category_icon' => $first->category?->icon ?? 'tag',
+                    'category_color' => $first->category?->color ?? '#94A3B8',
+                    'amount' => $group->sum('amount'),
+                ];
+            })
+            ->sortByDesc('amount')
+            ->take(5)
+            ->values()
+            ->toArray();
+
+        // Busiest month
+        $months = $all_txns->where('type', 'expense')
+            ->groupBy(fn ($t) => Carbon::parse($t->transaction_date)->month)
+            ->map(fn ($g) => $g->sum('amount'));
+
+        $busiest_month_num = $months->keys()->first(fn ($k) => $months[$k] === $months->max());
+        $busiest_month_name = $busiest_month_num ? Carbon::create($year, $busiest_month_num, 1)->format('F') : 'N/A';
+        $busiest_month_amount = $months->max() ?? 0;
+
+        // Split total
+        $total_split = $all_txns->sum('split_amount');
+
+        return [
+            'year' => $year,
+            'total_income' => round($total_income, 2),
+            'total_expense' => round($total_expense, 2),
+            'net_savings' => round($net_savings, 2),
+            'top_categories' => $categories,
+            'busiest_month' => [
+                'name' => $busiest_month_name,
+                'amount' => round($busiest_month_amount, 2),
+            ],
+            'total_split' => round($total_split, 2),
+        ];
     }
 }

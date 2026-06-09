@@ -19,6 +19,8 @@ final class TransactionDTO
         public readonly ?string $notes,
         public readonly ?string $reference_number,
         public readonly ?int $transfer_to_account_id,
+        public readonly ?int $split_with_person_id = null,
+        public readonly ?float $split_amount = null,
     ) {}
 
     /**
@@ -40,6 +42,8 @@ final class TransactionDTO
             transfer_to_account_id: isset($validated['transfer_to_account_id'])
                 ? (int) $validated['transfer_to_account_id']
                 : null,
+            split_with_person_id: isset($validated['split_with_person_id']) ? (int) $validated['split_with_person_id'] : null,
+            split_amount: isset($validated['split_amount']) ? (float) $validated['split_amount'] : null,
         );
     }
 
@@ -60,6 +64,8 @@ final class TransactionDTO
             'notes' => $this->notes,
             'reference_number' => $this->reference_number,
             'transfer_to_account_id' => $this->transfer_to_account_id,
+            'split_with_person_id' => $this->split_with_person_id,
+            'split_amount' => $this->split_amount,
         ];
     }
 }

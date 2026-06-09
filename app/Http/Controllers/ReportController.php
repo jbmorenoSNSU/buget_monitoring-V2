@@ -92,6 +92,27 @@ class ReportController extends Controller
         ]);
     }
 
+    public function settlements(Request $request): Response
+    {
+        $from = $request->get('from', now()->startOfMonth()->format('Y-m-d'));
+        $to = $request->get('to', now()->format('Y-m-d'));
+
+        return Inertia::render('Reports/Settlements', [
+            'data' => $this->service->settlement_report($from, $to),
+            'filters' => compact('from', 'to'),
+        ]);
+    }
+
+    public function year_in_review(Request $request): Response
+    {
+        $year = (int) $request->get('year', now()->year);
+
+        return Inertia::render('Reports/YearInReview', [
+            'data' => $this->service->year_in_review($year),
+            'filters' => compact('year'),
+        ]);
+    }
+
     public function export(Request $request, string $type)
     {
         $date = now()->format('Y-m-d');

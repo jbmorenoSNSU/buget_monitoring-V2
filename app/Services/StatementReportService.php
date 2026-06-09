@@ -139,4 +139,93 @@ class StatementReportService
 
         return $calendar;
     }
+
+    /**
+     * Compute a settlement report for split bills.
+     *
+     * @return array<string, mixed>
+     */
+    public function settlement_report(string $from, string $to): array
+    {
+        $transactions = $this->transactionRepository->split_transactions_raw($from, $to);
+
+        $balances = [];
+        $persons = [];
+
+        // Accumulate gross debts
+        foreach ($transactions as $t) {
+            $payer = $t->account->person;
+            $debtor = $t->splitWithPerson;
+
+            if (! $payer || ! $debtor || $payer->id === $debtor->id) {
+                continue;
+            }
+
+            $persons[$payer->id] = $payer->toArray();
+            $persons[$debtor->id] = $debtor->toArray();
+
+            $pId = $payer->id;
+            $dId = $debtor->id;
+
+            if (! isset($balances[$dId])) {
+                $balances[$dId] = [];
+            }
+            if (! isset($balances[$dId][$pId])) {
+                $balances[$dId][$pId] = 0;
+            }
+
+            $balances[$dId][$pId] += (float) $t->split_amount;
+        }
+
+        // Net out balances (A owes B vs B owes A)
+        $settlements = [];
+        $processed = [];
+
+        foreach ($balances as $debtor_id => $owed_to) {
+            foreach ($owed_to as $payer_id => $amount) {
+                if ($amount <= 0) {
+                    continue;
+                }
+
+                $reverse_amount = $balances[$payer_id][$debtor_id] ?? 0;
+                $pair_key = min($debtor_id, $payer_id).'-'.max($debtor_id, $payer_id);
+
+                if (in_array($pair_key, $processed)) {
+                    continue;
+                }
+                $processed[] = $pair_key;
+
+                $net = $amount - $reverse_amount;
+
+                if ($net > 0) {
+                    // debtor owes payer
+                    $settlements[] = [
+                        'debtor' => $persons[$debtor_id],
+                        'payer' => $persons[$payer_id],
+                        'amount' => round($net, 2),
+                    ];
+                } elseif ($net < 0) {
+                    // payer owes debtor
+                    $settlements[] = [
+                        'debtor' => $persons[$payer_id],
+                        'payer' => $persons[$debtor_id],
+                        'amount' => round(abs($net), 2),
+                    ];
+                }
+            }
+        }
+
+        return [
+            'transactions' => $transactions->map(fn ($t) => [
+                'id' => $t->id,
+                'date' => $t->transaction_date->format('Y-m-d'),
+                'description' => $t->description,
+                'payer' => $t->account->person?->name,
+                'debtor' => $t->splitWithPerson?->name,
+                'total_amount' => (float) $t->amount,
+                'split_amount' => (float) $t->split_amount,
+            ])->toArray(),
+            'settlements' => collect($settlements)->sortByDesc('amount')->values()->toArray(),
+        ];
+    }
 }

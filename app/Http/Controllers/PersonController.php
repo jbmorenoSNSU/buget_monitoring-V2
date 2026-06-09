@@ -33,8 +33,6 @@ class PersonController extends Controller
         ]);
     }
 
-
-
     public function store(StorePersonRequest $request): RedirectResponse
     {
         $this->authorize('create', Person::class);
@@ -42,8 +40,6 @@ class PersonController extends Controller
 
         return redirect()->route('persons.index')->with('success', 'Person created successfully.');
     }
-
-
 
     public function update(StorePersonRequest $request, Person $person): RedirectResponse
     {

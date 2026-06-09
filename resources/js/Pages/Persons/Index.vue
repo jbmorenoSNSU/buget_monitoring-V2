@@ -140,6 +140,16 @@ onUnmounted(() => {
                                 <p class="text-xs font-semibold text-expense">{{ formatPeso(person.expense_this_month) }}</p>
                             </div>
                         </div>
+                        <div v-if="person.owes_you > 0 || person.you_owe > 0" class="flex items-center justify-between pt-2 border-t border-border/50">
+                            <div>
+                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Others Owe (Split)</p>
+                                <p class="text-xs font-semibold text-income">{{ formatPeso(person.owes_you) }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Owes Others (Split)</p>
+                                <p class="text-xs font-semibold text-expense">{{ formatPeso(person.you_owe) }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -19,6 +19,7 @@ const navItems = [
     { name: 'Recurring', route: 'recurring', icon: 'RefreshCw', href: '/recurring' },
     { name: 'Budget Goals', route: 'budget-goals', icon: 'Target', href: '/budget-goals' },
     { name: 'Categories', route: 'categories', icon: 'Folder', href: '/categories' },
+    { name: 'Debts', route: 'debts', icon: 'TrendingDown', href: '/debts' },
     { name: 'Reports', route: 'reports', icon: 'PieChart', href: '/reports' },
 ];
 

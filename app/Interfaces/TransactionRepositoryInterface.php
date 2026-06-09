@@ -39,4 +39,6 @@ interface TransactionRepositoryInterface
     public function expense_by_date_range(string $from, string $to, ?int $person_id = null): Collection;
 
     public function calendar_transactions(string $start, string $end): Collection;
+
+    public function split_transactions_raw(string $from, string $to): Collection;
 }

@@ -33,8 +33,6 @@ class CategoryController extends Controller
         ]);
     }
 
-
-
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         $this->authorize('create', Category::class);
@@ -42,8 +40,6 @@ class CategoryController extends Controller
 
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
-
-
 
     public function update(StoreCategoryRequest $request, Category $category): RedirectResponse
     {

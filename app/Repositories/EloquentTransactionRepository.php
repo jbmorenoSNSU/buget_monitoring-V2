@@ -280,4 +280,13 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->whereBetween('transaction_date', [$start, $end])
             ->get();
     }
+
+    public function split_transactions_raw(string $from, string $to): Collection
+    {
+        return Transaction::with(['account.person', 'splitWithPerson'])
+            ->whereNotNull('split_with_person_id')
+            ->whereBetween('transaction_date', [$from, $to])
+            ->orderBy('transaction_date', 'desc')
+            ->get();
+    }
 }

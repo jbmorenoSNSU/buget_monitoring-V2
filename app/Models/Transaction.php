@@ -30,12 +30,15 @@ class Transaction extends Model
         'reference_number',
         'transfer_to_account_id',
         'recurring_id',
+        'split_with_person_id',
+        'split_amount',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
         'type' => TransactionType::class,
         'amount' => 'decimal:2',
+        'split_amount' => 'decimal:2',
         'transaction_date' => 'date',
     ];
 
@@ -69,6 +72,14 @@ class Transaction extends Model
     public function recurringTransaction(): BelongsTo
     {
         return $this->belongsTo(RecurringTransaction::class, 'recurring_id');
+    }
+
+    /**
+     * Get the person this transaction is split with.
+     */
+    public function splitWithPerson(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'split_with_person_id');
     }
 
     /**

@@ -33,10 +33,16 @@ interface SpendingTrend {
     [key: string]: SpendingTrendPoint[] | undefined;
 }
 
+interface CashFlowData {
+    date: string;
+    balance: number;
+}
+
 interface ChartData {
     sixMonths?: SixMonthData[];
     categoryExpense?: CategoryExpenseData[];
     spendingTrend?: SpendingTrend;
+    cashFlowForecast?: CashFlowData[];
 }
 
 interface ChartsAndGoals {
@@ -73,6 +79,7 @@ const chartsVisible = ref<ChartsVisible>({
     bar: false,
     doughnut: false,
     line: false,
+    cashFlow: false,
 });
 
 onMounted(() => {
@@ -90,7 +97,7 @@ onMounted(() => {
     }, { rootMargin: '100px' });
 
     setTimeout(() => {
-        ['bar', 'doughnut', 'line'].forEach(id => {
+        ['bar', 'doughnut', 'line', 'cashFlow'].forEach(id => {
             const el = document.querySelector(`[data-chart-id="${id}"]`);
             if (el) observer.observe(el);
         });
@@ -227,6 +234,35 @@ const lineChartData = computed(() => {
         ],
     };
 });
+
+const cashFlowChartData = computed(() => {
+    const data = props.chartsAndGoals?.chartData?.cashFlowForecast || [];
+    if (!data.length) return { labels: [], datasets: [] };
+
+    const labels = new Array(data.length);
+    const balanceData = new Array(data.length);
+
+    for (let i = 0; i < data.length; i++) {
+        labels[i] = data[i].date;
+        balanceData[i] = data[i].balance;
+    }
+
+    return {
+        labels,
+        datasets: [
+            {
+                label: 'Projected Balance',
+                data: balanceData,
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+            }
+        ]
+    };
+});
 </script>
 
 <template>
@@ -242,6 +278,18 @@ const lineChartData = computed(() => {
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Expenses by Category (This Month)</h3>
                 <DoughnutChart v-if="chartsVisible.doughnut" :chartData="doughnutData" :height="280" :centerText="formatPeso(monthlyExpense)" />
                 <div v-else class="h-[280px] bg-page-bg rounded-lg animate-pulse" />
+            </AppCard>
+        </div>
+
+        <!-- Cash Flow Forecast -->
+        <div class="mb-6">
+            <AppCard data-chart-id="cashFlow">
+                <div class="flex items-center gap-2 mb-4">
+                    <AppIcon name="TrendingUp" size="18" class="text-emerald-500" />
+                    <h3 class="text-sm font-semibold text-slate-100">30-Day Cash Flow Forecast</h3>
+                </div>
+                <LineChart v-if="chartsVisible.cashFlow" :chartData="cashFlowChartData" :height="240" />
+                <div v-else class="h-[240px] bg-page-bg rounded-lg animate-pulse" />
             </AppCard>
         </div>
 

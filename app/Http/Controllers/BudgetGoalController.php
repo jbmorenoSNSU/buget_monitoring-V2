@@ -42,8 +42,6 @@ class BudgetGoalController extends Controller
         ]);
     }
 
-
-
     public function store(StoreBudgetGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', BudgetGoal::class);
@@ -51,8 +49,6 @@ class BudgetGoalController extends Controller
 
         return redirect()->route('budget-goals.index')->with('success', 'Budget goal created successfully.');
     }
-
-
 
     public function update(StoreBudgetGoalRequest $request, BudgetGoal $budgetGoal): RedirectResponse
     {

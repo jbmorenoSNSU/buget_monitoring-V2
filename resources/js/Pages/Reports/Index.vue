@@ -10,6 +10,8 @@ const reports = [
     { name: 'Account Statement', description: 'View transaction history for an account', href: '/reports/account-statement', icon: 'ClipboardList' },
     { name: 'Budget Goals vs Actual', description: 'Track budget performance', href: '/reports/budget-goal', icon: 'Target' },
     { name: 'Financial Calendar', description: 'Visualize daily spending and income patterns', href: '/reports/calendar', icon: 'Calendar' },
+    { name: 'Debt & Settlements', description: 'See who owes who from split transactions', href: '/reports/settlements', icon: 'Users' },
+    { name: 'Year in Review', description: 'Annual breakdown of wealth growth and top categories', href: '/reports/year-in-review', icon: 'Award' },
 ];
 </script>
 

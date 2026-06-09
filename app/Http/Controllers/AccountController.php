@@ -40,8 +40,6 @@ class AccountController extends Controller
         ]);
     }
 
-
-
     public function store(StoreAccountRequest $request): RedirectResponse
     {
         $this->authorize('create', Account::class);
@@ -49,8 +47,6 @@ class AccountController extends Controller
 
         return redirect()->route('accounts.index')->with('success', 'Account created successfully.');
     }
-
-
 
     public function update(StoreAccountRequest $request, Account $account): RedirectResponse
     {

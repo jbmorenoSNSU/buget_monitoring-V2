@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
@@ -8,6 +8,7 @@ import AppModal from '@/Components/UI/AppModal.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
+import AppPagination from '@/Components/UI/AppPagination.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
@@ -89,13 +90,13 @@ const submitForm = () => {
 };
 
 const columns = [
-    { key: 'description', label: 'Description' },
-    { key: 'account', label: 'Account' },
-    { key: 'type', label: 'Type' },
-    { key: 'amount', label: 'Amount', class: 'text-right', cellClass: 'text-right' },
-    { key: 'frequency', label: 'Frequency' },
-    { key: 'next_due_date', label: 'Next Due' },
-    { key: 'is_active', label: 'Status' },
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'account', label: 'Account', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'amount', label: 'Amount', class: 'text-right', cellClass: 'text-right', sortable: true },
+    { key: 'frequency', label: 'Frequency', sortable: true },
+    { key: 'next_due_date', label: 'Next Due', sortable: true },
+    { key: 'is_active', label: 'Status', sortable: true },
     { key: 'actions', label: '' },
 ];
 
@@ -110,19 +111,162 @@ const doGenerateNow = () => {
         onFinish: () => { isGenerating.value = false; showGenerateModal.value = false; },
     }); 
 };
+
+// Client-Side Datatable States
+const search = ref('');
+const sortBy = ref('next_due_date');
+const sortDirection = ref('asc');
+const perPage = ref('10');
+const currentPage = ref(1);
+
+const perPageOptions = [
+    { value: '5', label: 'Show 5 entries' },
+    { value: '10', label: 'Show 10 entries' },
+    { value: '25', label: 'Show 25 entries' },
+    { value: '50', label: 'Show 50 entries' },
+];
+
+const handleSort = (columnKey) => {
+    if (sortBy.value === columnKey) {
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy.value = columnKey;
+        sortDirection.value = 'asc';
+    }
+};
+
+const filteredAndSortedItems = computed(() => {
+    let list = items.value;
+
+    if (search.value.trim()) {
+        const q = search.value.toLowerCase().trim();
+        list = list.filter(r => {
+            const desc = (r.description || '').toLowerCase();
+            const type = (r.type || '').toLowerCase();
+            const freq = (r.frequency || '').toLowerCase();
+            const status = r.is_active ? 'active' : 'inactive';
+            return desc.includes(q) || type.includes(q) || freq.includes(q) || status.includes(q);
+        });
+    }
+
+    return [...list].sort((a, b) => {
+        let valA = a[sortBy.value];
+        let valB = b[sortBy.value];
+        
+        if (sortBy.value === 'is_active') {
+            valA = a.is_active ? 1 : 0;
+            valB = b.is_active ? 1 : 0;
+        } else if (sortBy.value === 'account') {
+            valA = a.account?.name || '';
+            valB = b.account?.name || '';
+        }
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+
+        let comparison = 0;
+        if (typeof valA === 'string') {
+            comparison = valA.localeCompare(valB);
+        } else {
+            comparison = valA - valB;
+        }
+
+        return sortDirection.value === 'asc' ? comparison : -comparison;
+    });
+});
+
+const totalItems = computed(() => filteredAndSortedItems.value.length);
+const lastPage = computed(() => Math.ceil(totalItems.value / parseInt(perPage.value)) || 1);
+
+const paginatedItems = computed(() => {
+    const start = (currentPage.value - 1) * parseInt(perPage.value);
+    const end = start + parseInt(perPage.value);
+    return filteredAndSortedItems.value.slice(start, end);
+});
+
+watch([search, sortBy, sortDirection, perPage], () => {
+    currentPage.value = 1;
+});
+
+const paginationMeta = computed(() => {
+    const total = totalItems.value;
+    if (total === 0) return { from: 0, to: 0, total: 0 };
+    const from = (currentPage.value - 1) * parseInt(perPage.value) + 1;
+    const to = Math.min(from + parseInt(perPage.value) - 1, total);
+    return { from, to, total };
+});
+
+const paginationLinks = computed(() => {
+    const links = [];
+    const current = currentPage.value;
+    const last = lastPage.value;
+
+    links.push({ label: '&laquo; Previous', url: current > 1 ? 'prev' : null, active: false });
+    for (let i = 1; i <= last; i++) {
+        links.push({ label: i.toString(), url: i.toString(), active: i === current });
+    }
+    links.push({ label: 'Next &raquo;', url: current < last ? 'next' : null, active: false });
+    return links;
+});
+
+const handlePageNavigate = (pageStr) => {
+    if (pageStr === 'prev') {
+        currentPage.value = Math.max(1, currentPage.value - 1);
+    } else if (pageStr === 'next') {
+        currentPage.value = Math.min(lastPage.value, currentPage.value + 1);
+    } else {
+        currentPage.value = parseInt(pageStr);
+    }
+};
 </script>
 
 <template>
     <AppLayout title="Recurring Transactions">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 class="text-lg font-semibold text-slate-50">Recurring Transactions</h2>
+            <h2 class="text-lg font-semibold text-slate-100">Recurring Transactions</h2>
             <div class="flex gap-2">
                 <AppButton variant="secondary" @click="confirmGenerate">⚡ Generate Now</AppButton>
                 <AppButton @click="openAddModal">+ Add Recurring</AppButton>
             </div>
         </div>
 
-        <AppTable :columns="columns" :rows="items">
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-inner">
+            <AppIcon name="Info" size="20" class="text-indigo-400 shrink-0 mt-0.5" />
+            <div class="text-sm text-indigo-100/90 leading-relaxed">
+                <p class="font-semibold text-indigo-100 mb-1">How Recurring Transactions Work</p>
+                <p>
+                    Because this app runs locally without a background server, recurring transactions are <strong>not generated automatically</strong>. 
+                    You must click the <span class="font-medium text-white bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">⚡ Generate Now</span> button to process any transactions that are due. 
+                    We recommend clicking this button periodically to keep your ledger up to date.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-end mb-4 gap-4">
+            <!-- Search -->
+            <div class="w-full sm:w-72">
+                <AppInput v-model="search" placeholder="Search recurring..." />
+            </div>
+
+            <!-- Page Size -->
+            <div class="hidden sm:flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Page Size:</span>
+                <AppSelect v-model="perPage" :options="perPageOptions" class="w-40 select-none" />
+            </div>
+        </div>
+
+        <div class="flex sm:hidden justify-end items-center mb-4 gap-2">
+            <span class="text-xs text-slate-400 font-medium">Page Size:</span>
+            <AppSelect v-model="perPage" :options="perPageOptions" class="w-32 select-none" />
+        </div>
+
+        <AppTable 
+            :columns="columns" 
+            :rows="paginatedItems"
+            :sort-by="sortBy"
+            :sort-direction="sortDirection"
+            @sort="handleSort"
+        >
             <template #cell-account="{ row }">
                 <div v-if="row.account" class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: row.account.color || '#94A3B8' }" />
@@ -156,6 +300,14 @@ const doGenerateNow = () => {
                     <AppButton variant="ghost" size="sm" @click="toggle(row)">{{ row.is_active ? 'Pause' : 'Resume' }}</AppButton>
                     <AppButton variant="danger" size="sm" @click="confirmDelete(row)">Delete</AppButton>
                 </div>
+            </template>
+            <template #pagination>
+                <AppPagination
+                    :links="paginationLinks"
+                    :meta="paginationMeta"
+                    :client-side="true"
+                    @navigate="handlePageNavigate"
+                />
             </template>
         </AppTable>
 

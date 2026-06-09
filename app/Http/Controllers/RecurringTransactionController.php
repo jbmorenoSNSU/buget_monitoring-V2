@@ -38,8 +38,6 @@ class RecurringTransactionController extends Controller
         ]);
     }
 
-
-
     public function store(StoreRecurringTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', RecurringTransaction::class);
@@ -47,8 +45,6 @@ class RecurringTransactionController extends Controller
 
         return redirect()->route('recurring.index')->with('success', 'Recurring transaction created successfully.');
     }
-
-
 
     public function update(StoreRecurringTransactionRequest $request, RecurringTransaction $recurring): RedirectResponse
     {

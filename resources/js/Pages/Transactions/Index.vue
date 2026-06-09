@@ -44,6 +44,9 @@ const form = useForm({
     notes: '',
     reference_number: '',
     transfer_to_account_id: '',
+    split_bill: false,
+    split_with_person_id: '',
+    split_amount: '',
 });
 
 const formAccountOptions = computed(() => props.accounts.map(a => ({
@@ -65,6 +68,9 @@ const openAddModal = () => {
     form.reset();
     form.clearErrors();
     form.transaction_date = new Date().toISOString().split('T')[0];
+    form.split_bill = false;
+    form.split_with_person_id = '';
+    form.split_amount = '';
     showFormModal.value = true;
 };
 
@@ -89,6 +95,9 @@ const openEditModal = (txn) => {
     form.notes = txn.notes;
     form.reference_number = txn.reference_number;
     form.transfer_to_account_id = txn.transfer_to_account_id || (txn.transferToAccount?.id || '');
+    form.split_bill = !!txn.split_with_person_id;
+    form.split_with_person_id = txn.split_with_person_id || '';
+    form.split_amount = txn.split_amount || '';
     showFormModal.value = true;
 };
 
@@ -97,6 +106,72 @@ const submitForm = () => {
         form.put(`/transactions/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
     } else {
         form.post('/transactions', { onSuccess: () => { showFormModal.value = false; } });
+    }
+};
+
+// OCR Logic
+const isScanning = ref(false);
+const scanStatus = ref('');
+const scanProgress = ref(0);
+
+const handleReceiptScan = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    isScanning.value = true;
+    scanStatus.value = 'Loading AI Engine...';
+    scanProgress.value = 10;
+    
+    try {
+        const Tesseract = (await import('tesseract.js')).default;
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    scanStatus.value = 'Scanning receipt text...';
+                    scanProgress.value = Math.round(m.progress * 100);
+                } else if (m.status.includes('loading')) {
+                    scanStatus.value = 'Loading AI models...';
+                }
+            }
+        });
+        
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+
+        // Extract amount (find the largest currency-like number)
+        const allNumbersRegex = /((?:\d{1,3}(?:,\d{3})*|\d+)\.\d{2})/g;
+        const matches = [...text.matchAll(allNumbersRegex)];
+        if (matches.length > 0) {
+            const numbers = matches.map(m => parseFloat(m[1].replace(/,/g, '')));
+            const maxAmount = Math.max(...numbers);
+            if (maxAmount > 0) {
+                form.amount = maxAmount;
+                form.type = 'expense';
+            }
+        }
+        
+        // Extract date
+        const dateRegex = /(\d{4}-\d{2}-\d{2})|(\d{1,2}\/\d{1,2}\/\d{2,4})/;
+        const dateMatch = text.match(dateRegex);
+        if (dateMatch) {
+            let parsedDate = new Date(dateMatch[0]);
+            if (!isNaN(parsedDate) && parsedDate.getFullYear() > 2000) {
+                form.transaction_date = parsedDate.toISOString().split('T')[0];
+            }
+        }
+        
+        if (!form.description) {
+            form.description = "Scanned Receipt";
+        }
+        
+    } catch (e) {
+        console.error("OCR Failed:", e);
+        alert("Failed to read receipt. Please try a clearer image.");
+    } finally {
+        isScanning.value = false;
+        scanStatus.value = '';
+        scanProgress.value = 0;
+        event.target.value = null; // reset input
     }
 };
 
@@ -187,7 +262,6 @@ const perPageOptions = [
     <AppLayout title="Transactions">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Transactions</h2>
-            <AppButton @click="openAddModal">+ Add Transaction</AppButton>
         </div>
 
         <!-- Filters -->
@@ -240,9 +314,15 @@ const perPageOptions = [
             </template>
             <template #cell-description="{ row }">
                 <div>
-                    <span class="text-sm font-medium text-slate-100">{{ row.description }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-slate-100">{{ row.description }}</span>
+                        <AppBadge v-if="row.split_with_person_id" type="info" label="Split" class="text-[10px] px-1.5 py-0.5" />
+                    </div>
                     <div v-if="row.notes" class="text-[11px] text-slate-400 mt-0.5 leading-snug">
                         {{ row.notes }}
+                    </div>
+                    <div v-if="row.split_with_person_id && row.split_amount" class="text-[11px] text-primary mt-0.5 leading-snug">
+                        Split amount: {{ formatPeso(row.split_amount) }}
                     </div>
                 </div>
             </template>
@@ -274,6 +354,35 @@ const perPageOptions = [
         </AppModal>
 
         <AppModal :show="showFormModal" :title="isEdit ? 'Edit Transaction' : 'Add Transaction'" @close="showFormModal = false">
+            
+            <!-- OCR Receipt Scanner (only for Add) -->
+            <div v-if="!isEdit" class="mb-5 bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 text-indigo-300 font-medium">
+                        <AppIcon name="Camera" size="18" />
+                        <span>AI Receipt Scanner</span>
+                    </div>
+                    <AppBadge type="income" label="Beta" class="text-[9px] px-1.5 py-0.5" />
+                </div>
+                <p class="text-xs text-indigo-200/70 mb-3">Upload a photo of your receipt to automatically extract the amount and date.</p>
+                
+                <div v-if="isScanning" class="space-y-2">
+                    <div class="flex justify-between text-xs font-medium text-indigo-300">
+                        <span>{{ scanStatus }}</span>
+                        <span>{{ scanProgress }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-indigo-500 h-1.5 rounded-full transition-all duration-300" :style="{ width: scanProgress + '%' }"></div>
+                    </div>
+                </div>
+                <div v-else>
+                    <input type="file" accept="image/*" class="hidden" ref="receiptInput" @change="handleReceiptScan" />
+                    <AppButton type="button" variant="secondary" size="sm" class="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border-indigo-500/30" @click="$refs.receiptInput.click()">
+                        <AppIcon name="Upload" size="14" class="mr-2" /> Select Image
+                    </AppButton>
+                </div>
+            </div>
+
             <form @submit.prevent="submitForm" class="space-y-5">
                 <!-- Type Toggle -->
                 <div>
@@ -299,6 +408,19 @@ const perPageOptions = [
                 <AppInput v-model="form.description" label="Description" placeholder="e.g. Grocery shopping" :error="form.errors.description" required />
                 <AppInput v-model="form.notes" label="Notes (Optional)" placeholder="Additional notes" />
                 <AppInput v-model="form.reference_number" label="Reference Number (Optional)" placeholder="e.g. INV-001" />
+
+                <!-- Split Bill Feature -->
+                <div v-if="form.type === 'expense'" class="bg-slate-800/50 p-4 rounded-lg border border-border">
+                    <label class="flex items-center gap-2 mb-3 cursor-pointer select-none">
+                        <input type="checkbox" v-model="form.split_bill" class="w-4 h-4 rounded bg-page-bg border-border text-primary focus:ring-primary focus:ring-offset-slate-900" />
+                        <span class="text-sm font-medium text-slate-300">Split this expense?</span>
+                    </label>
+
+                    <div v-if="form.split_bill" class="space-y-4 pt-2 border-t border-border/50">
+                        <AppSelect v-model="form.split_with_person_id" label="Who owes you?" :options="personOptions.filter(p => p.value !== '')" :error="form.errors.split_with_person_id" required />
+                        <AppInput v-model="form.split_amount" label="Amount they owe you (₱)" type="number" step="0.01" min="0.01" :error="form.errors.split_amount" required />
+                    </div>
+                </div>
 
                 <div class="flex gap-3 pt-4">
                     <AppButton type="submit" :loading="form.processing">{{ isEdit ? 'Update' : 'Create' }}</AppButton>

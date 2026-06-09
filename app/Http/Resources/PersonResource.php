@@ -21,6 +21,8 @@ class PersonResource extends JsonResource
             'total_balance' => (float) ($this->accounts_sum_current_balance ?? 0),
             'income_this_month' => (float) ($this->income_this_month ?? 0),
             'expense_this_month' => (float) ($this->expense_this_month ?? 0),
+            'owes_you' => (float) ($this->owes_you ?? 0),
+            'you_owe' => (float) ($this->you_owe ?? 0),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

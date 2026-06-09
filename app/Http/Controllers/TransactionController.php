@@ -37,7 +37,7 @@ class TransactionController extends Controller
     {
         $filters = $request->only([
             'type', 'account_id', 'category_id', 'person_id', 'date_from', 'date_to', 'search',
-            'sort_by', 'sort_direction', 'per_page', 'action'
+            'sort_by', 'sort_direction', 'per_page', 'action',
         ]);
 
         return Inertia::render('Transactions/Index', [
@@ -49,8 +49,6 @@ class TransactionController extends Controller
         ]);
     }
 
-
-
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', Transaction::class);
@@ -58,8 +56,6 @@ class TransactionController extends Controller
 
         return redirect()->route('transactions.index')->with('success', 'Transaction created successfully.');
     }
-
-
 
     public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
     {

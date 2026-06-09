@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import StatCard from '@/Components/UI/StatCard.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useCurrency } from '@/composables/useCurrency';
 
 interface Stats {
     totalBalance: number;
+    safeToSpend: number;
     monthlyIncome: number;
     monthlyExpense: number;
 }
@@ -20,6 +22,7 @@ const props = withDefaults(
     {
         stats: () => ({
             totalBalance: 0,
+            safeToSpend: 0,
             monthlyIncome: 0,
             monthlyExpense: 0,
         }),
@@ -35,8 +38,28 @@ const netSavings = computed(() => monthlyIncome.value - monthlyExpense.value);
 </script>
 
 <template>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
+    <div class="mb-6">
+        <!-- Safe to Spend Hero -->
+        <div class="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 opacity-5 pointer-events-none">
+                <AppIcon name="ShieldCheck" :size="150" />
+            </div>
+            <div class="z-10">
+                <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-2">
+                    <AppIcon name="ShieldCheck" size="16" />
+                    Safe to Spend
+                </h2>
+                <p class="text-xs text-slate-400 max-w-md">Your current balance minus all upcoming recurring bills and remaining budget limits for the month.</p>
+            </div>
+            <div class="text-right z-10">
+                <div class="text-3xl md:text-4xl font-extrabold text-emerald-400 drop-shadow-md">
+                    {{ formatPeso(stats.safeToSpend || 0) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
             label="Total Balance"
             :value="formatPeso(totalBalance)"
             accentColor="var(--color-primary)"
@@ -60,5 +83,6 @@ const netSavings = computed(() => monthlyIncome.value - monthlyExpense.value);
             :accentColor="netSavings >= 0 ? 'var(--color-income)' : 'var(--color-expense)'"
             icon="PiggyBank"
         />
+        </div>
     </div>
 </template>

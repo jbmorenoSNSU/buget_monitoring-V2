@@ -88,4 +88,20 @@ class ReportService
     {
         return $this->statementReportService->calendar_report($month, $year);
     }
+
+    /**
+     * Delegate: Settlement report.
+     */
+    public function settlement_report(string $from, string $to): array
+    {
+        return $this->statementReportService->settlement_report($from, $to);
+    }
+
+    /**
+     * Delegate: Year in Review report.
+     */
+    public function year_in_review(int $year): array
+    {
+        return $this->chartReportService->year_in_review($year);
+    }
 }
