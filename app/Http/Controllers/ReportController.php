@@ -126,6 +126,13 @@ class ReportController extends Controller
         ]);
     }
 
+    public function forecasting(): Response
+    {
+        return Inertia::render('Reports/Forecasting', [
+            'data' => $this->service->cashflow_projection(),
+        ]);
+    }
+
     public function export(Request $request, string $type)
     {
         // Example $type: 'income-expense-excel' or 'income-expense-pdf'

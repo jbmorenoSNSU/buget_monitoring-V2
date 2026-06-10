@@ -12,6 +12,8 @@ interface DebtRepositoryInterface
 {
     public function paginate(?int $person_id = null): CursorPaginator;
 
+    public function get_active(?int $person_id = null): Collection;
+
     public function all(): Collection;
 
     public function create(array $data): Debt;

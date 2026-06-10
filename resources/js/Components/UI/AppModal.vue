@@ -1,19 +1,33 @@
-<script setup>
-defineProps({
-    show: { type: Boolean, default: false },
-    title: { type: String, default: '' },
-    maxWidth: { type: String, default: 'md' },
-});
+<script setup lang="ts">
+withDefaults(
+    defineProps<{
+        show?: boolean;
+        title?: string;
+        maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    }>(),
+    {
+        show: false,
+        title: '',
+        maxWidth: 'md',
+    }
+);
 
-const emit = defineEmits(['close']);
+const emit = defineEmits<{
+    (e: 'close'): void;
+}>();
 
-const maxWidthClass = {
+const maxWidthClass: Record<string, string> = {
     sm: 'sm:max-w-sm',
     md: 'sm:max-w-md',
     lg: 'sm:max-w-lg',
     xl: 'sm:max-w-xl',
     '2xl': 'sm:max-w-2xl',
 };
+
+defineSlots<{
+    default?: (props: {}) => any;
+    footer?: (props: {}) => any;
+}>();
 </script>
 
 <template>

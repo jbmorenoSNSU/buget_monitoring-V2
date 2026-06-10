@@ -20,6 +20,7 @@ const navItems = [
     { name: 'Budget Goals', route: 'budget-goals', icon: 'Target', href: '/budget-goals' },
     { name: 'Categories', route: 'categories', icon: 'Folder', href: '/categories' },
     { name: 'Debts', route: 'debts', icon: 'TrendingDown', href: '/debts' },
+    { name: 'Savings Goals', route: 'savings-goals', icon: 'Compass', href: '/savings-goals' },
     { name: 'Reports', route: 'reports', icon: 'PieChart', href: '/reports' },
     { name: 'Downloads', route: 'downloads', icon: 'Download', href: '/downloads' },
 ];

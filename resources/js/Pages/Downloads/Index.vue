@@ -47,7 +47,7 @@ onMounted(() => {
     pollInterval = setInterval(() => {
         const hasActiveExports = props.exports.data.some((e: any) => e.status === 'pending' || e.status === 'processing');
         if (hasActiveExports) {
-            router.reload({ only: ['exports'], preserveScroll: true, preserveState: true });
+            router.reload({ only: ['exports'] });
         }
     }, 3000);
 });

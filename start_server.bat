@@ -21,6 +21,10 @@ if %errorlevel% neq 0 (
     start /b php artisan serve --port=8000
 )
 
+:: 2.1 Run database migrations silently
+echo Checking for database updates...
+php artisan migrate --force > nul 2>&1
+
 :: 2.5 Check if Queue Worker is running, if not start it
 where wmic >nul 2>nul
 if %errorlevel% equ 0 (
@@ -37,6 +41,13 @@ if %errorlevel% equ 0 (
 :: 2.6 Run Monthly Budget Rollover
 echo Running Budget Rollovers...
 start /b php artisan budget:rollover
+
+:: 2.7 Check if Vite Dev Server is running, if not start it
+netstat -ano | find "LISTENING" | find ":5173" > nul
+if %errorlevel% neq 0 (
+    echo Starting Vite Dev Server...
+    start /b npm run dev
+)
 
 :: 3. Wait for the Artisan server (Port 8000) itself to be fully active
 echo Waiting for App Server to be ready...

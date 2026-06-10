@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AppCard from '@/Components/UI/AppCard.vue';
 import ProgressBar from '@/Components/UI/ProgressBar.vue';
 import { useCurrency } from '@/composables/useCurrency';
@@ -50,9 +51,27 @@ interface UpcomingRecurring {
     account?: Account;
 }
 
+interface SavingsGoal {
+    id: number;
+    name: string;
+    current_amount: number;
+    target_amount: number;
+    percent: number;
+    person?: Person;
+}
+
+interface Debt {
+    id: number;
+    name: string;
+    principal_amount: number;
+    person?: Person;
+}
+
 interface ChartsAndGoals {
     budgetGoals?: { data: BudgetGoal[] } | BudgetGoal[];
     upcomingRecurring?: UpcomingRecurring[];
+    savingsGoals?: SavingsGoal[];
+    activeDebts?: Debt[];
 }
 
 /**
@@ -87,6 +106,14 @@ const goals = computed<BudgetGoal[]>(() => {
 
 const upcomingRecurring = computed<UpcomingRecurring[]>(() => {
     return props.chartsAndGoals?.upcomingRecurring || [];
+});
+
+const savingsGoals = computed<SavingsGoal[]>(() => {
+    return props.chartsAndGoals?.savingsGoals || [];
+});
+
+const activeDebts = computed<Debt[]>(() => {
+    return props.chartsAndGoals?.activeDebts || [];
 });
 </script>
 
@@ -179,6 +206,53 @@ const upcomingRecurring = computed<UpcomingRecurring[]>(() => {
                         </span>
                     </div>
                     <p v-if="!upcomingRecurring.length" class="text-sm text-slate-400 text-center py-4">Nothing upcoming</p>
+                </div>
+            </AppCard>
+
+            <!-- Savings Goals -->
+            <AppCard>
+                <h3 class="text-sm font-semibold text-slate-100 mb-4">Savings Goals</h3>
+                <div class="space-y-4">
+                    <div v-for="goal in savingsGoals" :key="goal.id">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm text-slate-400">
+                                {{ goal.name }}
+                                <span v-if="goal.person" class="text-xs font-medium ml-1" :style="{ color: goal.person.color || '#94A3B8' }">({{ goal.person.name }})</span>
+                                <span v-else class="text-xs text-slate-500 opacity-80 ml-1">(Shared)</span>
+                            </span>
+                            <span class="text-xs text-slate-400">{{ formatPeso(goal.current_amount) }} / {{ formatPeso(goal.target_amount) }}</span>
+                        </div>
+                        <ProgressBar :percent="goal.percent" :showPercent="false" colorClass="bg-income" />
+                    </div>
+                    <div v-if="!savingsGoals.length" class="text-sm text-slate-400 text-center py-4">
+                        No active savings goals. 
+                        <Link :href="route('savings-goals.index')" class="text-primary hover:text-primary-hover font-medium">Add one</Link>
+                    </div>
+                </div>
+            </AppCard>
+
+            <!-- Active Debts -->
+            <AppCard>
+                <h3 class="text-sm font-semibold text-slate-100 mb-4">Active Debts</h3>
+                <div class="space-y-3">
+                    <div v-for="debt in activeDebts" :key="debt.id" class="flex justify-between items-center p-2 rounded-lg bg-page-bg border border-expense/10">
+                        <div>
+                            <p class="text-sm font-medium text-slate-100">{{ debt.name }}</p>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span v-if="debt.person" class="text-xs font-semibold" :style="{ color: debt.person.color || '#94A3B8' }">
+                                    {{ debt.person.name }}
+                                </span>
+                                <span v-else class="text-xs text-slate-500 opacity-80">Shared</span>
+                            </div>
+                        </div>
+                        <span class="text-sm font-semibold text-expense">
+                            {{ formatPeso(debt.principal_amount) }}
+                        </span>
+                    </div>
+                    <div v-if="!activeDebts.length" class="text-sm text-slate-400 text-center py-4">
+                        No active debts.
+                        <Link :href="route('debts.index')" class="text-primary hover:text-primary-hover font-medium">Add one</Link>
+                    </div>
                 </div>
             </AppCard>
         </div>

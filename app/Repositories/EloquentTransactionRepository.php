@@ -16,7 +16,12 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 {
     public function paginate(array $filters, int $per_page): CursorPaginator
     {
-        $query = Transaction::with(['account.person:id,name,color', 'category:id,name,icon,color', 'transferToAccount:id,name'])
+        $query = Transaction::with([
+            'account:id,name,person_id',
+            'account.person:id,name,color',
+            'category:id,name,icon,color',
+            'transferToAccount:id,name',
+        ])
             ->select([
                 'transactions.id',
                 'transactions.account_id',
@@ -124,7 +129,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
     public function recent(int $limit, ?int $person_id = null): Collection
     {
-        $query = Transaction::with(['account.person:id,name,color', 'category:id,name,icon,color'])
+        $query = Transaction::with([
+            'account:id,name,person_id',
+            'account.person:id,name,color',
+            'category:id,name,icon,color',
+        ])
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc');
         if ($person_id) {
@@ -351,10 +360,49 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
     public function split_transactions_raw(string $from, string $to): Collection
     {
-        return Transaction::with(['account.person', 'splitWithPerson'])
+        return Transaction::with([
+            'account:id,name,person_id',
+            'account.person:id,name,color',
+            'splitWithPerson:id,name,color',
+        ])
             ->whereNotNull('split_with_person_id')
             ->whereBetween('transaction_date', [$from, $to])
             ->orderBy('transaction_date', 'desc')
+            ->get();
+    }
+
+    /**
+     * Sum income and expense for non-recurring transactions in a date range.
+     *
+     * @return array{income: float, expense: float}
+     */
+    public function non_recurring_net_for_projection(string $from, string $to): array
+    {
+        $rows = Transaction::select('type', \Illuminate\Support\Facades\DB::raw('SUM(amount) as total'))
+            ->whereBetween('transaction_date', [$from, $to])
+            ->whereIn('type', ['income', 'expense'])
+            ->whereNull('recurring_id')
+            ->groupBy('type')
+            ->get();
+
+        $income = (float) $rows->where('type', 'income')->value('total');
+        $expense = (float) $rows->where('type', 'expense')->value('total');
+
+        return compact('income', 'expense');
+    }
+
+    /**
+     * Fetch all income and expense transactions for a year with category relations
+     * for the Year-in-Review report.
+     *
+     * @return Collection<int, Transaction>
+     */
+    public function year_in_review_raw(string $from, string $to): Collection
+    {
+        return Transaction::with(['category:id,name,icon,color'])
+            ->select(['id', 'type', 'amount', 'category_id', 'transaction_date', 'split_amount'])
+            ->whereBetween('transaction_date', [$from, $to])
+            ->whereIn('type', ['income', 'expense'])
             ->get();
     }
 }

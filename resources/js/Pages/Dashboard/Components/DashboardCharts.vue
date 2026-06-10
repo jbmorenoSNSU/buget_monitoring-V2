@@ -281,9 +281,10 @@ const cashFlowChartData = computed(() => {
             </AppCard>
         </div>
 
-        <!-- Cash Flow Forecast -->
-        <div class="mb-6">
-            <AppCard data-chart-id="cashFlow">
+        <!-- Bottom Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <!-- Cash Flow Forecast -->
+            <AppCard data-chart-id="cashFlow" class="h-full">
                 <div class="flex items-center gap-2 mb-4">
                     <AppIcon name="TrendingUp" size="18" class="text-emerald-500" />
                     <h3 class="text-sm font-semibold text-slate-100">30-Day Cash Flow Forecast</h3>
@@ -291,11 +292,9 @@ const cashFlowChartData = computed(() => {
                 <LineChart v-if="chartsVisible.cashFlow" :chartData="cashFlowChartData" :height="240" />
                 <div v-else class="h-[240px] bg-page-bg rounded-lg animate-pulse" />
             </AppCard>
-        </div>
 
-        <!-- Daily Spending Trend -->
-        <div class="mb-6">
-            <AppCard data-chart-id="line">
+            <!-- Daily Spending Trend -->
+            <AppCard data-chart-id="line" class="h-full flex flex-col">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                     <h3 class="text-sm font-semibold text-slate-100">
                         {{ selectedTrendInterval === 'weekly' ? 'Weekly Spending Trend' : selectedTrendInterval === 'monthly' ? 'Monthly Spending Trend' : 'Daily Spending Trend' }}
@@ -316,8 +315,8 @@ const cashFlowChartData = computed(() => {
                         </button>
                     </div>
                 </div>
-                <LineChart v-if="chartsVisible.line" :chartData="lineChartData" :height="240" />
-                <div v-else class="h-[240px] bg-page-bg rounded-lg animate-pulse" />
+                <LineChart v-if="chartsVisible.line" :chartData="lineChartData" :height="240" class="mt-auto" />
+                <div v-else class="h-[240px] bg-page-bg rounded-lg animate-pulse mt-auto" />
             </AppCard>
         </div>
     </div>

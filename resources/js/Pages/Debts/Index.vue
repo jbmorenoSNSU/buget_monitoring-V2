@@ -125,7 +125,8 @@ onUnmounted(() => {
                             <div class="min-w-0">
                                 <h3 class="font-bold text-slate-100 text-base truncate leading-snug" :title="debt.name">{{ debt.name }}</h3>
                                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                                    <span v-if="debt.person" class="text-[10px] font-medium" :style="{ color: debt.person.color }">
+                                    <span v-if="debt.person" class="text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none" 
+                                        :style="{ backgroundColor: (debt.person.color || '#94A3B8') + '30', color: debt.person.color || '#94A3B8', filter: 'brightness(1.4)' }">
                                         {{ debt.person.name }}
                                     </span>
                                     <span v-else class="text-[10px] font-medium text-indigo-400">Shared Debt</span>

@@ -104,4 +104,12 @@ class ReportService
     {
         return $this->chartReportService->year_in_review($year);
     }
+
+    /**
+     * Delegate: 180-day daily cashflow balance projections.
+     */
+    public function cashflow_projection(): array
+    {
+        return $this->chartReportService->cashflow_projection();
+    }
 }

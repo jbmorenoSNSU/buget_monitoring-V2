@@ -6,9 +6,11 @@ const props = defineProps({
     label: { type: String, default: '' },
     showPercent: { type: Boolean, default: true },
     height: { type: String, default: 'h-3' },
+    colorClass: { type: String, default: '' },
 });
 
 const color = computed(() => {
+    if (props.colorClass) return props.colorClass;
     if (props.percent < 75) return 'bg-income';
     if (props.percent < 90) return 'bg-warning';
     return 'bg-danger';

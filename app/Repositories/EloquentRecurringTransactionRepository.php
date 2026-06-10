@@ -12,14 +12,14 @@ class EloquentRecurringTransactionRepository implements RecurringTransactionRepo
 {
     public function all(): Collection
     {
-        return RecurringTransaction::with(['account:id,name,person_id', 'category:id,name,icon'])
+        return RecurringTransaction::with(['account:id,name,person_id', 'account.person:id,name,color', 'category:id,name,icon'])
             ->orderBy('next_due_date')
             ->get();
     }
 
     public function find(int $id): ?RecurringTransaction
     {
-        return RecurringTransaction::with(['account:id,name,person_id', 'category:id,name,icon'])->find($id);
+        return RecurringTransaction::with(['account:id,name,person_id', 'account.person:id,name,color', 'category:id,name,icon'])->find($id);
     }
 
     public function all_due(): Collection
@@ -29,7 +29,7 @@ class EloquentRecurringTransactionRepository implements RecurringTransactionRepo
 
     public function upcoming(int $days): Collection
     {
-        return RecurringTransaction::with(['account.person:id,name', 'category:id,name,icon'])
+        return RecurringTransaction::with(['account:id,name,person_id', 'account.person:id,name,color', 'category:id,name,icon'])
             ->active()
             ->where('next_due_date', '<=', now()->addDays($days)->toDateString())
             ->orderBy('next_due_date')

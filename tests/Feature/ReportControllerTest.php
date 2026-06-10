@@ -21,6 +21,13 @@ test('income expense report page can be rendered', function () {
     $response->assertStatus(200);
 });
 
+test('forecasting report page can be rendered', function () {
+    $user = User::factory()->create();
+    $response = $this->actingAs($user)->get('/reports/forecasting');
+
+    $response->assertStatus(200);
+});
+
 test('export dispatches job and redirects', function () {
     Queue::fake();
 

@@ -13,7 +13,7 @@ class EloquentBudgetGoalRepository implements BudgetGoalRepositoryInterface
 {
     public function for_month(int $month, int $year, ?int $person_id = null): Collection
     {
-        $query = BudgetGoal::with(['category:id,name,icon,color', 'person:id,name'])
+        $query = BudgetGoal::with(['category:id,name,icon,color', 'person:id,name,color'])
             ->forMonth($month, $year);
 
         if ($person_id) {
@@ -25,7 +25,7 @@ class EloquentBudgetGoalRepository implements BudgetGoalRepositoryInterface
 
     public function find(int $id): ?BudgetGoal
     {
-        return BudgetGoal::with(['category:id,name,icon,color', 'person:id,name'])->find($id);
+        return BudgetGoal::with(['category:id,name,icon,color', 'person:id,name,color'])->find($id);
     }
 
     public function create(array $data): BudgetGoal

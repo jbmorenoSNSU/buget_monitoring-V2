@@ -11,6 +11,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\RecurringTransactionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SavingsGoalController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,8 @@ Route::resource('budget-goals', BudgetGoalController::class)->except(['show', 'c
 
 Route::resource('debts', DebtController::class)->except(['show', 'create', 'edit']);
 
+Route::resource('savings-goals', SavingsGoalController::class)->except(['show', 'create', 'edit']);
+
 Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/', [ReportController::class, 'index'])->name('index');
     Route::get('/income-expense', [ReportController::class, 'income_expense'])->name('income-expense');
@@ -45,6 +48,7 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/calendar', [ReportController::class, 'calendar'])->name('calendar');
     Route::get('/settlements', [ReportController::class, 'settlements'])->name('settlements');
     Route::get('/year-in-review', [ReportController::class, 'year_in_review'])->name('year-in-review');
+    Route::get('/forecasting', [ReportController::class, 'forecasting'])->name('forecasting');
     Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
 });
 

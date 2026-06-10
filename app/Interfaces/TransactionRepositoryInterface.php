@@ -43,4 +43,19 @@ interface TransactionRepositoryInterface
     public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection;
 
     public function split_transactions_raw(string $from, string $to): Collection;
+
+    /**
+     * Sum income and expense for non-recurring transactions in a date range.
+     *
+     * @return array{income: float, expense: float}
+     */
+    public function non_recurring_net_for_projection(string $from, string $to): array;
+
+    /**
+     * Fetch all income and expense transactions for a year with category relations
+     * for the Year-in-Review report.
+     *
+     * @return Collection<int, Transaction>
+     */
+    public function year_in_review_raw(string $from, string $to): Collection;
 }

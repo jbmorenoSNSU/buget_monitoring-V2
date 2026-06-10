@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\AccountRepositoryInterface;
+use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
-use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -18,7 +19,9 @@ class ChartReportService
      * Create a new ChartReportService instance.
      */
     public function __construct(
-        private TransactionRepositoryInterface $transactionRepository
+        private TransactionRepositoryInterface $transactionRepository,
+        private AccountRepositoryInterface $accountRepository,
+        private RecurringTransactionRepositoryInterface $recurringRepository
     ) {}
 
     /**
@@ -325,10 +328,11 @@ class ChartReportService
                 $end = $today;
             }
 
-            // Get all transactions for the year
-            $all_txns = Transaction::whereBetween('transaction_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
-                ->whereIn('type', ['income', 'expense'])
-                ->get();
+            // Get all transactions for the year via repository — never query models directly in a service
+            $all_txns = $this->transactionRepository->year_in_review_raw(
+                $start->format('Y-m-d'),
+                $end->format('Y-m-d')
+            );
 
             $total_income = $all_txns->where('type', 'income')->sum('amount');
             $total_expense = $all_txns->where('type', 'expense')->sum('amount');
@@ -375,6 +379,140 @@ class ChartReportService
                     'amount' => round($busiest_month_amount, 2),
                 ],
                 'total_split' => round($total_split, 2),
+            ];
+        });
+    }
+
+    /**
+     * Generate 180-day daily cashflow balance projections.
+     *
+     * @return array<string, mixed>
+     */
+    public function cashflow_projection(): array
+    {
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:cashflow_projection:v{$version}";
+
+        return Cache::remember($key, 3600, function () {
+            // 1. Calculate Average Daily Growth via repository — no direct model queries in service
+            $threeMonthsAgo = now()->subDays(90)->toDateString();
+            $today = now()->toDateString();
+
+            $net = $this->transactionRepository->non_recurring_net_for_projection($threeMonthsAgo, $today);
+            $netDailyGrowth = ($net['income'] - $net['expense']) / 90.0;
+
+            // 2. Fetch Active Recurring Transactions via upcoming(180) — filters is_active at DB level
+            //    Do NOT use all()->where() — that fetches all records into memory before filtering.
+            $recurrings = $this->recurringRepository->upcoming(180);
+            $startProj = now()->startOfDay();
+            $endProj = now()->addDays(180)->endOfDay();
+
+            $recurringEvents = [];
+            foreach ($recurrings as $rec) {
+                if (!$rec->next_due_date) {
+                    continue;
+                }
+                $next = Carbon::parse($rec->next_due_date)->startOfDay();
+                $end = $rec->end_date ? Carbon::parse($rec->end_date)->startOfDay() : null;
+                $freq = $rec->frequency->value ?? $rec->frequency;
+                $amount = (float) $rec->amount;
+                $type = $rec->type->value ?? $rec->type;
+                $desc = $rec->description;
+
+                while ($next->lte($endProj)) {
+                    if ($next->gte($startProj) && (!$end || $next->lte($end))) {
+                        $dateStr = $next->format('Y-m-d');
+                        if (!isset($recurringEvents[$dateStr])) {
+                            $recurringEvents[$dateStr] = [];
+                        }
+                        $recurringEvents[$dateStr][] = [
+                            'amount' => $amount,
+                            'type' => $type,
+                            'description' => $desc,
+                        ];
+                    }
+
+                    switch ($freq) {
+                        case 'daily':
+                            $next->addDay();
+                            break;
+                        case 'weekly':
+                            $next->addWeek();
+                            break;
+                        case 'monthly':
+                            $next->addMonth();
+                            break;
+                        case 'yearly':
+                            $next->addYear();
+                            break;
+                        default:
+                            break 2;
+                    }
+                }
+            }
+
+            // 3. Simulate Projections Day-by-Day
+            $startingCash = (float) $this->accountRepository->all_active()->sum('current_balance');
+            $currentBalance = $startingCash;
+            $dailyPoints = [];
+            $milestones = [];
+
+            $cursor = now()->startOfDay();
+
+            // Day 0
+            $dailyPoints[] = [
+                'date' => $cursor->format('Y-m-d'),
+                'balance' => round($currentBalance, 2),
+            ];
+
+            for ($day = 1; $day <= 180; $day++) {
+                $cursor->addDay();
+                $dateStr = $cursor->format('Y-m-d');
+
+                // Apply daily growth
+                $currentBalance += $netDailyGrowth;
+
+                // Apply recurring events
+                if (isset($recurringEvents[$dateStr])) {
+                    foreach ($recurringEvents[$dateStr] as $event) {
+                        if ($event['type'] === 'income') {
+                            $currentBalance += $event['amount'];
+                        } else {
+                            $currentBalance -= $event['amount'];
+                        }
+
+                        $milestones[] = [
+                            'date' => $dateStr,
+                            'description' => $event['description'],
+                            'amount' => $event['amount'],
+                            'type' => $event['type'],
+                            'projected_balance' => round($currentBalance, 2),
+                        ];
+                    }
+                }
+
+                $dailyPoints[] = [
+                    'date' => $dateStr,
+                    'balance' => round($currentBalance, 2),
+                ];
+            }
+
+            // 4. Summarize and Format Results
+            $balances = collect($dailyPoints)->pluck('balance');
+            $projectedHigh = (float) $balances->max();
+            $projectedLow = (float) $balances->min();
+            $endingBalance = (float) $balances->last();
+            $netChange = $endingBalance - $startingCash;
+
+            return [
+                'starting_balance' => round($startingCash, 2),
+                'ending_balance' => round($endingBalance, 2),
+                'projected_high' => round($projectedHigh, 2),
+                'projected_low' => round($projectedLow, 2),
+                'net_change' => round($netChange, 2),
+                'daily_growth_rate' => round($netDailyGrowth, 2),
+                'daily_points' => $dailyPoints,
+                'milestones' => collect($milestones)->sortBy('date')->take(20)->values()->toArray(),
             ];
         });
     }

@@ -8,6 +8,7 @@ use App\DTOs\Debts\DebtDTO;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
 use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class DebtService
 {
@@ -26,6 +27,16 @@ class DebtService
         });
 
         return $paginator;
+    }
+
+    public function get_active(?int $person_id = null): Collection
+    {
+        $debts = $this->debtRepository->get_active($person_id);
+
+        return $debts->map(function ($debt) {
+            $debt->payoff_projection = $this->calculate_payoff($debt);
+            return $debt;
+        });
     }
 
     public function create(DebtDTO $dto): Debt

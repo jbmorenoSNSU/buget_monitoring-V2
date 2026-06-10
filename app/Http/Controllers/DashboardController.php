@@ -11,7 +11,9 @@ use App\Interfaces\PersonRepositoryInterface;
 use App\Services\AccountService;
 use App\Services\BudgetGoalService;
 use App\Services\DashboardService;
+use App\Services\DebtService;
 use App\Services\ReportService;
+use App\Services\SavingsGoalService;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,6 +27,8 @@ class DashboardController extends Controller
         private BudgetGoalService $budgetGoalService,
         private ReportService $reportService,
         private DashboardService $dashboardService,
+        private DebtService $debtService,
+        private SavingsGoalService $savingsGoalService,
         private PersonRepositoryInterface $personRepository,
     ) {}
 
@@ -45,12 +49,14 @@ class DashboardController extends Controller
             ],
             'accounts' => AccountResource::collection($this->accountService->get_active($person_id)),
             'recentTransactions' => Inertia::defer(fn () => TransactionResource::collection(
-                $this->transactionService->get_recent_transactions(10, $person_id)
+                $this->transactionService->get_recent_transactions(15, $person_id)
             )),
             'chartsAndGoals' => Inertia::defer(fn () => [
                 'budgetGoals' => BudgetGoalResource::collection(
                     $this->budgetGoalService->get_for_month($month, $year, $person_id)
                 ),
+                'savingsGoals' => $this->savingsGoalService->all($person_id),
+                'activeDebts' => $this->debtService->get_active($person_id),
                 'upcomingRecurring' => $this->dashboardService->getUpcomingRecurring($person_id),
                 'chartData' => [
                     'sixMonths' => $this->reportService->last_6_months_chart($person_id),

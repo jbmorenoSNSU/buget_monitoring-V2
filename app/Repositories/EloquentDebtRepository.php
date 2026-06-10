@@ -13,7 +13,7 @@ class EloquentDebtRepository implements DebtRepositoryInterface
 {
     public function paginate(?int $person_id = null): CursorPaginator
     {
-        $query = Debt::query()->with('person');
+        $query = Debt::query()->with('person:id,name,color');
 
         if ($person_id) {
             $query->where('person_id', $person_id);
@@ -22,6 +22,17 @@ class EloquentDebtRepository implements DebtRepositoryInterface
         return $query->orderBy('status')
             ->orderBy('principal_amount', 'desc')
             ->cursorPaginate(50);
+    }
+
+    public function get_active(?int $person_id = null): Collection
+    {
+        $query = Debt::query()->with('person:id,name,color')->where('status', 'active');
+
+        if ($person_id) {
+            $query->where('person_id', $person_id);
+        }
+
+        return $query->orderBy('principal_amount', 'desc')->get();
     }
 
     public function all(): Collection

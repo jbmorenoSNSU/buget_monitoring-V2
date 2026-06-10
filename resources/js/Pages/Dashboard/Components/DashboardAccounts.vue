@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppCard from '@/Components/UI/AppCard.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useCurrency } from '@/composables/useCurrency';
 
 interface AccountType {
@@ -78,6 +79,18 @@ const groupedAccounts = computed<GroupedAccount[]>(() => {
 
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
 });
+
+const expandedGroups = ref<Set<string>>(new Set());
+
+function toggleGroup(name: string) {
+    const newSet = new Set(expandedGroups.value);
+    if (newSet.has(name)) {
+        newSet.delete(name);
+    } else {
+        newSet.add(name);
+    }
+    expandedGroups.value = newSet;
+}
 </script>
 
 <template>
@@ -86,24 +99,29 @@ const groupedAccounts = computed<GroupedAccount[]>(() => {
             <h3 class="text-sm font-semibold text-slate-100 mb-5">Account Balances</h3>
             <div v-for="group in groupedAccounts" :key="group.name" class="mb-6 last:mb-0">
                 <!-- Group Header -->
-                <div class="flex items-center justify-between mb-4 bg-page-bg/50 rounded-xl p-3 border border-border/50">
+                <div class="flex items-center justify-between mb-4 bg-page-bg/50 rounded-xl p-3 border border-border/50 cursor-pointer hover:bg-page-bg transition-colors"
+                     @click="toggleGroup(group.name)">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm"
                              :style="{ backgroundColor: group.color + '20', color: group.color, border: `1px solid ${group.color}40` }">
                             {{ group.name.substring(0, 1).toUpperCase() }}
                         </div>
-                        <h4 class="text-sm font-semibold uppercase tracking-wider" :style="{ color: group.color }">
+                        <h4 class="text-sm font-semibold uppercase tracking-wider select-none" :style="{ color: group.color }">
                             {{ group.name }}
                         </h4>
                     </div>
-                    <div class="flex flex-col items-end px-2">
-                        <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">Total Wealth</span>
-                        <span class="text-sm font-bold text-slate-100">{{ formatPeso(group.total_balance) }}</span>
+                    <div class="flex items-center gap-4 px-2">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5 select-none">Total Wealth</span>
+                            <span class="text-sm font-bold text-slate-100 select-none">{{ formatPeso(group.total_balance) }}</span>
+                        </div>
+                        <AppIcon name="ChevronDown" size="20" class="text-slate-500 transition-transform duration-300"
+                                 :class="{ 'rotate-180': expandedGroups.has(group.name) }" />
                     </div>
                 </div>
 
                 <!-- Account Cards Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div v-show="expandedGroups.has(group.name)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <div v-for="acc in group.accounts" :key="acc.id"
                          class="account-card group relative flex items-center justify-between p-4 rounded-xl bg-page-bg border border-border hover:border-transparent transition-all duration-300 hover:-translate-y-1 overflow-hidden">
 
