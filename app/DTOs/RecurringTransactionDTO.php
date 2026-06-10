@@ -19,6 +19,7 @@ final class RecurringTransactionDTO
         public readonly string $start_date,
         public readonly ?string $end_date,
         public readonly bool $is_active,
+        public readonly ?int $debt_id = null,
     ) {}
 
     /**
@@ -38,6 +39,7 @@ final class RecurringTransactionDTO
             start_date: (string) $validated['start_date'],
             end_date: $validated['end_date'] ?? null,
             is_active: (bool) ($validated['is_active'] ?? true),
+            debt_id: isset($validated['debt_id']) ? (int) $validated['debt_id'] : null,
         );
     }
 
@@ -58,6 +60,7 @@ final class RecurringTransactionDTO
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'is_active' => $this->is_active,
+            'debt_id' => $this->debt_id,
         ];
     }
 }

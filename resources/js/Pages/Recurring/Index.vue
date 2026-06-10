@@ -17,6 +17,7 @@ const props = defineProps({
     recurring: { type: Array, default: () => [] },
     accounts: { type: Array, default: () => [] },
     categories: { type: Array, default: () => [] },
+    debts: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
@@ -41,6 +42,7 @@ const form = useForm({
     frequency: 'monthly',
     start_date: new Date().toISOString().split('T')[0],
     end_date: '',
+    debt_id: '',
 });
 
 const typeOptions = [{ value: 'income', label: 'Income' }, { value: 'expense', label: 'Expense' }];
@@ -58,11 +60,21 @@ const categoryOptions = computed(() =>
     props.categories.filter(c => c.type === form.type || c.type === 'both').map(c => ({ value: c.id, label: c.name }))
 );
 
+const debtOptions = computed(() => [{ value: '', label: 'None' }, ...props.debts.map(d => ({ value: d.id, label: d.name }))]);
+
 const openAddModal = () => {
     isEdit.value = false;
-    form.reset();
     form.clearErrors();
+    form.id = null;
+    form.type = 'expense';
+    form.account_id = '';
+    form.category_id = '';
+    form.amount = '';
+    form.description = '';
+    form.frequency = 'monthly';
     form.start_date = new Date().toISOString().split('T')[0];
+    form.end_date = '';
+    form.debt_id = '';
     showFormModal.value = true;
 };
 
@@ -78,14 +90,15 @@ const openEditModal = (rec) => {
     form.frequency = rec.frequency;
     form.start_date = rec.start_date?.split('T')[0];
     form.end_date = rec.end_date?.split('T')[0] || '';
+    form.debt_id = rec.debt_id || '';
     showFormModal.value = true;
 };
 
 const submitForm = () => {
     if (isEdit.value) {
-        form.put(`/recurring/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+        form.put(`/recurring/${form.id}`, { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     } else {
-        form.post('/recurring', { onSuccess: () => { showFormModal.value = false; } });
+        form.post('/recurring', { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     }
 };
 
@@ -270,9 +283,12 @@ const handlePageNavigate = (pageStr) => {
             <template #cell-account="{ row }">
                 <div v-if="row.account" class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: row.account.color || '#94A3B8' }" />
-                    <span class="text-sm font-medium text-slate-200">
+                    <span class="text-sm font-medium text-slate-200 flex items-center gap-2">
                         {{ row.account.name }}
-                        <span v-if="row.account.person" :style="{ color: row.account.person.color }" class="font-bold opacity-90 text-xs"> ({{ row.account.person.name }})</span>
+                        <span v-if="row.account.person" class="text-[9px] font-bold px-1.5 py-0.5 rounded-md leading-none" 
+                            :style="{ backgroundColor: (row.account.person.color || '#94A3B8') + '30', color: row.account.person.color || '#94A3B8', filter: 'brightness(1.4)' }">
+                            {{ row.account.person.name }}
+                        </span>
                     </span>
                 </div>
                 <span v-else class="text-sm text-slate-500">-</span>
@@ -335,6 +351,7 @@ const handlePageNavigate = (pageStr) => {
                 <AppSelect v-model="form.type" label="Type" :options="typeOptions" :error="form.errors.type" required />
                 <AppSelect v-model="form.account_id" label="Account" :options="accountOptions" :error="form.errors.account_id" required />
                 <AppSelect v-model="form.category_id" label="Category" :options="categoryOptions" :error="form.errors.category_id" required />
+                <AppSelect v-if="form.type === 'expense'" v-model="form.debt_id" label="Debt (Optional)" :options="debtOptions" :error="form.errors.debt_id" />
                 <AppInput v-model="form.amount" label="Amount (₱)" type="number" step="0.01" :error="form.errors.amount" required />
                 <AppInput v-model="form.description" label="Description" :error="form.errors.description" required />
                 <AppSelect v-model="form.frequency" label="Frequency" :options="freqOptions" :error="form.errors.frequency" required />

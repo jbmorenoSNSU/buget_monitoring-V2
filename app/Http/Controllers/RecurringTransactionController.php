@@ -10,6 +10,7 @@ use App\DTOs\RecurringTransactionDTO;
 use App\Http\Requests\StoreRecurringTransactionRequest;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
+use App\Interfaces\DebtRepositoryInterface;
 use App\Models\RecurringTransaction;
 use App\Services\RecurringTransactionService;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,7 @@ class RecurringTransactionController extends Controller
         private RecurringTransactionService $service,
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
+        private DebtRepositoryInterface $debtRepository,
         private CreateRecurringTransactionAction $createRecurring,
         private UpdateRecurringTransactionAction $updateRecurring,
     ) {}
@@ -35,6 +37,7 @@ class RecurringTransactionController extends Controller
             'recurring' => $this->service->get_all(),
             'accounts' => $this->accountRepository->all_active(),
             'categories' => $this->categoryRepository->all_active(),
+            'debts' => $this->debtRepository->all(),
         ]);
     }
 

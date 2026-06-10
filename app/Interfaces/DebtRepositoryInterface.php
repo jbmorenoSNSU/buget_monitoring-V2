@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Interfaces;
 
 use App\Models\Debt;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 interface DebtRepositoryInterface
 {
-    public function paginate(?int $person_id = null): LengthAwarePaginator;
+    public function paginate(?int $person_id = null): CursorPaginator;
+
+    public function all(): Collection;
 
     public function create(array $data): Debt;
 

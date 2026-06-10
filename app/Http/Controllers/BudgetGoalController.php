@@ -10,6 +10,7 @@ use App\DTOs\BudgetGoalDTO;
 use App\Http\Requests\StoreBudgetGoalRequest;
 use App\Http\Resources\BudgetGoalResource;
 use App\Interfaces\CategoryRepositoryInterface;
+use App\Interfaces\PersonRepositoryInterface;
 use App\Models\BudgetGoal;
 use App\Services\BudgetGoalService;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ class BudgetGoalController extends Controller
         private CategoryRepositoryInterface $categoryRepository,
         private CreateBudgetGoalAction $createBudgetGoal,
         private UpdateBudgetGoalAction $updateBudgetGoal,
+        private PersonRepositoryInterface $personRepository,
     ) {}
 
     public function index(Request $request): Response
@@ -39,6 +41,7 @@ class BudgetGoalController extends Controller
             'month' => $month,
             'year' => $year,
             'categories' => $this->categoryRepository->all_active_expense(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 

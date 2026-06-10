@@ -7,6 +7,7 @@ import DashboardStats from './Components/DashboardStats.vue';
 import DashboardAccounts from './Components/DashboardAccounts.vue';
 import DashboardCharts from './Components/DashboardCharts.vue';
 import DashboardActivity from './Components/DashboardActivity.vue';
+import DashboardHealthScore from './Components/DashboardHealthScore.vue';
 
 interface Person {
     id: number;
@@ -53,6 +54,9 @@ const onPersonChange = () => {
 
         <!-- summary numeric cards section -->
         <DashboardStats :stats="stats" />
+
+        <!-- financial health score -->
+        <DashboardHealthScore :score="stats?.healthScore || 0" :badges="stats?.badges || []" />
 
         <!-- primary chart visualization panels -->
         <DashboardCharts :chartsAndGoals="chartsAndGoals" :monthlyExpense="stats?.monthlyExpense || 0" />

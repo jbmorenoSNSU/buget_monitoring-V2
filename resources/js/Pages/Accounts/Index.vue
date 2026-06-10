@@ -77,8 +77,13 @@ const form = useForm({
 
 const openAddModal = () => {
     isEdit.value = false;
-    form.reset();
     form.clearErrors();
+    form.id = null;
+    form.account_type_id = '';
+    form.person_id = '';
+    form.name = '';
+    form.description = '';
+    form.initial_balance = 0;
     showFormModal.value = true;
 };
 
@@ -96,9 +101,9 @@ const openEditModal = (acc) => {
 
 const submitForm = () => {
     if (isEdit.value) {
-        form.put(`/accounts/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+        form.put(`/accounts/${form.id}`, { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     } else {
-        form.post('/accounts', { onSuccess: () => { showFormModal.value = false; } });
+        form.post('/accounts', { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     }
 };
 
@@ -121,86 +126,99 @@ onUnmounted(() => {
 
 <template>
     <AppLayout title="Accounts">
+        <!-- Top Metrics Row -->
+        <div class="mb-8">
+            <StatCard label="Total Balance" :value="formatPeso(displayBalance)" accentColor="#6366F1" class="max-w-sm" />
+        </div>
+
+        <!-- Action Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1">
-                <StatCard label="Total Balance" :value="formatPeso(displayBalance)" accentColor="#6366F1" class="flex-1 max-w-xs" />
+            <h2 class="text-lg font-semibold text-slate-200">Your Accounts</h2>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Filter by Owner:</span>
                     <AppSelect v-model="selectedPerson" :options="personOptions" class="w-44" />
                 </div>
+                <AppButton @click="openAddModal">+ Add Account</AppButton>
             </div>
-            <AppButton @click="openAddModal">+ Add Account</AppButton>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Accounts Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div v-for="acc in filteredItems" :key="acc.id"
-                class="bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
-                <!-- Color bar (Compact Option 1: h-1 instead of h-2) -->
-                <div class="h-1" :style="{ backgroundColor: acc.color }" />
+                class="group bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex flex-col justify-between h-44"
+                :style="{ boxShadow: `inset 0 2px 0 0 ${acc.color}` }">
                 
-                <div class="p-4">
-                    <!-- Top section with dropdown (Option 2) -->
-                    <div class="flex items-start justify-between mb-2">
-                        <div class="flex items-center gap-2 max-w-[80%]">
-                            <AppIcon :name="acc.account_type?.icon || 'Wallet'" size="20" class="text-slate-400 shrink-0" />
-                            <div class="min-w-0">
-                                <h3 class="font-semibold text-slate-100 text-sm truncate leading-snug" :title="acc.name">{{ acc.name }}</h3>
-                                <p class="text-[11px] text-slate-400 truncate leading-none mt-0.5">{{ acc.account_type?.name }}</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Dropdown Menu trigger -->
-                        <div class="relative shrink-0">
-                            <button @click="toggleDropdown(acc.id, $event)" 
-                                class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
-                                <AppIcon name="MoreVertical" size="16" />
-                            </button>
-                            
-                            <!-- Dropdown List -->
-                            <div v-if="activeDropdownId === acc.id" 
-                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
-                                @click.stop>
-                                <button @click="openEditModal(acc); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
-                                    <AppIcon name="Edit2" size="12" /> Edit
-                                </button>
-                                <button @click="toggle(acc); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
-                                    <AppIcon :name="acc.is_active ? 'EyeOff' : 'Eye'" size="12" />
-                                    {{ acc.is_active ? 'Deactivate' : 'Activate' }}
-                                </button>
-                                <div class="border-t border-border my-1"></div>
-                                <button @click="confirmDelete(acc); activeDropdownId = null" 
-                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
-                                    <AppIcon name="Trash2" size="12" /> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Background Watermark Icon -->
+                <AppIcon :name="acc.account_type?.icon || 'Wallet'" size="80" 
+                    class="absolute -bottom-4 -right-4 text-slate-100 opacity-[0.02] pointer-events-none transform group-hover:scale-110 group-hover:opacity-[0.04] transition-all duration-500" />
+                
+                <!-- Subtle glow effect on hover -->
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"
+                     :style="{ background: `radial-gradient(circle at 50% 0%, ${acc.color}, transparent 70%)` }">
+                </div>
 
-                    <!-- Owner and Badge -->
-                    <div class="flex items-center justify-between mb-2">
-                        <div v-if="acc.person" class="flex items-center gap-1.5 min-w-0">
-                            <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0"
-                                :style="{ backgroundColor: acc.person.color + '30', color: acc.person.color }">
+                <div class="p-5 flex flex-col h-full relative z-10">
+                    <!-- Top Section: Owner & Actions -->
+                    <div class="flex items-start justify-between mb-auto">
+                        <div v-if="acc.person" class="flex items-center gap-2 min-w-0" :title="acc.person.name">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                                :style="{ backgroundColor: acc.person.color + '20', color: acc.person.color, border: `1px solid ${acc.person.color}40` }">
                                 {{ acc.person.name.charAt(0).toUpperCase() }}
                             </div>
-                            <span class="text-[11px] font-medium truncate" :style="{ color: acc.person.color }">{{ acc.person.name }}</span>
+                            <span class="text-xs font-medium truncate" :style="{ color: acc.person.color }">{{ acc.person.name }}</span>
                         </div>
-                        <div v-else class="h-4"></div>
-                        <AppBadge :type="acc.is_active ? 'active' : 'inactive'" :label="acc.is_active ? 'Active' : 'Inactive'" class="scale-75 origin-right shrink-0" />
+                        <div v-else class="h-6 flex items-center"><span class="text-xs text-slate-500 font-medium italic">Shared</span></div>
+                        
+                        <div class="flex items-center gap-2 shrink-0">
+                            <AppBadge :type="acc.is_active ? 'active' : 'inactive'" :label="acc.is_active ? 'Active' : 'Inactive'" class="scale-75 origin-right" />
+                            
+                            <!-- Dropdown Menu trigger -->
+                            <div class="relative shrink-0 -mr-1">
+                                <button @click="toggleDropdown(acc.id, $event)" 
+                                    class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                    <AppIcon name="MoreVertical" size="16" />
+                                </button>
+                                
+                                <!-- Dropdown List -->
+                                <div v-if="activeDropdownId === acc.id" 
+                                    class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-20"
+                                    @click.stop>
+                                    <button @click="openEditModal(acc); activeDropdownId = null" 
+                                        class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                        <AppIcon name="Edit2" size="12" /> Edit
+                                    </button>
+                                    <button @click="toggle(acc); activeDropdownId = null" 
+                                        class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                        <AppIcon :name="acc.is_active ? 'EyeOff' : 'Eye'" size="12" />
+                                        {{ acc.is_active ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                    <div class="border-t border-border my-1"></div>
+                                    <button @click="confirmDelete(acc); activeDropdownId = null" 
+                                        class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                        <AppIcon name="Trash2" size="12" /> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Description -->
-                    <p v-if="acc.description" class="text-[11px] text-slate-400 mb-2 line-clamp-2 h-8" :title="acc.description">
-                        {{ acc.description }}
-                    </p>
-                    <div v-else class="h-8"></div>
+                    <!-- Middle Section: Title & Type -->
+                    <div class="mb-3">
+                        <h3 class="font-bold text-slate-100 text-base truncate" :title="acc.name">{{ acc.name }}</h3>
+                        <p class="text-[11px] text-slate-400 truncate flex items-center gap-1 mt-0.5" :title="acc.description || acc.account_type?.name">
+                            <AppIcon :name="acc.account_type?.icon || 'Wallet'" size="12" class="opacity-70" />
+                            {{ acc.account_type?.name }}
+                        </p>
+                    </div>
 
-                    <!-- Balance -->
-                    <p :class="['text-xl font-bold mt-1', acc.current_balance >= 0 ? 'text-slate-50' : 'text-expense']">
-                        {{ formatPeso(acc.current_balance) }}
-                    </p>
+                    <!-- Bottom Section: Balance -->
+                    <div class="mt-auto">
+                        <p class="text-xs text-slate-500 mb-0.5">Current Balance</p>
+                        <p :class="['text-2xl font-black tracking-tight', acc.current_balance >= 0 ? 'text-slate-50' : 'text-rose-400']">
+                            {{ formatPeso(acc.current_balance) }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

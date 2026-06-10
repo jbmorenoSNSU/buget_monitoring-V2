@@ -7,6 +7,9 @@ import { useCurrency } from '@/composables/useCurrency';
 interface Stats {
     totalBalance: number;
     safeToSpend: number;
+    safeToSpendDaily?: number;
+    healthScore?: number;
+    badges?: any[];
     monthlyIncome: number;
     monthlyExpense: number;
 }
@@ -54,6 +57,9 @@ const netSavings = computed(() => monthlyIncome.value - monthlyExpense.value);
             <div class="text-right z-10">
                 <div class="text-3xl md:text-4xl font-extrabold text-emerald-400 drop-shadow-md">
                     {{ formatPeso(stats.safeToSpend || 0) }}
+                </div>
+                <div class="text-sm font-medium text-emerald-500 mt-1 bg-emerald-900/30 inline-block px-3 py-1 rounded-full border border-emerald-500/20">
+                    Daily Allowance: {{ formatPeso(stats.safeToSpendDaily || 0) }}
                 </div>
             </div>
         </div>

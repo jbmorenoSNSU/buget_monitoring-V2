@@ -1,11 +1,14 @@
 <script setup>
 import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
+import AppModal from '@/Components/UI/AppModal.vue';
+import AppButton from '@/Components/UI/AppButton.vue';
+import QrcodeVue from 'qrcode.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
 const props = defineProps({
@@ -32,6 +35,23 @@ const columns = [
     { key: 'total_amount', label: 'Total Amount', class: 'text-right', cellClass: 'text-right' },
     { key: 'split_amount', label: 'Split Amount', class: 'text-right', cellClass: 'text-right' },
 ];
+
+const showQRModal = ref(false);
+const qrPayload = ref('');
+const qrPersonName = ref('');
+const qrAmount = ref(0);
+
+const openQRModal = (settlement) => {
+    qrPersonName.value = settlement.payer.name;
+    qrAmount.value = settlement.amount;
+    qrPayload.value = JSON.stringify({
+        app: 'BudgetMonitor',
+        type: 'expense',
+        amount: settlement.amount,
+        description: `Settlement to ${settlement.payer.name}`
+    });
+    showQRModal.value = true;
+};
 </script>
 
 <template>
@@ -39,6 +59,17 @@ const columns = [
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppInput v-model="dateFrom" type="date" label="From Date" @change="filter" />
             <AppInput v-model="dateTo" type="date" label="To Date" @change="filter" />
+        </div>
+
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-inner">
+            <AppIcon name="Info" size="20" class="text-indigo-400 shrink-0 mt-0.5" />
+            <div class="text-sm text-indigo-100/90 leading-relaxed">
+                <p class="font-semibold text-indigo-100 mb-1">What is this report for?</p>
+                <p>
+                    This report is specifically for tracking <strong>Split Bills</strong> between people in your household (e.g. if you paid for dinner and split the cost). It calculates who owes who so you can settle up. 
+                    If you are looking to track external loans, credit cards, or device installments, please use the <strong><Link href="/debts" class="text-indigo-300 hover:text-indigo-200 underline">Debts</Link></strong> page instead.
+                </p>
+            </div>
         </div>
 
         <div class="mb-8">
@@ -62,6 +93,9 @@ const columns = [
                             <div class="h-px bg-border flex-1"></div>
                         </div>
                         <span class="text-base font-bold text-expense mt-1">{{ formatPeso(settlement.amount) }}</span>
+                        <button @click="openQRModal(settlement)" class="mt-2 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded flex items-center gap-1 transition-colors cursor-pointer">
+                            <AppIcon name="QrCode" size="10" /> Pay QR
+                        </button>
                     </div>
 
                     <div class="flex flex-col items-center gap-1">
@@ -94,5 +128,19 @@ const columns = [
                 </AppTable>
             </AppCard>
         </div>
+
+        <AppModal :show="showQRModal" title="Settlement Payment QR" @close="showQRModal = false">
+            <div class="flex flex-col items-center py-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+                    <qrcode-vue :value="qrPayload" :size="200" level="M" />
+                </div>
+                <p class="text-slate-100 font-medium text-center mb-1 text-lg">Pay {{ qrPersonName }}</p>
+                <p class="text-expense font-bold text-2xl mb-2">{{ formatPeso(qrAmount) }}</p>
+                <p class="text-slate-400 text-sm text-center max-w-sm">Scan this code from the <strong>Transactions</strong> page to quickly log this settlement payment.</p>
+            </div>
+            <template #footer>
+                <AppButton variant="secondary" @click="showQRModal = false" class="w-full">Close</AppButton>
+            </template>
+        </AppModal>
     </AppLayout>
 </template>

@@ -32,10 +32,13 @@ class RecurringTransaction extends Model
         'next_due_date',
         'last_generated_date',
         'is_active',
+        'debt_id',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
+        'account_id' => 'integer',
+        'category_id' => 'integer',
         'type' => TransactionType::class,
         'frequency' => RecurringFrequency::class,
         'amount' => 'decimal:2',
@@ -44,6 +47,7 @@ class RecurringTransaction extends Model
         'next_due_date' => 'date',
         'last_generated_date' => 'date',
         'is_active' => 'boolean',
+        'debt_id' => 'integer',
     ];
 
     /**
@@ -68,6 +72,14 @@ class RecurringTransaction extends Model
     public function generatedTransactions(): HasMany
     {
         return $this->hasMany(Transaction::class, 'recurring_id');
+    }
+
+    /**
+     * Get the debt this recurring transaction is linked to.
+     */
+    public function debt(): BelongsTo
+    {
+        return $this->belongsTo(Debt::class, 'debt_id');
     }
 
     /**

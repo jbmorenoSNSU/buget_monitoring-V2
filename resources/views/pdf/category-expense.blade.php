@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>{{ $title }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #1e293b; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #1e293b; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
         .header h1 { color: #1e40af; font-size: 18px; margin: 0; }
         .header p { color: #64748b; margin: 4px 0; }

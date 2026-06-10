@@ -20,16 +20,19 @@ class StoreBudgetGoalRequest extends FormRequest
         $goal_id = $this->route('budget_goal')?->id ?? null;
 
         return [
+            'person_id' => 'nullable|exists:persons,id',
             'category_id' => [
                 'required', 'exists:categories,id',
                 Rule::unique('budget_goals')->where(function ($query) {
                     $query->where('month', $this->input('month'))
-                        ->where('year', $this->input('year'));
+                        ->where('year', $this->input('year'))
+                        ->where('person_id', $this->input('person_id'));
                 })->ignore($goal_id),
             ],
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2020|max:2099',
             'limit_amount' => 'required|numeric|min:0.01|max:9999999999999.99',
+            'is_rollover_enabled' => 'boolean',
         ];
     }
 }

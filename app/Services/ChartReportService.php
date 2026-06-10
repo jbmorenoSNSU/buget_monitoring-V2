@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Service class handling visual chart reporting datasets.
@@ -27,43 +28,48 @@ class ChartReportService
      */
     public function income_vs_expense(?string $from = null, ?string $to = null, ?int $person_id = null): array
     {
-        $fromDate = $from ? Carbon::parse($from)->startOfMonth() : now()->subMonths(5)->startOfMonth();
-        $toDate = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:income_vs_expense:{$from}:{$to}:{$person_id}:v{$version}";
 
-        $data = $this->transactionRepository->income_vs_expense_raw(
-            $fromDate->format('Y-m-d'),
-            $toDate->format('Y-m-d'),
-            $person_id
-        );
+        return Cache::remember($key, 3600, function () use ($from, $to, $person_id) {
+            $fromDate = $from ? Carbon::parse($from)->startOfMonth() : now()->subMonths(5)->startOfMonth();
+            $toDate = $to ? Carbon::parse($to)->endOfMonth() : now()->endOfMonth();
 
-        $months = [];
-        $cursor = $fromDate->copy();
-        while ($cursor->lte($toDate)) {
-            $key = $cursor->format('Y-m');
-            $months[$key] = [
-                'label' => $cursor->format('M Y'),
-                'month' => $cursor->month,
-                'year' => $cursor->year,
-                'income' => 0,
-                'expense' => 0,
-                'net' => 0,
-            ];
-            $cursor->addMonth();
-        }
+            $data = $this->transactionRepository->income_vs_expense_raw(
+                $fromDate->format('Y-m-d'),
+                $toDate->format('Y-m-d'),
+                $person_id
+            );
 
-        foreach ($data as $row) {
-            $key = sprintf('%04d-%02d', (int) $row->year, (int) $row->month);
-            if (isset($months[$key])) {
-                $type_str = $row->type instanceof \UnitEnum ? $row->type->value : $row->type;
-                $months[$key][$type_str] = (float) $row->total;
+            $months = [];
+            $cursor = $fromDate->copy();
+            while ($cursor->lte($toDate)) {
+                $mkey = $cursor->format('Y-m');
+                $months[$mkey] = [
+                    'label' => $cursor->format('M Y'),
+                    'month' => $cursor->month,
+                    'year' => $cursor->year,
+                    'income' => 0,
+                    'expense' => 0,
+                    'net' => 0,
+                ];
+                $cursor->addMonth();
             }
-        }
 
-        foreach ($months as &$m) {
-            $m['net'] = $m['income'] - $m['expense'];
-        }
+            foreach ($data as $row) {
+                $mkey = sprintf('%04d-%02d', (int) $row->year, (int) $row->month);
+                if (isset($months[$mkey])) {
+                    $type_str = $row->type instanceof \UnitEnum ? $row->type->value : $row->type;
+                    $months[$mkey][$type_str] = (float) $row->total;
+                }
+            }
 
-        return array_values($months);
+            foreach ($months as &$m) {
+                $m['net'] = $m['income'] - $m['expense'];
+            }
+
+            return array_values($months);
+        });
     }
 
     /**
@@ -73,17 +79,22 @@ class ChartReportService
      */
     public function category_expense(int $month, int $year, ?int $person_id = null): array
     {
-        $data = $this->transactionRepository->category_expense_raw($month, $year, $person_id);
-        $grand_total = $data->sum('total');
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:category_expense:{$month}:{$year}:{$person_id}:v{$version}";
 
-        return $data->map(fn ($row) => [
-            'category_id' => $row->category_id,
-            'category_name' => $row->category?->name ?? 'Unknown',
-            'category_icon' => $row->category?->icon ?? 'tag',
-            'category_color' => $row->category?->color ?? '#94A3B8',
-            'amount' => (float) $row->total,
-            'percentage' => $grand_total > 0 ? round(($row->total / $grand_total) * 100, 1) : 0,
-        ])->toArray();
+        return Cache::remember($key, 3600, function () use ($month, $year, $person_id) {
+            $data = $this->transactionRepository->category_expense_raw($month, $year, $person_id);
+            $grand_total = $data->sum('total');
+
+            return $data->map(fn ($row) => [
+                'category_id' => $row->category_id,
+                'category_name' => $row->category?->name ?? 'Unknown',
+                'category_icon' => $row->category?->icon ?? 'tag',
+                'category_color' => $row->category?->color ?? '#94A3B8',
+                'amount' => (float) $row->total,
+                'percentage' => $grand_total > 0 ? round(($row->total / $grand_total) * 100, 1) : 0,
+            ])->toArray();
+        });
     }
 
     /**
@@ -107,53 +118,58 @@ class ChartReportService
      */
     public function daily_spending_trend(int $month, int $year, ?int $person_id = null): array
     {
-        $current_start = Carbon::create($year, $month, 1);
-        $current_end = $current_start->copy()->endOfMonth();
-        $today = now();
-        if ($current_end->gt($today)) {
-            $current_end = $today;
-        }
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:daily_spending_trend:{$month}:{$year}:{$person_id}:v{$version}";
 
-        $prev_start = $current_start->copy()->subMonth()->startOfMonth();
-        $prev_end = $current_start->copy()->subMonth()->endOfMonth();
-
-        $transactions = $this->transactionRepository->expense_by_date_range(
-            $prev_start->format('Y-m-d'),
-            $current_end->format('Y-m-d'),
-            $person_id
-        );
-
-        $current_data = [];
-        $prev_data = [];
-        foreach ($transactions as $t) {
-            $date = Carbon::parse($t->transaction_date);
-            if ($date->between($current_start, $current_end)) {
-                $current_data[$date->day] = ($current_data[$date->day] ?? 0) + (float) $t->amount;
-            } elseif ($date->between($prev_start, $prev_end)) {
-                $prev_data[$date->day] = ($prev_data[$date->day] ?? 0) + (float) $t->amount;
+        return Cache::remember($key, 3600, function () use ($month, $year, $person_id) {
+            $current_start = Carbon::create($year, $month, 1);
+            $current_end = $current_start->copy()->endOfMonth();
+            $today = now();
+            if ($current_end->gt($today)) {
+                $current_end = $today;
             }
-        }
 
-        $result = [];
-        $run_current = 0;
-        $run_prev = 0;
-        $max_days = $current_start->daysInMonth;
+            $prev_start = $current_start->copy()->subMonth()->startOfMonth();
+            $prev_end = $current_start->copy()->subMonth()->endOfMonth();
 
-        for ($d = 1; $d <= $max_days; $d++) {
-            $run_current += $current_data[$d] ?? 0;
-            $run_prev += $prev_data[$d] ?? 0;
+            $transactions = $this->transactionRepository->expense_by_date_range(
+                $prev_start->format('Y-m-d'),
+                $current_end->format('Y-m-d'),
+                $person_id
+            );
 
-            $is_future = $d > $current_end->day && $current_start->format('Y-m') === $today->format('Y-m');
+            $current_data = [];
+            $prev_data = [];
+            foreach ($transactions as $t) {
+                $date = Carbon::parse($t->transaction_date);
+                if ($date->between($current_start, $current_end)) {
+                    $current_data[$date->day] = ($current_data[$date->day] ?? 0) + (float) $t->amount;
+                } elseif ($date->between($prev_start, $prev_end)) {
+                    $prev_data[$date->day] = ($prev_data[$date->day] ?? 0) + (float) $t->amount;
+                }
+            }
 
-            $result[] = [
-                'day' => $d,
-                'label' => "Day $d",
-                'current_amount' => $is_future ? null : round($run_current, 2),
-                'previous_amount' => round($run_prev, 2),
-            ];
-        }
+            $result = [];
+            $run_current = 0;
+            $run_prev = 0;
+            $max_days = $current_start->daysInMonth;
 
-        return $result;
+            for ($d = 1; $d <= $max_days; $d++) {
+                $run_current += $current_data[$d] ?? 0;
+                $run_prev += $prev_data[$d] ?? 0;
+
+                $is_future = $d > $current_end->day && $current_start->format('Y-m') === $today->format('Y-m');
+
+                $result[] = [
+                    'day' => $d,
+                    'label' => "Day $d",
+                    'current_amount' => $is_future ? null : round($run_current, 2),
+                    'previous_amount' => round($run_prev, 2),
+                ];
+            }
+
+            return $result;
+        });
     }
 
     /**
@@ -163,67 +179,72 @@ class ChartReportService
      */
     public function weekly_spending_trend(?int $person_id = null): array
     {
-        $today = now();
-        $current_start = now()->subWeeks(11)->startOfWeek();
-        $current_end = now()->endOfWeek();
-        if ($current_end->gt($today)) {
-            $current_end = $today;
-        }
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:weekly_spending_trend:{$person_id}:v{$version}";
 
-        $prev_start = $current_start->copy()->subWeeks(12)->startOfWeek();
-        $prev_end = $current_start->copy()->subWeeks(1)->endOfWeek();
+        return Cache::remember($key, 3600, function () use ($person_id) {
+            $today = now();
+            $current_start = now()->subWeeks(11)->startOfWeek();
+            $current_end = now()->endOfWeek();
+            if ($current_end->gt($today)) {
+                $current_end = $today;
+            }
 
-        $transactions = $this->transactionRepository->expense_by_date_range(
-            $prev_start->format('Y-m-d'),
-            $current_end->format('Y-m-d'),
-            $person_id
-        );
+            $prev_start = $current_start->copy()->subWeeks(12)->startOfWeek();
+            $prev_end = $current_start->copy()->subWeeks(1)->endOfWeek();
 
-        $current_buckets = array_fill(0, 12, 0);
-        $prev_buckets = array_fill(0, 12, 0);
-        $labels = [];
+            $transactions = $this->transactionRepository->expense_by_date_range(
+                $prev_start->format('Y-m-d'),
+                $current_end->format('Y-m-d'),
+                $person_id
+            );
 
-        $cursor = $current_start->copy();
-        for ($i = 0; $i < 12; $i++) {
-            $labels[$i] = 'Wk '.$cursor->format('M d');
-            $cursor->addWeek();
-        }
+            $current_buckets = array_fill(0, 12, 0);
+            $prev_buckets = array_fill(0, 12, 0);
+            $labels = [];
 
-        foreach ($transactions as $t) {
-            $date = Carbon::parse($t->transaction_date);
+            $cursor = $current_start->copy();
+            for ($i = 0; $i < 12; $i++) {
+                $labels[$i] = 'Wk '.$cursor->format('M d');
+                $cursor->addWeek();
+            }
 
-            if ($date->between($current_start, $current_end)) {
-                $diff_in_weeks = $date->diffInWeeks($current_start);
-                if (isset($current_buckets[$diff_in_weeks])) {
-                    $current_buckets[$diff_in_weeks] += (float) $t->amount;
-                }
-            } elseif ($date->between($prev_start, $prev_end)) {
-                $diff_in_weeks = $date->diffInWeeks($prev_start);
-                if (isset($prev_buckets[$diff_in_weeks])) {
-                    $prev_buckets[$diff_in_weeks] += (float) $t->amount;
+            foreach ($transactions as $t) {
+                $date = Carbon::parse($t->transaction_date);
+
+                if ($date->between($current_start, $current_end)) {
+                    $diff_in_weeks = (int) floor($current_start->diffInWeeks($date));
+                    if (isset($current_buckets[$diff_in_weeks])) {
+                        $current_buckets[$diff_in_weeks] += (float) $t->amount;
+                    }
+                } elseif ($date->between($prev_start, $prev_end)) {
+                    $diff_in_weeks = (int) floor($prev_start->diffInWeeks($date));
+                    if (isset($prev_buckets[$diff_in_weeks])) {
+                        $prev_buckets[$diff_in_weeks] += (float) $t->amount;
+                    }
                 }
             }
-        }
 
-        $result = [];
-        $run_current = 0;
-        $run_prev = 0;
+            $result = [];
+            $run_current = 0;
+            $run_prev = 0;
 
-        for ($i = 0; $i < 12; $i++) {
-            $run_current += $current_buckets[$i];
-            $run_prev += $prev_buckets[$i];
+            for ($i = 0; $i < 12; $i++) {
+                $run_current += $current_buckets[$i];
+                $run_prev += $prev_buckets[$i];
 
-            $week_start = $current_start->copy()->addWeeks($i);
-            $is_future = $week_start->gt($today);
+                $week_start = $current_start->copy()->addWeeks($i);
+                $is_future = $week_start->gt($today);
 
-            $result[] = [
-                'label' => $labels[$i],
-                'current_amount' => $is_future ? null : round($run_current, 2),
-                'previous_amount' => round($run_prev, 2),
-            ];
-        }
+                $result[] = [
+                    'label' => $labels[$i],
+                    'current_amount' => $is_future ? null : round($run_current, 2),
+                    'previous_amount' => round($run_prev, 2),
+                ];
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     /**
@@ -233,51 +254,56 @@ class ChartReportService
      */
     public function yearly_spending_trend(int $year, ?int $person_id = null): array
     {
-        $current_start = Carbon::create($year, 1, 1)->startOfYear();
-        $current_end = $current_start->copy()->endOfYear();
-        $today = now();
-        if ($current_end->gt($today)) {
-            $current_end = $today;
-        }
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:yearly_spending_trend:{$year}:{$person_id}:v{$version}";
 
-        $prev_start = $current_start->copy()->subYear()->startOfYear();
-        $prev_end = $current_start->copy()->subYear()->endOfYear();
-
-        $transactions = $this->transactionRepository->expense_by_date_range(
-            $prev_start->format('Y-m-d'),
-            $current_end->format('Y-m-d'),
-            $person_id
-        );
-
-        $current_data = [];
-        $prev_data = [];
-        foreach ($transactions as $t) {
-            $date = Carbon::parse($t->transaction_date);
-            if ($date->between($current_start, $current_end)) {
-                $current_data[$date->month] = ($current_data[$date->month] ?? 0) + (float) $t->amount;
-            } elseif ($date->between($prev_start, $prev_end)) {
-                $prev_data[$date->month] = ($prev_data[$date->month] ?? 0) + (float) $t->amount;
+        return Cache::remember($key, 3600, function () use ($year, $person_id) {
+            $current_start = Carbon::create($year, 1, 1)->startOfYear();
+            $current_end = $current_start->copy()->endOfYear();
+            $today = now();
+            if ($current_end->gt($today)) {
+                $current_end = $today;
             }
-        }
 
-        $result = [];
-        $run_current = 0;
-        $run_prev = 0;
+            $prev_start = $current_start->copy()->subYear()->startOfYear();
+            $prev_end = $current_start->copy()->subYear()->endOfYear();
 
-        for ($m = 1; $m <= 12; $m++) {
-            $run_current += $current_data[$m] ?? 0;
-            $run_prev += $prev_data[$m] ?? 0;
+            $transactions = $this->transactionRepository->expense_by_date_range(
+                $prev_start->format('Y-m-d'),
+                $current_end->format('Y-m-d'),
+                $person_id
+            );
 
-            $is_future = $m > $current_end->month && $current_start->year === $today->year;
+            $current_data = [];
+            $prev_data = [];
+            foreach ($transactions as $t) {
+                $date = Carbon::parse($t->transaction_date);
+                if ($date->between($current_start, $current_end)) {
+                    $current_data[$date->month] = ($current_data[$date->month] ?? 0) + (float) $t->amount;
+                } elseif ($date->between($prev_start, $prev_end)) {
+                    $prev_data[$date->month] = ($prev_data[$date->month] ?? 0) + (float) $t->amount;
+                }
+            }
 
-            $result[] = [
-                'label' => Carbon::create($year, $m, 1)->format('M'),
-                'current_amount' => $is_future ? null : round($run_current, 2),
-                'previous_amount' => round($run_prev, 2),
-            ];
-        }
+            $result = [];
+            $run_current = 0;
+            $run_prev = 0;
 
-        return $result;
+            for ($m = 1; $m <= 12; $m++) {
+                $run_current += $current_data[$m] ?? 0;
+                $run_prev += $prev_data[$m] ?? 0;
+
+                $is_future = $m > $current_end->month && $current_start->year === $today->year;
+
+                $result[] = [
+                    'label' => Carbon::create($year, $m, 1)->format('M'),
+                    'current_amount' => $is_future ? null : round($run_current, 2),
+                    'previous_amount' => round($run_prev, 2),
+                ];
+            }
+
+            return $result;
+        });
     }
 
     /**
@@ -287,67 +313,69 @@ class ChartReportService
      */
     public function year_in_review(int $year): array
     {
-        $start = Carbon::create($year, 1, 1)->startOfYear();
-        $end = $start->copy()->endOfYear();
+        $version = Cache::get('reports_cache_version', 1);
+        $key = "reports:year_in_review:{$year}:v{$version}";
 
-        $today = now();
-        if ($end->gt($today)) {
-            $end = $today;
-        }
+        return Cache::remember($key, 3600, function () use ($year) {
+            $start = Carbon::create($year, 1, 1)->startOfYear();
+            $end = $start->copy()->endOfYear();
 
-        // Get all transactions for the year
-        $transactions = $this->transactionRepository->expense_by_date_range($start->format('Y-m-d'), $end->format('Y-m-d'));
-        // wait, expense_by_date_range only returns expenses. Let's use a new query or just hit DB here.
-        // Actually we can just query the DB directly here for ease since this is an aggregated report.
-        $all_txns = Transaction::whereBetween('transaction_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
-            ->whereIn('type', ['income', 'expense'])
-            ->get();
+            $today = now();
+            if ($end->gt($today)) {
+                $end = $today;
+            }
 
-        $total_income = $all_txns->where('type', 'income')->sum('amount');
-        $total_expense = $all_txns->where('type', 'expense')->sum('amount');
-        $net_savings = $total_income - $total_expense;
+            // Get all transactions for the year
+            $all_txns = Transaction::whereBetween('transaction_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+                ->whereIn('type', ['income', 'expense'])
+                ->get();
 
-        // Top categories
-        $categories = $all_txns->where('type', 'expense')
-            ->groupBy('category_id')
-            ->map(function ($group) {
-                $first = $group->first();
+            $total_income = $all_txns->where('type', 'income')->sum('amount');
+            $total_expense = $all_txns->where('type', 'expense')->sum('amount');
+            $net_savings = $total_income - $total_expense;
 
-                return [
-                    'category_name' => $first->category?->name ?? 'Unknown',
-                    'category_icon' => $first->category?->icon ?? 'tag',
-                    'category_color' => $first->category?->color ?? '#94A3B8',
-                    'amount' => $group->sum('amount'),
-                ];
-            })
-            ->sortByDesc('amount')
-            ->take(5)
-            ->values()
-            ->toArray();
+            // Top categories
+            $categories = $all_txns->where('type', 'expense')
+                ->groupBy('category_id')
+                ->map(function ($group) {
+                    $first = $group->first();
 
-        // Busiest month
-        $months = $all_txns->where('type', 'expense')
-            ->groupBy(fn ($t) => Carbon::parse($t->transaction_date)->month)
-            ->map(fn ($g) => $g->sum('amount'));
+                    return [
+                        'category_name' => $first->category?->name ?? 'Unknown',
+                        'category_icon' => $first->category?->icon ?? 'tag',
+                        'category_color' => $first->category?->color ?? '#94A3B8',
+                        'amount' => $group->sum('amount'),
+                    ];
+                })
+                ->sortByDesc('amount')
+                ->take(5)
+                ->values()
+                ->toArray();
 
-        $busiest_month_num = $months->keys()->first(fn ($k) => $months[$k] === $months->max());
-        $busiest_month_name = $busiest_month_num ? Carbon::create($year, $busiest_month_num, 1)->format('F') : 'N/A';
-        $busiest_month_amount = $months->max() ?? 0;
+            // Busiest month
+            $months = $all_txns->where('type', 'expense')
+                ->groupBy(fn ($t) => Carbon::parse($t->transaction_date)->month)
+                ->map(fn ($g) => $g->sum('amount'));
 
-        // Split total
-        $total_split = $all_txns->sum('split_amount');
+            $busiest_month_num = $months->keys()->first(fn ($k) => $months[$k] === $months->max());
+            $busiest_month_name = $busiest_month_num ? Carbon::create($year, $busiest_month_num, 1)->format('F') : 'N/A';
+            $busiest_month_amount = $months->max() ?? 0;
 
-        return [
-            'year' => $year,
-            'total_income' => round($total_income, 2),
-            'total_expense' => round($total_expense, 2),
-            'net_savings' => round($net_savings, 2),
-            'top_categories' => $categories,
-            'busiest_month' => [
-                'name' => $busiest_month_name,
-                'amount' => round($busiest_month_amount, 2),
-            ],
-            'total_split' => round($total_split, 2),
-        ];
+            // Split total
+            $total_split = $all_txns->sum('split_amount');
+
+            return [
+                'year' => $year,
+                'total_income' => round($total_income, 2),
+                'total_expense' => round($total_expense, 2),
+                'net_savings' => round($net_savings, 2),
+                'top_categories' => $categories,
+                'busiest_month' => [
+                    'name' => $busiest_month_name,
+                    'amount' => round($busiest_month_amount, 2),
+                ],
+                'total_split' => round($total_split, 2),
+            ];
+        });
     }
 }

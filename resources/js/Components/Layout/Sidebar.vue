@@ -21,6 +21,7 @@ const navItems = [
     { name: 'Categories', route: 'categories', icon: 'Folder', href: '/categories' },
     { name: 'Debts', route: 'debts', icon: 'TrendingDown', href: '/debts' },
     { name: 'Reports', route: 'reports', icon: 'PieChart', href: '/reports' },
+    { name: 'Downloads', route: 'downloads', icon: 'Download', href: '/downloads' },
 ];
 
 const isActive = (item) => {

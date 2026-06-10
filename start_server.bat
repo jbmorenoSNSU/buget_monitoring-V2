@@ -2,17 +2,6 @@
 :: Navigate to the directory where this script is located
 cd /d %~dp0
 
-:: 0. Robust Early Exit: Only skip the wait if BOTH the Database and the App are confirmed ready.
-:: This prevents errors if the app server is running but the database is offline.
-php -r "try { new PDO('mysql:host=127.0.0.1;port=3306', 'root', ''); exit(0); } catch (Exception $e) { exit(1); }" > nul 2>&1
-if %errorlevel% neq 0 goto START_SEQUENCE
-
-netstat -ano | find "LISTENING" | find ":8000" > nul
-if %errorlevel% equ 0 (
-    start chrome --app=http://localhost:8000
-    exit
-)
-
 :START_SEQUENCE
 
 :: 1. Wait for WampServer MySQL (Port 3306) to be ready using an actual connection attempt
@@ -31,6 +20,23 @@ if %errorlevel% neq 0 (
     echo Starting Artisan server...
     start /b php artisan serve --port=8000
 )
+
+:: 2.5 Check if Queue Worker is running, if not start it
+where wmic >nul 2>nul
+if %errorlevel% equ 0 (
+    wmic process where "commandline like '%%queue:work%%' and name='php.exe'" get processid ^| findstr [0-9] > nul
+    if errorlevel 1 (
+        echo Starting Queue Worker...
+        start /b php artisan queue:work
+    )
+) else (
+    echo wmic not found, Starting Queue Worker...
+    start /b php artisan queue:work
+)
+
+:: 2.6 Run Monthly Budget Rollover
+echo Running Budget Rollovers...
+start /b php artisan budget:rollover
 
 :: 3. Wait for the Artisan server (Port 8000) itself to be fully active
 echo Waiting for App Server to be ready...

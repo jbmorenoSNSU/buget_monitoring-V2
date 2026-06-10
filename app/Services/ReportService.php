@@ -44,9 +44,9 @@ class ReportService
     /**
      * Delegate: Variance analysis on budget goals vs actual spending.
      */
-    public function budget_goal_report(int $month, int $year): array
+    public function budget_goal_report(int $month, int $year, ?int $person_id = null): array
     {
-        return $this->statementReportService->budget_goal_report($month, $year);
+        return $this->statementReportService->budget_goal_report($month, $year, $person_id);
     }
 
     /**
@@ -84,9 +84,9 @@ class ReportService
     /**
      * Delegate: Calendar day aggregation list.
      */
-    public function calendar_report(int $month, int $year): array
+    public function calendar_report(int $month, int $year, ?int $person_id = null, ?int $account_id = null): array
     {
-        return $this->statementReportService->calendar_report($month, $year);
+        return $this->statementReportService->calendar_report($month, $year, $person_id, $account_id);
     }
 
     /**

@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Account;
+use App\Models\Debt;
 use App\Models\Transaction;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -39,7 +40,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             $query->byAccount((int) $filters['account_id']);
         }
         if (! empty($filters['person_id'])) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', (int) $filters['person_id']));
+            $pid = (int) $filters['person_id'];
+            $query->where(function ($q) use ($pid) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $pid))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $pid));
+            });
         }
         if (! empty($filters['category_id'])) {
             $query->byCategory((int) $filters['category_id']);
@@ -108,7 +113,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         $query = Transaction::byType($type)->forMonth($month, $year);
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return (float) $query->sum('amount');
@@ -120,7 +128,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc');
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return $query->limit($limit)->get();
@@ -133,7 +144,12 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
         match ($type) {
             'income' => $account->increment('current_balance', (float) $transaction->amount),
-            'expense' => $account->decrement('current_balance', (float) $transaction->amount),
+            'expense' => (function () use ($transaction, $account) {
+                $account->decrement('current_balance', (float) $transaction->amount);
+                if ($transaction->debt_id) {
+                    Debt::findOrFail($transaction->debt_id)->decrement('principal_amount', (float) $transaction->amount);
+                }
+            })(),
             'transfer' => (function () use ($transaction) {
                 $transaction->account->decrement('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
@@ -151,7 +167,12 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
         match ($type) {
             'income' => $account->decrement('current_balance', (float) $transaction->amount),
-            'expense' => $account->increment('current_balance', (float) $transaction->amount),
+            'expense' => (function () use ($transaction, $account) {
+                $account->increment('current_balance', (float) $transaction->amount);
+                if ($transaction->debt_id) {
+                    Debt::findOrFail($transaction->debt_id)->increment('principal_amount', (float) $transaction->amount);
+                }
+            })(),
             'transfer' => (function () use ($transaction) {
                 $transaction->account->increment('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
@@ -182,10 +203,35 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->groupBy('category_id');
 
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return $query->pluck('spent', 'category_id')->toArray();
+    }
+
+    public function spent_by_category_and_person_map(int $month, int $year): array
+    {
+        $query = Transaction::join('accounts', 'transactions.account_id', '=', 'accounts.id')
+            ->where('transactions.type', 'expense')
+            ->whereMonth('transactions.transaction_date', $month)
+            ->whereYear('transactions.transaction_date', $year)
+            ->whereNotNull('accounts.person_id')
+            ->selectRaw('transactions.category_id, accounts.person_id, SUM(transactions.amount) as spent')
+            ->groupBy('transactions.category_id', 'accounts.person_id')
+            ->get();
+
+        $map = [];
+        foreach ($query as $row) {
+            if (! isset($map[$row->person_id])) {
+                $map[$row->person_id] = [];
+            }
+            $map[$row->person_id][$row->category_id] = (float) $row->spent;
+        }
+
+        return $map;
     }
 
     public function income_vs_expense_raw(string $from, string $to, ?int $person_id = null): Collection
@@ -209,7 +255,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->whereBetween('transaction_date', [$from, $to]);
 
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return $query->groupBy('year', 'month', 'type')
@@ -225,7 +274,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->forMonth($month, $year);
 
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return $query->with('category:id,name,color,icon')
@@ -268,17 +320,33 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->whereBetween('transaction_date', [$from, $to]);
 
         if ($person_id) {
-            $query->whereHas('account', fn ($q) => $q->where('person_id', $person_id));
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
         }
 
         return $query->orderBy('transaction_date')->get();
     }
 
-    public function calendar_transactions(string $start, string $end): Collection
+    public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection
     {
-        return Transaction::with(['category:id,name,icon,color', 'account:id,name'])
-            ->whereBetween('transaction_date', [$start, $end])
-            ->get();
+        $query = Transaction::with(['category:id,name,icon,color', 'account:id,name'])
+            ->whereBetween('transaction_date', [$start, $end]);
+
+        if ($account_id) {
+            $query->where(function ($q) use ($account_id) {
+                $q->where('account_id', $account_id)
+                    ->orWhere('transfer_to_account_id', $account_id);
+            });
+        } elseif ($person_id) {
+            $query->where(function ($q) use ($person_id) {
+                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
+                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
+            });
+        }
+
+        return $query->get();
     }
 
     public function split_transactions_raw(string $from, string $to): Collection

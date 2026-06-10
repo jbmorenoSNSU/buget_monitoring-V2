@@ -7,7 +7,7 @@ namespace App\Services;
 use App\DTOs\Debts\DebtDTO;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\CursorPaginator;
 
 class DebtService
 {
@@ -15,7 +15,7 @@ class DebtService
         private DebtRepositoryInterface $debtRepository
     ) {}
 
-    public function paginate(?int $person_id = null): LengthAwarePaginator
+    public function paginate(?int $person_id = null): CursorPaginator
     {
         $paginator = $this->debtRepository->paginate($person_id);
 

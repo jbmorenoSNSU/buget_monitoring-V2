@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface BudgetGoalRepositoryInterface
 {
-    public function for_month(int $month, int $year): Collection;
+    public function for_month(int $month, int $year, ?int $person_id = null): Collection;
 
     public function find(int $id): ?BudgetGoal;
 
@@ -19,5 +19,5 @@ interface BudgetGoalRepositoryInterface
 
     public function delete(BudgetGoal $goal): void;
 
-    public function spent_by_category(int $category_id, int $month, int $year): float;
+    public function spent_by_category(int $category_id, int $month, int $year, ?int $person_id = null): float;
 }

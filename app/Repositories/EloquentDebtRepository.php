@@ -6,11 +6,12 @@ namespace App\Repositories;
 
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class EloquentDebtRepository implements DebtRepositoryInterface
 {
-    public function paginate(?int $person_id = null): LengthAwarePaginator
+    public function paginate(?int $person_id = null): CursorPaginator
     {
         $query = Debt::query()->with('person');
 
@@ -20,7 +21,12 @@ class EloquentDebtRepository implements DebtRepositoryInterface
 
         return $query->orderBy('status')
             ->orderBy('principal_amount', 'desc')
-            ->paginate(50);
+            ->cursorPaginate(50);
+    }
+
+    public function all(): Collection
+    {
+        return Debt::orderBy('name')->get();
     }
 
     public function create(array $data): Debt

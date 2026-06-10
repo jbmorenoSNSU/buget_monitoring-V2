@@ -13,6 +13,7 @@ import { useCurrency } from '@/composables/useCurrency.js';
 const props = defineProps({
     data: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
+    persons: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
@@ -24,7 +25,13 @@ const yearOptions = Array.from({ length: 6 }, (_, i) => ({ value: 2023 + i, labe
 
 const viewMode = ref('chart'); // 'chart' or 'heatmap'
 
-const filter = () => router.get('/reports/category-expense', { month: month.value, year: year.value }, { preserveState: true });
+const person_id = ref(props.filters.person_id || '');
+
+const personOptions = computed(() => {
+    return [{ value: '', label: 'Everyone' }, ...props.persons.map(p => ({ value: p.id, label: p.name }))];
+});
+
+const filter = () => router.get('/reports/category-expense', { month: month.value, year: year.value, person_id: person_id.value }, { preserveState: true });
 
 const chartData = computed(() => ({
     labels: props.data.map(d => d.category_name),
@@ -41,7 +48,7 @@ const columns = [
     { key: 'percentage', label: '% of Total', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=${year.value}`;
+const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=${year.value}&person_id=${person_id.value || ''}`;
 </script>
 
 <template>
@@ -49,6 +56,7 @@ const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=$
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppSelect v-model="month" :options="monthOptions" label="Month" @change="filter" />
             <AppSelect v-model="year" :options="yearOptions" label="Year" @change="filter" />
+            <AppSelect v-model="person_id" :options="personOptions" label="Person" @change="filter" />
             
             <div class="flex items-center bg-slate-800 rounded-lg p-1 ml-auto shrink-0">
                 <button @click="viewMode = 'chart'" :class="['px-3 py-1.5 text-xs font-medium rounded-md transition-colors', viewMode === 'chart' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200']">

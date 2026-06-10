@@ -40,9 +40,12 @@ const typeOptions = [
 
 const openAddModal = () => {
     isEdit.value = false;
-    form.reset();
     form.clearErrors();
+    form.id = null;
+    form.name = '';
     form.type = activeTab.value === 'both' ? 'expense' : activeTab.value;
+    form.icon = 'tag';
+    form.color = '#6366F1';
     showFormModal.value = true;
 };
 
@@ -59,9 +62,9 @@ const openEditModal = (cat) => {
 
 const submitForm = () => {
     if (isEdit.value) {
-        form.put(`/categories/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+        form.put(`/categories/${form.id}`, { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     } else {
-        form.post('/categories', { onSuccess: () => { showFormModal.value = false; } });
+        form.post('/categories', { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     }
 };
 

@@ -5,6 +5,7 @@ import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
+import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
@@ -13,13 +14,19 @@ import { useCurrency } from '@/composables/useCurrency.js';
 const props = defineProps({
     data: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
+    persons: { type: Array, default: () => [] },
 });
 
 const { formatPeso } = useCurrency();
 const from = ref(props.filters.from || '');
 const to = ref(props.filters.to || '');
+const person_id = ref(props.filters.person_id || '');
 
-const filter = () => router.get('/reports/income-expense', { from: from.value, to: to.value }, { preserveState: true });
+const personOptions = computed(() => {
+    return [{ value: '', label: 'Everyone' }, ...props.persons.map(p => ({ value: p.id, label: p.name }))];
+});
+
+const filter = () => router.get('/reports/income-expense', { from: from.value, to: to.value, person_id: person_id.value }, { preserveState: true });
 
 const chartData = computed(() => ({
     labels: props.data.map(d => d.label),
@@ -36,7 +43,7 @@ const columns = [
     { key: 'net', label: 'Net Savings', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.value}`;
+const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.value}&person_id=${person_id.value || ''}`;
 </script>
 
 <template>
@@ -44,6 +51,7 @@ const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
+            <AppSelect v-model="person_id" :options="personOptions" label="Person" />
             <AppButton @click="filter">Apply</AppButton>
             <a :href="exportUrl('income-expense-excel')" class="inline-block">
                 <AppButton variant="secondary" class="gap-2">

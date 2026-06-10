@@ -35,8 +35,10 @@ const form = useForm({
 
 const openAddModal = () => {
     isEdit.value = false;
-    form.reset();
     form.clearErrors();
+    form.id = null;
+    form.name = '';
+    form.color = '#6366F1';
     showFormModal.value = true;
 };
 
@@ -51,9 +53,9 @@ const openEditModal = (person) => {
 
 const submitForm = () => {
     if (isEdit.value) {
-        form.put(`/persons/${form.id}`, { onSuccess: () => { showFormModal.value = false; } });
+        form.put(`/persons/${form.id}`, { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     } else {
-        form.post('/persons', { onSuccess: () => { showFormModal.value = false; } });
+        form.post('/persons', { onSuccess: () => { showFormModal.value = false; form.reset(); } });
     }
 };
 
@@ -81,26 +83,36 @@ onUnmounted(() => {
             <AppButton @click="openAddModal">+ Add Person</AppButton>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div v-for="person in items" :key="person.id"
-                class="bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow relative">
-                <div class="h-1" :style="{ backgroundColor: person.color }" />
+                class="group bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative flex flex-col justify-between"
+                :style="{ boxShadow: `inset 0 2px 0 0 ${person.color}` }">
                 
-                <div class="p-4">
-                    <div class="flex items-start justify-between mb-2">
-                        <div class="flex items-center gap-2 max-w-[80%]">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-md"
-                                :style="{ backgroundColor: person.color + '30', color: person.color }">
+                <!-- Background Watermark Icon -->
+                <AppIcon name="User" size="100" 
+                    class="absolute -bottom-4 -right-4 text-slate-100 opacity-[0.02] pointer-events-none transform group-hover:scale-110 group-hover:opacity-[0.04] transition-all duration-500" />
+                
+                <!-- Subtle glow effect on hover -->
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"
+                     :style="{ background: `radial-gradient(circle at 50% 0%, ${person.color}, transparent 70%)` }">
+                </div>
+
+                <div class="p-5 flex flex-col h-full relative z-10">
+                    <!-- Top Section: Avatar, Name & Dropdown -->
+                    <div class="flex items-start justify-between mb-5">
+                        <div class="flex items-center gap-3 max-w-[80%]">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm"
+                                :style="{ backgroundColor: person.color + '20', color: person.color, border: `1px solid ${person.color}40` }">
                                 {{ person.name.charAt(0).toUpperCase() }}
                             </div>
                             <div class="min-w-0">
-                                <h3 class="font-semibold text-slate-100 text-sm truncate leading-snug">{{ person.name }}</h3>
-                                <p class="text-[11px] text-slate-400 truncate leading-none mt-0.5">{{ person.accounts_count }} active account{{ person.accounts_count !== 1 ? 's' : '' }}</p>
+                                <h3 class="font-bold text-slate-100 text-lg truncate leading-snug">{{ person.name }}</h3>
+                                <p class="text-xs text-slate-400 truncate mt-0.5">{{ person.accounts_count }} active account{{ person.accounts_count !== 1 ? 's' : '' }}</p>
                             </div>
                         </div>
                         
                         <!-- Dropdown Menu trigger -->
-                        <div class="relative shrink-0">
+                        <div class="relative shrink-0 -mr-1">
                             <button @click="toggleDropdown(person.id, $event)" 
                                 class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
                                 <AppIcon name="MoreVertical" size="16" />
@@ -108,7 +120,7 @@ onUnmounted(() => {
                             
                             <!-- Dropdown List -->
                             <div v-if="activeDropdownId === person.id" 
-                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-10"
+                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-20"
                                 @click.stop>
                                 <button @click="openEditModal(person); activeDropdownId = null" 
                                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
@@ -123,31 +135,32 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <div class="bg-page-bg/50 rounded-lg p-2.5 space-y-2">
+                    <!-- Stats Box -->
+                    <div class="bg-sidebar/50 rounded-lg p-4 space-y-3 mt-auto border border-border/30 backdrop-blur-sm relative z-10">
                         <div>
-                            <p class="text-[10px] text-slate-400 mb-0.5">Total Balance</p>
-                            <p :class="['text-lg font-bold', person.total_balance >= 0 ? 'text-slate-50' : 'text-expense']">
+                            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1">Total Balance</p>
+                            <p :class="['text-2xl font-black tracking-tight', person.total_balance >= 0 ? 'text-slate-50' : 'text-rose-400']">
                                 {{ formatPeso(person.total_balance) }}
                             </p>
                         </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-border/50">
+                        <div class="flex items-center justify-between pt-3 border-t border-border/40">
                             <div>
-                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Income</p>
-                                <p class="text-xs font-semibold text-income">{{ formatPeso(person.income_this_month) }}</p>
+                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Income</p>
+                                <p class="text-xs font-semibold text-emerald-400">{{ formatPeso(person.income_this_month) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Expense</p>
-                                <p class="text-xs font-semibold text-expense">{{ formatPeso(person.expense_this_month) }}</p>
+                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Expense</p>
+                                <p class="text-xs font-semibold text-rose-400">{{ formatPeso(person.expense_this_month) }}</p>
                             </div>
                         </div>
-                        <div v-if="person.owes_you > 0 || person.you_owe > 0" class="flex items-center justify-between pt-2 border-t border-border/50">
+                        <div v-if="person.owes_you > 0 || person.you_owe > 0" class="flex items-center justify-between pt-3 border-t border-border/40">
                             <div>
-                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Others Owe (Split)</p>
-                                <p class="text-xs font-semibold text-income">{{ formatPeso(person.owes_you) }}</p>
+                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Others Owe</p>
+                                <p class="text-xs font-semibold text-indigo-400">{{ formatPeso(person.owes_you) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">Owes Others (Split)</p>
-                                <p class="text-xs font-semibold text-expense">{{ formatPeso(person.you_owe) }}</p>
+                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Owes Others</p>
+                                <p class="text-xs font-semibold text-amber-400">{{ formatPeso(person.you_owe) }}</p>
                             </div>
                         </div>
                     </div>

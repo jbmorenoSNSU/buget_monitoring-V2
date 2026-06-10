@@ -21,6 +21,7 @@ class Debt extends Model
     ];
 
     protected $casts = [
+        'person_id' => 'integer',
         'principal_amount' => 'float',
         'interest_rate' => 'float',
         'minimum_payment' => 'float',
@@ -30,5 +31,10 @@ class Debt extends Model
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

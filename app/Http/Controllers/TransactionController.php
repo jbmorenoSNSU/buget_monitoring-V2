@@ -11,6 +11,7 @@ use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Resources\TransactionResource;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
+use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Transaction;
 use App\Services\TransactionService;
@@ -29,6 +30,7 @@ class TransactionController extends Controller
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
         private PersonRepositoryInterface $personRepository,
+        private DebtRepositoryInterface $debtRepository,
         private CreateTransactionAction $createTransaction,
         private UpdateTransactionAction $updateTransaction,
     ) {}
@@ -46,6 +48,7 @@ class TransactionController extends Controller
             'accounts' => $this->accountRepository->all_active(),
             'categories' => $this->categoryRepository->all_active(),
             'persons' => $this->personRepository->all_active(),
+            'debts' => $this->debtRepository->all(),
         ]);
     }
 

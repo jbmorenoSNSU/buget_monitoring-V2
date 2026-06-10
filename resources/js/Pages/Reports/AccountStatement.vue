@@ -18,7 +18,7 @@ const props = defineProps({
 });
 
 const { formatPeso } = useCurrency();
-const accountId = ref(props.filters.accountId || '');
+const account_id = ref(props.filters.account_id || '');
 const from = ref(props.filters.from || '');
 const to = ref(props.filters.to || '');
 
@@ -27,7 +27,7 @@ const accountOptions = props.accounts.map(a => ({
     label: a.person ? `${a.name} (${a.person.name})` : a.name,
 }));
 
-const filter = () => router.get('/reports/account-statement', { account_id: accountId.value, from: from.value, to: to.value }, { preserveState: true });
+const filter = () => router.get('/reports/account-statement', { account_id: account_id.value, from: from.value, to: to.value }, { preserveState: true });
 
 const columns = [
     { key: 'date', label: 'Date' },
@@ -38,13 +38,13 @@ const columns = [
     { key: 'balance', label: 'Balance', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?account_id=${accountId.value}&from=${from.value}&to=${to.value}`;
+const exportUrl = (type) => `/reports/export/${type}?account_id=${account_id.value}&from=${from.value}&to=${to.value}`;
 </script>
 
 <template>
     <AppLayout title="Account Statement Report">
         <div class="flex flex-wrap items-end gap-3 mb-6">
-            <AppSelect v-model="accountId" :options="accountOptions" label="Account" @change="filter" />
+            <AppSelect v-model="account_id" :options="accountOptions" label="Account" @change="filter" />
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
             <AppButton @click="filter">Apply</AppButton>

@@ -32,14 +32,21 @@ class Transaction extends Model
         'recurring_id',
         'split_with_person_id',
         'split_amount',
+        'debt_id',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
+        'account_id' => 'integer',
+        'category_id' => 'integer',
+        'transfer_to_account_id' => 'integer',
+        'recurring_id' => 'integer',
+        'split_with_person_id' => 'integer',
         'type' => TransactionType::class,
         'amount' => 'decimal:2',
         'split_amount' => 'decimal:2',
         'transaction_date' => 'date',
+        'debt_id' => 'integer',
     ];
 
     /**
@@ -80,6 +87,14 @@ class Transaction extends Model
     public function splitWithPerson(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'split_with_person_id');
+    }
+
+    /**
+     * Get the debt this transaction is linked to.
+     */
+    public function debt(): BelongsTo
+    {
+        return $this->belongsTo(Debt::class, 'debt_id');
     }
 
     /**

@@ -21,6 +21,12 @@ class BudgetGoalResource extends JsonResource
                 'icon' => $this->category->icon,
                 'color' => $this->category->color,
             ]),
+            'person_id' => $this->person_id,
+            'person' => $this->whenLoaded('person', fn () => [
+                'id' => $this->person->id,
+                'name' => $this->person->name,
+                'color' => $this->person->color,
+            ]),
             'month' => $this->month,
             'year' => $this->year,
             'limit_amount' => (float) $this->limit_amount,

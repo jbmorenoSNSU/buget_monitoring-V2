@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
@@ -7,6 +7,7 @@ import AppButton from '@/Components/UI/AppButton.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppPagination from '@/Components/UI/AppPagination.vue';
+import AppModal from '@/Components/UI/AppModal.vue';
 import DebtFormModal from './Components/DebtFormModal.vue';
 import { useCurrency } from '@/composables/useCurrency';
 
@@ -41,19 +42,45 @@ const openEditModal = (debt: any) => {
     isFormModalOpen.value = true;
 };
 
+const showDeleteModal = ref(false);
+const deleteTarget = ref<any>(null);
+
 const handleDelete = (debt: any) => {
-    if (confirm(`Are you sure you want to delete ${debt.name}?`)) {
-        router.delete(`/debts/${debt.id}`);
+    deleteTarget.value = debt;
+    showDeleteModal.value = true;
+};
+
+const doDelete = () => {
+    if (deleteTarget.value) {
+        router.delete(`/debts/${deleteTarget.value.id}`, {
+            onSuccess: () => {
+                showDeleteModal.value = false;
+                deleteTarget.value = null;
+            }
+        });
     }
 };
 
 const calculateProgress = (debt: any) => {
-    // If we wanted to track original balance vs current balance, we'd calculate a %.
-    // Since we only track current balance, progress is simply "Paid off" or not.
-    // However, if it's paid off, balance is 0.
     if (debt.principal_amount <= 0 || debt.status === 'paid_off') return 100;
-    return 0; // We don't have starting balance, so we can't show a true progress bar easily without another field.
+    return 0;
 };
+
+// Dropdown state
+const activeDropdownId = ref<number | null>(null);
+const toggleDropdown = (id: number, event: Event) => {
+    event.stopPropagation();
+    activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+const closeDropdown = () => {
+    activeDropdownId.value = null;
+};
+onMounted(() => {
+    window.addEventListener('click', closeDropdown);
+});
+onUnmounted(() => {
+    window.removeEventListener('click', closeDropdown);
+});
 
 </script>
 
@@ -73,70 +100,106 @@ const calculateProgress = (debt: any) => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <AppCard v-for="debt in debts.data" :key="debt.id" class="flex flex-col relative overflow-hidden group">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                            {{ debt.name }}
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-1" v-if="debt.person">Owner: {{ debt.person.name }}</p>
-                    </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button @click="openEditModal(debt)" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded hover:bg-slate-700 transition">
-                            <AppIcon name="Edit2" size="14" />
-                        </button>
-                        <button @click="handleDelete(debt)" class="p-1.5 text-slate-400 hover:text-expense bg-slate-800 rounded hover:bg-expense/20 transition">
-                            <AppIcon name="Trash2" size="14" />
-                        </button>
-                    </div>
+            <div v-for="debt in debts.data" :key="debt.id" 
+                class="group bg-card-bg border border-border rounded-xl shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative p-5 flex flex-col justify-between"
+                :style="{ boxShadow: debt.status === 'active' ? `inset 0 2px 0 0 #f43f5e` : `inset 0 2px 0 0 #10b981` }">
+                
+                <!-- Background Watermark Icon -->
+                <AppIcon name="CreditCard" size="100" 
+                    class="absolute -bottom-4 -right-4 text-slate-100 opacity-[0.02] pointer-events-none transform group-hover:scale-110 group-hover:opacity-[0.04] transition-all duration-500" />
+                
+                <!-- Subtle glow effect on hover -->
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none"
+                     :style="{ background: debt.status === 'active' ? `radial-gradient(circle at 50% 0%, #f43f5e, transparent 70%)` : `radial-gradient(circle at 50% 0%, #10b981, transparent 70%)` }">
                 </div>
 
-                <div class="flex justify-between items-end mb-4">
-                    <div>
+                <div class="relative z-10 flex flex-col h-full">
+                    <!-- Top Section: Icon, Name & Dropdown -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3 max-w-[85%]">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-sm shrink-0"
+                                :style="{ backgroundColor: debt.person ? debt.person.color + '20' : '#6366F120', color: debt.person ? debt.person.color : '#6366F1', border: `1px solid ${debt.person ? debt.person.color : '#6366F1'}40` }">
+                                <AppIcon name="Briefcase" size="20" v-if="!debt.person" />
+                                <span v-else class="font-bold text-sm">{{ debt.person.name.charAt(0).toUpperCase() }}</span>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-slate-100 text-base truncate leading-snug" :title="debt.name">{{ debt.name }}</h3>
+                                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    <span v-if="debt.person" class="text-[10px] font-medium" :style="{ color: debt.person.color }">
+                                        {{ debt.person.name }}
+                                    </span>
+                                    <span v-else class="text-[10px] font-medium text-indigo-400">Shared Debt</span>
+                                    <span class="text-[10px] text-slate-600 px-0.5">•</span>
+                                    <span class="text-[10px] text-slate-400 leading-none">
+                                        {{ debt.status === 'active' ? `${debt.interest_rate}% APR` : 'Paid Off' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Menu trigger -->
+                        <div class="relative shrink-0 -mr-1">
+                            <button @click="toggleDropdown(debt.id, $event)" 
+                                class="p-1 rounded hover:bg-border text-slate-400 hover:text-slate-200 transition-colors cursor-pointer focus:outline-none">
+                                <AppIcon name="MoreVertical" size="16" />
+                            </button>
+                            
+                            <!-- Dropdown List -->
+                            <div v-if="activeDropdownId === debt.id" 
+                                class="absolute right-0 top-7 w-32 bg-sidebar border border-border rounded-lg shadow-xl py-1 z-20"
+                                @click.stop>
+                                <button @click="openEditModal(debt); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon name="Edit2" size="12" /> Edit
+                                </button>
+                                <div class="border-t border-border my-1"></div>
+                                <button @click="handleDelete(debt); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon name="Trash2" size="12" /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Balance -->
+                    <div class="mb-4">
                         <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Current Balance</p>
-                        <p class="text-2xl font-bold text-expense">{{ formatPeso(debt.principal_amount) }}</p>
+                        <p :class="['text-2xl font-black tracking-tight', debt.status === 'active' ? 'text-expense' : 'text-emerald-400']">{{ formatPeso(debt.principal_amount) }}</p>
                     </div>
-                    <div class="text-right">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-slate-800 text-slate-300" v-if="debt.status === 'active'">
-                            {{ debt.interest_rate }}% APR
-                        </span>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400" v-else>
-                            Paid Off
-                        </span>
-                    </div>
-                </div>
 
-                <div class="bg-slate-800/50 rounded-lg p-3 mb-4 space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-400">Monthly Payment:</span>
-                        <span class="text-slate-200 font-medium">{{ formatPeso(debt.minimum_payment) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm" v-if="debt.due_date_day">
-                        <span class="text-slate-400">Due Date:</span>
-                        <span class="text-slate-200 font-medium">{{ debt.due_date_day }}th</span>
+                    <!-- Stats Box -->
+                    <div class="bg-sidebar/50 rounded-lg p-3 space-y-2 mb-1 border border-border/30 backdrop-blur-sm mt-auto">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Min. Payment</span>
+                            <span class="font-medium text-slate-200">{{ formatPeso(debt.minimum_payment) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm" v-if="debt.due_date_day">
+                            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Due Date</span>
+                            <span class="font-medium text-slate-200">{{ debt.due_date_day }}th</span>
+                        </div>
+                        
+                        <div class="pt-2 border-t border-border/40">
+                            <div v-if="debt.status === 'active'">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Est. Payoff</span>
+                                    <span class="text-emerald-400 font-semibold text-xs" v-if="debt.payoff_projection.is_possible">{{ debt.payoff_projection.payoff_date }}</span>
+                                    <span class="text-expense font-semibold text-xs" v-else>Never</span>
+                                </div>
+                                <div class="flex justify-between items-center" v-if="debt.payoff_projection.is_possible">
+                                    <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Time Left</span>
+                                    <span class="text-xs text-slate-300">{{ debt.payoff_projection.months }} months</span>
+                                </div>
+                                <div class="text-[10px] text-expense mt-1 leading-tight" v-if="!debt.payoff_projection.is_possible">
+                                    Min payment is less than interest!
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-1 text-emerald-500 font-bold flex items-center justify-center gap-1.5 text-xs">
+                                <AppIcon name="CheckCircle" size="14" /> Debt Free!
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="mt-auto border-t border-border pt-4">
-                    <div v-if="debt.status === 'active'">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-400">Estimated Payoff</span>
-                            <span class="text-emerald-400 font-semibold" v-if="debt.payoff_projection.is_possible">{{ debt.payoff_projection.payoff_date }}</span>
-                            <span class="text-expense font-semibold" v-else>Never</span>
-                        </div>
-                        <div class="flex justify-between text-xs text-slate-500 mt-1" v-if="debt.payoff_projection.is_possible">
-                            <span>Time to payoff:</span>
-                            <span>{{ debt.payoff_projection.months }} months</span>
-                        </div>
-                        <div class="text-xs text-expense mt-1" v-if="!debt.payoff_projection.is_possible">
-                            Minimum payment is less than accumulated interest!
-                        </div>
-                    </div>
-                    <div v-else class="text-center py-2 text-emerald-500 font-bold flex items-center justify-center gap-2">
-                        <AppIcon name="CheckCircle" size="20" /> Debt Free!
-                    </div>
-                </div>
-            </AppCard>
+            </div>
 
             <div v-if="!debts.data.length" class="col-span-full py-12 text-center border-2 border-dashed border-border rounded-xl">
                 <AppIcon name="CheckCircle" size="48" class="mx-auto text-slate-500 mb-4" />
@@ -145,7 +208,7 @@ const calculateProgress = (debt: any) => {
             </div>
         </div>
 
-        <AppPagination :links="debts.links" :meta="debts" class="mt-6" />
+        <AppPagination :links="{ prev: debts.prev_page_url, next: debts.next_page_url }" :meta="debts" class="mt-6" />
 
         <DebtFormModal
             :show="isFormModalOpen"
@@ -153,5 +216,13 @@ const calculateProgress = (debt: any) => {
             :persons="filters.persons"
             @close="isFormModalOpen = false"
         />
+
+        <AppModal :show="showDeleteModal" title="Delete Debt" @close="showDeleteModal = false">
+            <p class="text-slate-400">Are you sure you want to delete <strong>{{ deleteTarget?.name }}</strong>? This action cannot be undone and will permanently remove this debt record.</p>
+            <template #footer>
+                <AppButton variant="secondary" @click="showDeleteModal = false">Cancel</AppButton>
+                <AppButton variant="danger" @click="doDelete">Delete</AppButton>
+            </template>
+        </AppModal>
     </AppLayout>
 </template>

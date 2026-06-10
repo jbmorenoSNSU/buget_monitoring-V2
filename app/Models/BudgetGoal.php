@@ -16,16 +16,20 @@ class BudgetGoal extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'category_id',
+        'person_id',
         'month',
         'year',
         'limit_amount',
+        'is_rollover_enabled',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
+        'category_id' => 'integer',
         'month' => 'integer',
         'year' => 'integer',
         'limit_amount' => 'decimal:2',
+        'is_rollover_enabled' => 'boolean',
     ];
 
     /**
@@ -34,6 +38,14 @@ class BudgetGoal extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
+     * Get the person for this budget goal.
+     */
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'person_id');
     }
 
     /**

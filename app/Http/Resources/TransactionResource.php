@@ -44,6 +44,7 @@ class TransactionResource extends JsonResource
                 'name' => $this->transferToAccount->name,
             ]),
             'recurring_id' => $this->recurring_id,
+            'debt_id' => $this->debt_id,
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

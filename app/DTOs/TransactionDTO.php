@@ -21,6 +21,7 @@ final class TransactionDTO
         public readonly ?int $transfer_to_account_id,
         public readonly ?int $split_with_person_id = null,
         public readonly ?float $split_amount = null,
+        public readonly ?int $debt_id = null,
     ) {}
 
     /**
@@ -44,6 +45,7 @@ final class TransactionDTO
                 : null,
             split_with_person_id: isset($validated['split_with_person_id']) ? (int) $validated['split_with_person_id'] : null,
             split_amount: isset($validated['split_amount']) ? (float) $validated['split_amount'] : null,
+            debt_id: isset($validated['debt_id']) ? (int) $validated['debt_id'] : null,
         );
     }
 
@@ -66,6 +68,7 @@ final class TransactionDTO
             'transfer_to_account_id' => $this->transfer_to_account_id,
             'split_with_person_id' => $this->split_with_person_id,
             'split_amount' => $this->split_amount,
+            'debt_id' => $this->debt_id,
         ];
     }
 }

@@ -32,6 +32,8 @@ class Account extends Model
 
     /** @var array<string, string> */
     protected $casts = [
+        'account_type_id' => 'integer',
+        'person_id' => 'integer',
         'initial_balance' => 'decimal:2',
         'current_balance' => 'decimal:2',
         'is_active' => 'boolean',

@@ -38,6 +38,7 @@ interface BudgetGoal {
     limit_amount: number;
     percent: number;
     category?: Category;
+    person?: Person;
 }
 
 interface UpcomingRecurring {
@@ -141,7 +142,11 @@ const upcomingRecurring = computed<UpcomingRecurring[]>(() => {
                 <div class="space-y-4">
                     <div v-for="goal in goals" :key="goal.id">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm text-slate-400">{{ goal.category?.name }}</span>
+                            <span class="text-sm text-slate-400">
+                                {{ goal.category?.name }}
+                                <span v-if="goal.person" class="text-xs font-medium ml-1" :style="{ color: goal.person.color || '#94A3B8' }">({{ goal.person.name }})</span>
+                                <span v-else class="text-xs text-slate-500 opacity-80 ml-1">(Shared)</span>
+                            </span>
                             <span class="text-xs text-slate-400">{{ formatPeso(goal.spent) }} / {{ formatPeso(goal.limit_amount) }}</span>
                         </div>
                         <ProgressBar :percent="goal.percent" :showPercent="false" />

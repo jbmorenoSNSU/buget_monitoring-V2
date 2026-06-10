@@ -11,16 +11,21 @@ use Illuminate\Database\Eloquent\Collection;
 
 class EloquentBudgetGoalRepository implements BudgetGoalRepositoryInterface
 {
-    public function for_month(int $month, int $year): Collection
+    public function for_month(int $month, int $year, ?int $person_id = null): Collection
     {
-        return BudgetGoal::with('category:id,name,icon,color')
-            ->forMonth($month, $year)
-            ->get();
+        $query = BudgetGoal::with(['category:id,name,icon,color', 'person:id,name'])
+            ->forMonth($month, $year);
+
+        if ($person_id) {
+            $query->where('person_id', $person_id);
+        }
+
+        return $query->get();
     }
 
     public function find(int $id): ?BudgetGoal
     {
-        return BudgetGoal::with('category:id,name,icon,color')->find($id);
+        return BudgetGoal::with(['category:id,name,icon,color', 'person:id,name'])->find($id);
     }
 
     public function create(array $data): BudgetGoal
@@ -40,11 +45,18 @@ class EloquentBudgetGoalRepository implements BudgetGoalRepositoryInterface
         $goal->delete();
     }
 
-    public function spent_by_category(int $category_id, int $month, int $year): float
+    public function spent_by_category(int $category_id, int $month, int $year, ?int $person_id = null): float
     {
-        return (float) Transaction::where('category_id', $category_id)
+        $query = Transaction::where('category_id', $category_id)
             ->where('type', 'expense')
-            ->forMonth($month, $year)
-            ->sum('amount');
+            ->forMonth($month, $year);
+
+        if ($person_id) {
+            $query->whereHas('account', function ($q) use ($person_id) {
+                $q->where('person_id', $person_id);
+            });
+        }
+
+        return (float) $query->sum('amount');
     }
 }

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>{{ $title }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #1e293b; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #1e293b; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
         .header h1 { color: #1e40af; font-size: 18px; margin: 0; }
         .header p { color: #64748b; margin: 4px 0; }
@@ -25,11 +25,12 @@
         <p>Generated: {{ $generated_at }}</p>
     </div>
     <table>
-        <thead><tr><th>Category</th><th class="text-right">Budget (₱)</th><th class="text-right">Spent (₱)</th><th class="text-right">Variance (₱)</th><th class="text-right">% Used</th></tr></thead>
+        <thead><tr><th>Category</th><th>Owner</th><th class="text-right">Budget (₱)</th><th class="text-right">Spent (₱)</th><th class="text-right">Variance (₱)</th><th class="text-right">% Used</th></tr></thead>
         <tbody>
             @foreach($data as $row)
             <tr>
                 <td>{{ $row['category_name'] }}</td>
+                <td>{{ $row['person_name'] ?? 'Shared' }}</td>
                 <td class="text-right">{{ number_format($row['limit_amount'], 2) }}</td>
                 <td class="text-right">{{ number_format($row['actual_spent'], 2) }}</td>
                 <td class="text-right {{ $row['variance'] >= 0 ? 'text-green' : 'text-red' }}">{{ number_format($row['variance'], 2) }}</td>

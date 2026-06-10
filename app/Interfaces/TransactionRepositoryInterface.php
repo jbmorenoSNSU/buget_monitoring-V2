@@ -28,6 +28,8 @@ interface TransactionRepositoryInterface
 
     public function spent_by_category_map(int $month, int $year, ?int $person_id = null): array;
 
+    public function spent_by_category_and_person_map(int $month, int $year): array;
+
     public function income_vs_expense_raw(string $from, string $to, ?int $person_id = null): Collection;
 
     public function category_expense_raw(int $month, int $year, ?int $person_id = null): Collection;
@@ -38,7 +40,7 @@ interface TransactionRepositoryInterface
 
     public function expense_by_date_range(string $from, string $to, ?int $person_id = null): Collection;
 
-    public function calendar_transactions(string $start, string $end): Collection;
+    public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection;
 
     public function split_transactions_raw(string $from, string $to): Collection;
 }

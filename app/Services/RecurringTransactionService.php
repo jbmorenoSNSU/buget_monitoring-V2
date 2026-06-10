@@ -71,6 +71,7 @@ class RecurringTransactionService
                     'transaction_date' => $recurring->next_due_date->toDateString(),
                     'description' => $recurring->description.' (Auto)',
                     'recurring_id' => $recurring->id,
+                    'debt_id' => $recurring->debt_id,
                 ]);
 
                 $next_date = $this->compute_next_date($recurring);
