@@ -1,0 +1,6 @@
+resources/js/Pages/Dashboard/Components/DashboardActivity.vue(229,38): error TS2339: Property 'route' does not exist on type '{ recentTxns: Transaction[]; formatShortDate: (date: string | Date | null | undefined) => string; formatPeso: (amount: string | number | null | undefined) => string; ... 27 more ...; _pStores?: Record<...> | undefined; }'.
+resources/js/Pages/Dashboard/Components/DashboardActivity.vue(254,38): error TS2339: Property 'route' does not exist on type '{ recentTxns: Transaction[]; formatShortDate: (date: string | Date | null | undefined) => string; formatPeso: (amount: string | number | null | undefined) => string; ... 27 more ...; _pStores?: Record<...> | undefined; }'.
+resources/js/Pages/Reports/Forecasting.vue(229,28): error TS2339: Property 'cell-date' does not exist on type '{}'.
+resources/js/Pages/Reports/Forecasting.vue(232,28): error TS2339: Property 'cell-description' does not exist on type '{}'.
+resources/js/Pages/Reports/Forecasting.vue(238,28): error TS2339: Property 'cell-amount' does not exist on type '{}'.
+resources/js/Pages/Reports/Forecasting.vue(243,28): error TS2339: Property 'cell-projected_balance' does not exist on type '{}'.

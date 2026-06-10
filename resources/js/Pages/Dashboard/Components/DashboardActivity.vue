@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import AppCard from '@/Components/UI/AppCard.vue';
 import ProgressBar from '@/Components/UI/ProgressBar.vue';
 import { useCurrency } from '@/composables/useCurrency';

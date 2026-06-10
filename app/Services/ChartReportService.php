@@ -409,7 +409,7 @@ class ChartReportService
 
             $recurringEvents = [];
             foreach ($recurrings as $rec) {
-                if (!$rec->next_due_date) {
+                if (! $rec->next_due_date) {
                     continue;
                 }
                 $next = Carbon::parse($rec->next_due_date)->startOfDay();
@@ -420,9 +420,9 @@ class ChartReportService
                 $desc = $rec->description;
 
                 while ($next->lte($endProj)) {
-                    if ($next->gte($startProj) && (!$end || $next->lte($end))) {
+                    if ($next->gte($startProj) && (! $end || $next->lte($end))) {
                         $dateStr = $next->format('Y-m-d');
-                        if (!isset($recurringEvents[$dateStr])) {
+                        if (! isset($recurringEvents[$dateStr])) {
                             $recurringEvents[$dateStr] = [];
                         }
                         $recurringEvents[$dateStr][] = [

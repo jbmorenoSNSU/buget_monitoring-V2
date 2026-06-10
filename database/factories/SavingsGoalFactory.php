@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Account;
-use App\Models\Person;
 use App\Models\SavingsGoal;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

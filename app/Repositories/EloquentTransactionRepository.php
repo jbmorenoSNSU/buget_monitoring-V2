@@ -378,7 +378,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
      */
     public function non_recurring_net_for_projection(string $from, string $to): array
     {
-        $rows = Transaction::select('type', \Illuminate\Support\Facades\DB::raw('SUM(amount) as total'))
+        $rows = Transaction::select('type', DB::raw('SUM(amount) as total'))
             ->whereBetween('transaction_date', [$from, $to])
             ->whereIn('type', ['income', 'expense'])
             ->whereNull('recurring_id')

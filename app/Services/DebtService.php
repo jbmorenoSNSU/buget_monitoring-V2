@@ -35,6 +35,7 @@ class DebtService
 
         return $debts->map(function ($debt) {
             $debt->payoff_projection = $this->calculate_payoff($debt);
+
             return $debt;
         });
     }

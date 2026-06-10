@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Actions\SavingsGoal\CreateSavingsGoalAction;
-use App\Actions\SavingsGoal\UpdateSavingsGoalAction;
 use App\Actions\SavingsGoal\DeleteSavingsGoalAction;
+use App\Actions\SavingsGoal\UpdateSavingsGoalAction;
 use App\DTOs\SavingsGoal\SavingsGoalDTO;
 use App\Interfaces\SavingsGoalRepositoryInterface;
 use App\Models\SavingsGoal;
@@ -34,7 +34,7 @@ class SavingsGoalService
         return $goals->map(function (SavingsGoal $goal) {
             $target = (float) $goal->target_amount;
             $current = (float) $goal->current_amount;
-            
+
             $goal->percent = $target > 0 ? round(($current / $target) * 100, 1) : 0;
             $goal->remaining_amount = max(0.0, $target - $current);
             $goal->is_completed = $current >= $target;
@@ -42,7 +42,7 @@ class SavingsGoalService
             if ($goal->target_date) {
                 $targetDate = Carbon::parse($goal->target_date)->startOfDay();
                 $today = now()->startOfDay();
-                
+
                 if ($targetDate->lt($today)) {
                     $goal->days_remaining = -$today->diffInDays($targetDate);
                 } else {

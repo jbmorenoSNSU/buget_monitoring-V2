@@ -1,21 +1,44 @@
-<script setup>
+<script setup lang="ts">
 import AppIcon from '@/Components/UI/AppIcon.vue';
 
-defineProps({
-    columns: { type: Array, default: () => [] },
-    rows: { type: Array, default: () => [] },
-    emptyMessage: { type: String, default: 'No data found.' },
-    sortBy: { type: String, default: '' },
-    sortDirection: { type: String, default: 'asc' },
+export interface Column {
+    key: string;
+    label: string;
+    sortable?: boolean;
+    class?: string;
+    cellClass?: string;
+}
+
+const props = withDefaults(defineProps<{
+    columns?: Column[];
+    rows?: any[];
+    emptyMessage?: string;
+    sortBy?: string;
+    sortDirection?: string;
+}>(), {
+    columns: () => [],
+    rows: () => [],
+    emptyMessage: 'No data found.',
+    sortBy: '',
+    sortDirection: 'asc',
 });
 
-const emit = defineEmits(['sort']);
+const emit = defineEmits<{
+    (e: 'sort', key: string): void;
+}>();
 
-const handleHeaderClick = (col) => {
+const handleHeaderClick = (col: Column) => {
     if (col.sortable) {
         emit('sort', col.key);
     }
 };
+
+defineSlots<
+    {
+        [key: `cell-${string}`]: (props: { row: any; value: any }) => any;
+        pagination?: () => any;
+    }
+>();
 </script>
 
 <template>

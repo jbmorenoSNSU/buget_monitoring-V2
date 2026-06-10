@@ -19,9 +19,9 @@ beforeEach(function () {
 
 it('renders the savings goals index page with goals, accounts, and persons', function () {
     SavingsGoal::factory()->for($this->account)->create([
-        'name' => 'Dream Car', 
+        'name' => 'Dream Car',
         'target_amount' => 50000,
-        'person_id' => $this->person->id
+        'person_id' => $this->person->id,
     ]);
 
     $response = $this->get(route('savings-goals.index'));
@@ -47,9 +47,9 @@ it('stores a new savings goal with owner and redirects', function () {
 
     $response->assertRedirect();
     assertDatabaseHas('savings_goals', [
-        'name' => 'Emergency Fund', 
+        'name' => 'Emergency Fund',
         'target_amount' => 10000.00,
-        'person_id' => $this->person->id
+        'person_id' => $this->person->id,
     ]);
 });
 

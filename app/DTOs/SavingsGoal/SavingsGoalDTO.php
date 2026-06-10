@@ -23,7 +23,7 @@ class SavingsGoalDTO
             name: $validated['name'],
             target_amount: (float) $validated['target_amount'],
             current_amount: (float) ($validated['current_amount'] ?? 0.0),
-            target_date: !empty($validated['target_date']) ? $validated['target_date'] : null
+            target_date: ! empty($validated['target_date']) ? $validated['target_date'] : null
         );
     }
 
