@@ -26,8 +26,6 @@ class StoreTransactionRequest extends FormRequest
             'notes' => 'nullable|string',
             'reference_number' => 'nullable|string|max:100',
             'transfer_to_account_id' => 'nullable|exists:accounts,id|different:account_id',
-            'split_with_person_id' => 'nullable|exists:persons,id',
-            'split_amount' => 'nullable|numeric|min:0.01',
             'debt_id' => 'nullable|integer|exists:debts,id',
         ];
     }

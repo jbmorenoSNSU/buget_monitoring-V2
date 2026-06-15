@@ -1,27 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ExportResource;
 use App\Models\Export;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ExportController extends Controller
 {
-    public function index(Request $request)
+    public function index(): Response
     {
-        // For simplicity, returning all exports. If it's a multi-user app, filter by user.
-        $exports = Export::orderBy('created_at', 'desc')->paginate(20);
+        $exports = Export::orderBy('created_at', 'desc')->cursorPaginate(20);
 
         return Inertia::render('Downloads/Index', [
-            'exports' => $exports,
+            'exports' => ExportResource::collection($exports),
         ]);
     }
 
     public function download(Export $export)
     {
-        // Check if file exists and status is completed
+        $this->authorize('download', $export);
+
         if ($export->status !== 'completed' || ! $export->file_path || ! Storage::disk('public')->exists($export->file_path)) {
             abort(404, 'File not found or still processing.');
         }
@@ -29,8 +33,10 @@ class ExportController extends Controller
         return Storage::disk('public')->download($export->file_path, $export->file_name);
     }
 
-    public function destroy(Export $export)
+    public function destroy(Export $export): RedirectResponse
     {
+        $this->authorize('delete', $export);
+
         if ($export->file_path && Storage::disk('public')->exists($export->file_path)) {
             Storage::disk('public')->delete($export->file_path);
         }

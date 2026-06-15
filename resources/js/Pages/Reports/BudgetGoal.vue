@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Budget Goals vs Actual Report');
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -8,11 +13,11 @@ import AppTable from '@/Components/UI/AppTable.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    data: { type: Array, default: () => [] },
-    filters: { type: Object, default: () => ({}) },
-    persons: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    data: any[];
+    filters: Record<string, any>;
+    persons: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const month = ref(props.filters.month || new Date().getMonth() + 1);
@@ -38,11 +43,12 @@ const columns = [
     { key: 'percent', label: '% Used', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=${year.value}&person_id=${person_id.value || ''}`;
+const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value}&year=${year.value}&person_id=${person_id.value || ''}`;
 </script>
 
 <template>
-    <AppLayout title="Budget Goals vs Actual Report">
+    <Head title="Budget Goals vs Actual Report" />
+    <div>
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppSelect v-model="month" :options="monthOptions" label="Month" @change="filter" />
             <AppSelect v-model="year" :options="yearOptions" label="Year" @change="filter" />
@@ -77,5 +83,5 @@ const exportUrl = (type) => `/reports/export/${type}?month=${month.value}&year=$
                 </span>
             </template>
         </AppTable>
-    </AppLayout>
+    </div>
 </template>

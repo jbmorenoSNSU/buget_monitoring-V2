@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Income vs Expense Report');
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -11,11 +16,11 @@ import AppIcon from '@/Components/UI/AppIcon.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    data: { type: Array, default: () => [] },
-    filters: { type: Object, default: () => ({}) },
-    persons: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    data: any[];
+    filters: Record<string, any>;
+    persons: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const from = ref(props.filters.from || '');
@@ -43,11 +48,12 @@ const columns = [
     { key: 'net', label: 'Net Savings', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.value}&person_id=${person_id.value || ''}`;
+const exportUrl = (type: string) => `/reports/export/${type}?from=${from.value}&to=${to.value}&person_id=${person_id.value || ''}`;
 </script>
 
 <template>
-    <AppLayout title="Income vs Expense Report">
+    <Head title="Income vs Expense Report" />
+    <div>
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
@@ -76,5 +82,5 @@ const exportUrl = (type) => `/reports/export/${type}?from=${from.value}&to=${to.
             <template #cell-expense="{ value }"><span class="text-expense font-medium">{{ formatPeso(value) }}</span></template>
             <template #cell-net="{ value }"><span :class="['font-semibold', value >= 0 ? 'text-income' : 'text-expense']">{{ formatPeso(value) }}</span></template>
         </AppTable>
-    </AppLayout>
+    </div>
 </template>

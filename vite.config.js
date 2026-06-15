@@ -31,5 +31,22 @@ export default defineConfig({
     },
     build: {
         chunkSizeWarningLimit: 1500,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('vue') || id.includes('pinia') || id.includes('@inertiajs') || id.includes('axios')) {
+                            return 'vendor';
+                        }
+                        if (id.includes('chart.js') || id.includes('vue-chartjs')) {
+                            return 'charts';
+                        }
+                        if (id.includes('dayjs')) {
+                            return 'utils';
+                        }
+                    }
+                }
+            }
+        }
     },
 });

@@ -1,4 +1,9 @@
 <script setup>
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Reports');
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppCard from '@/Components/UI/AppCard.vue';
@@ -10,14 +15,14 @@ const reports = [
     { name: 'Account Statement', description: 'View transaction history for an account', href: '/reports/account-statement', icon: 'ClipboardList' },
     { name: 'Budget Goals vs Actual', description: 'Track budget performance', href: '/reports/budget-goal', icon: 'Target' },
     { name: 'Financial Calendar', description: 'Visualize daily spending and income patterns', href: '/reports/calendar', icon: 'Calendar' },
-    { name: 'Debt & Settlements', description: 'See who owes who from split transactions', href: '/reports/settlements', icon: 'Users' },
     { name: 'Cashflow Forecasting', description: 'Project future balances based on current data and recurring events', href: '/reports/forecasting', icon: 'TrendingUp' },
     { name: 'Year in Review', description: 'Annual breakdown of wealth growth and top categories', href: '/reports/year-in-review', icon: 'Award' },
 ];
 </script>
 
 <template>
-    <AppLayout title="Reports">
+    <Head title="Reports" />
+    <div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link v-for="r in reports" :key="r.href" :href="r.href" class="group">
                 <AppCard class="hover:shadow-md hover:border-primary/50 transition-all duration-200">
@@ -31,5 +36,5 @@ const reports = [
                 </AppCard>
             </Link>
         </div>
-    </AppLayout>
+    </div>
 </template>

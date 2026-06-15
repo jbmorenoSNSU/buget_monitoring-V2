@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Accounts');
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -12,16 +17,16 @@ import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    accounts: { type: Object, default: () => ({ data: [] }) },
-    totalBalance: { type: Number, default: 0 },
-    accountTypes: { type: Array, default: () => [] },
-    persons: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    accounts: Record<string, any>;
+    totalBalance: number;
+    accountTypes: any[];
+    persons: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const items = computed(() => props.accounts?.data || []);
-const deleteTarget = ref(null);
+const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
 const selectedPerson = ref('');
 
@@ -41,21 +46,21 @@ const personOptions = computed(() => {
 
 const filteredItems = computed(() => {
     if (!selectedPerson.value) return items.value;
-    return items.value.filter(acc => acc.person?.id?.toString() === selectedPerson.value);
+    return items.value.filter((acc: any) => acc.person?.id?.toString() === selectedPerson.value);
 });
 
 const displayBalance = computed(() => {
     if (!selectedPerson.value) return props.totalBalance;
     return filteredItems.value
-        .filter(acc => acc.is_active)
-        .reduce((sum, acc) => sum + acc.current_balance, 0);
+        .filter((acc: any) => acc.is_active)
+        .reduce((sum: number, acc: any) => sum + acc.current_balance, 0);
 });
 
-const confirmDelete = (acc) => { deleteTarget.value = acc; showDeleteModal.value = true; };
+const confirmDelete = (acc: any) => { deleteTarget.value = acc; showDeleteModal.value = true; };
 const doDelete = () => {
-    router.delete(`/accounts/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
+    if(deleteTarget.value) router.delete(`/accounts/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
 };
-const toggle = (acc) => router.patch(`/accounts/${acc.id}/toggle`);
+const toggle = (acc: any) => router.patch(`/accounts/${acc.id}/toggle`);
 
 const typeOptions = computed(() => props.accountTypes.map(t => ({ value: t.id, label: t.name })));
 const formPersonOptions = computed(() => [
@@ -87,7 +92,7 @@ const openAddModal = () => {
     showFormModal.value = true;
 };
 
-const openEditModal = (acc) => {
+const openEditModal = (acc: any) => {
     isEdit.value = true;
     form.clearErrors();
     form.id = acc.id;
@@ -108,8 +113,8 @@ const submitForm = () => {
 };
 
 // Dropdown state
-const activeDropdownId = ref(null);
-const toggleDropdown = (id, event) => {
+const activeDropdownId = ref<number | string | null>(null);
+const toggleDropdown = (id: number | string, event: Event) => {
     event.stopPropagation();
     activeDropdownId.value = activeDropdownId.value === id ? null : id;
 };
@@ -125,7 +130,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AppLayout title="Accounts">
+    <Head title="Accounts" />
+    <div>
         <!-- Top Metrics Row -->
         <div class="mb-8">
             <StatCard label="Total Balance" :value="formatPeso(displayBalance)" accentColor="#6366F1" class="max-w-sm" />
@@ -248,5 +254,5 @@ onUnmounted(() => {
                 </div>
             </form>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

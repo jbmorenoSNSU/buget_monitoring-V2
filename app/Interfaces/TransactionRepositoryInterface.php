@@ -42,8 +42,6 @@ interface TransactionRepositoryInterface
 
     public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection;
 
-    public function split_transactions_raw(string $from, string $to): Collection;
-
     /**
      * Sum income and expense for non-recurring transactions in a date range.
      *

@@ -11,7 +11,7 @@ export function useFlash() {
 
     watch(
         () => page.props?.flash,
-        (flash) => {
+        (flash: any) => {
             if (flash?.success) {
                 toast.success(flash.success);
             }

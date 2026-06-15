@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('180-Day Cashflow Forecasting');
 import { computed } from 'vue';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
@@ -139,7 +144,8 @@ const milestoneColumns = [
 </script>
 
 <template>
-    <AppLayout title="180-Day Cashflow Forecasting">
+    <Head title="180-Day Cashflow Forecasting" />
+    <div>
         <!-- Overview Banner -->
         <div class="bg-card-bg border border-border p-5 rounded-xl mb-6 relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 opacity-[0.02] text-slate-100 pointer-events-none">
@@ -250,5 +256,5 @@ const milestoneColumns = [
                 No active recurring transactions scheduled in the next 180 days.
             </div>
         </div>
-    </AppLayout>
+    </div>
 </template>

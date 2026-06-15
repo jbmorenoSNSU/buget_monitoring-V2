@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Debt;
+use App\Interfaces\DebtRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -14,35 +14,40 @@ class DashboardService
         private AccountService $accountService,
         private TransactionService $transactionService,
         private BudgetGoalService $budgetGoalService,
-        private RecurringTransactionService $recurringService
+        private RecurringTransactionService $recurringService,
+        private DebtRepositoryInterface $debtRepository
     ) {}
 
     public function getDashboardStats(int $month, int $year, ?int $person_id = null): array
     {
-        $totalBalance = $this->accountService->get_total_balance($person_id);
-        $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
+        $cacheKey = "dashboard_stats_{$month}_{$year}_" . ($person_id ?? 'all');
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addDay(), function () use ($month, $year, $person_id) {
+            $totalBalance = $this->accountService->get_total_balance($person_id);
+            $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
 
-        $remainingBudgets = $this->calculateRemainingBudgets($budgetGoals, $person_id);
-        $filteredUpcomingRecurring = $this->getUpcomingRecurring($person_id);
-        $upcomingExpenses = $this->calculateUpcomingExpenses($filteredUpcomingRecurring);
+            $remainingBudgets = $this->calculateRemainingBudgets($budgetGoals, $person_id);
+            $filteredUpcomingRecurring = $this->getUpcomingRecurring($person_id);
+            $upcomingExpenses = $this->calculateUpcomingExpenses($filteredUpcomingRecurring);
 
-        $safeToSpend = max(0, $totalBalance - $remainingBudgets - $upcomingExpenses);
-        $safeToSpendDaily = $this->calculateDailySafeToSpend($safeToSpend, $month, $year);
+            $safeToSpend = max(0, $totalBalance - $remainingBudgets - $upcomingExpenses);
+            $safeToSpendDaily = $this->calculateDailySafeToSpend($safeToSpend, $month, $year);
 
-        $monthlyIncome = $this->transactionService->get_monthly_income($month, $year, $person_id);
-        $monthlyExpense = $this->transactionService->get_monthly_expense($month, $year, $person_id);
+            $monthlyIncome = $this->transactionService->get_monthly_income($month, $year, $person_id);
+            $monthlyExpense = $this->transactionService->get_monthly_expense($month, $year, $person_id);
 
-        $healthScoreAndBadges = $this->calculateHealthScore($monthlyIncome, $monthlyExpense, $safeToSpend, $budgetGoals, $person_id);
+            $healthScoreAndBadges = $this->calculateHealthScore($monthlyIncome, $monthlyExpense, $safeToSpend, $budgetGoals, $person_id);
 
-        return [
-            'totalBalance' => $totalBalance,
-            'safeToSpend' => $safeToSpend,
-            'safeToSpendDaily' => $safeToSpendDaily,
-            'healthScore' => $healthScoreAndBadges['score'],
-            'badges' => $healthScoreAndBadges['badges'],
-            'monthlyIncome' => $monthlyIncome,
-            'monthlyExpense' => $monthlyExpense,
-        ];
+            return [
+                'totalBalance' => $totalBalance,
+                'safeToSpend' => $safeToSpend,
+                'safeToSpendDaily' => $safeToSpendDaily,
+                'healthScore' => $healthScoreAndBadges['score'],
+                'badges' => $healthScoreAndBadges['badges'],
+                'monthlyIncome' => $monthlyIncome,
+                'monthlyExpense' => $monthlyExpense,
+            ];
+        });
     }
 
     public function getUpcomingRecurring(?int $person_id = null): Collection
@@ -178,11 +183,7 @@ class DashboardService
             $healthScore += 15;
         }
 
-        $activeDebtsQuery = Debt::where('status', 'active');
-        if ($person_id) {
-            $activeDebtsQuery->where('person_id', $person_id);
-        }
-        if ($activeDebtsQuery->count() === 0) {
+        if ($this->debtRepository->count_active($person_id) === 0) {
             $healthScore += 20;
             $badges[] = ['id' => 'debt_free', 'name' => 'Debt Free', 'color' => 'bg-amber-500/20 text-amber-400 border-amber-500/30', 'icon' => 'Award'];
         }

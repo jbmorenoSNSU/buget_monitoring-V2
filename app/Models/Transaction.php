@@ -30,8 +30,6 @@ class Transaction extends Model
         'reference_number',
         'transfer_to_account_id',
         'recurring_id',
-        'split_with_person_id',
-        'split_amount',
         'debt_id',
     ];
 
@@ -41,10 +39,8 @@ class Transaction extends Model
         'category_id' => 'integer',
         'transfer_to_account_id' => 'integer',
         'recurring_id' => 'integer',
-        'split_with_person_id' => 'integer',
         'type' => TransactionType::class,
         'amount' => 'decimal:2',
-        'split_amount' => 'decimal:2',
         'transaction_date' => 'date',
         'debt_id' => 'integer',
     ];
@@ -79,14 +75,6 @@ class Transaction extends Model
     public function recurringTransaction(): BelongsTo
     {
         return $this->belongsTo(RecurringTransaction::class, 'recurring_id');
-    }
-
-    /**
-     * Get the person this transaction is split with.
-     */
-    public function splitWithPerson(): BelongsTo
-    {
-        return $this->belongsTo(Person::class, 'split_with_person_id');
     }
 
     /**

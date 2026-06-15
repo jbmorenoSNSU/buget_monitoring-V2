@@ -5,21 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Interfaces\AccountRepositoryInterface;
+use App\Interfaces\PersonRepositoryInterface;
 use App\Jobs\ExportReportJob;
 use App\Models\Export;
-use App\Models\Person;
 use App\Services\ReportService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
     public function __construct(
         private ReportService $service,
-        private AccountRepositoryInterface $accountRepository
+        private AccountRepositoryInterface $accountRepository,
+        private PersonRepositoryInterface $personRepository
     ) {}
 
     public function index(): Response
@@ -36,7 +35,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/IncomeExpense', [
             'data' => $this->service->income_vs_expense($from, $to, $person_id),
             'filters' => compact('from', 'to', 'person_id'),
-            'persons' => Person::select('id', 'name')->get(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 
@@ -49,7 +48,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/CategoryExpense', [
             'data' => $this->service->category_expense($month, $year, $person_id),
             'filters' => compact('month', 'year', 'person_id'),
-            'persons' => Person::select('id', 'name')->get(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 
@@ -82,7 +81,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/BudgetGoal', [
             'data' => $this->service->budget_goal_report($month, $year, $person_id),
             'filters' => compact('month', 'year', 'person_id'),
-            'persons' => Person::select('id', 'name')->get(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 
@@ -96,7 +95,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/Calendar', [
             'data' => $this->service->calendar_report($month, $year, $person_id, $account_id),
             'filters' => compact('month', 'year', 'person_id', 'account_id'),
-            'persons' => Person::select('id', 'name')->get(),
+            'persons' => $this->personRepository->all_active(),
             'accounts' => $this->accountRepository->all()->map(fn ($acc) => [
                 'id' => $acc->id,
                 'name' => $acc->name,
@@ -105,16 +104,6 @@ class ReportController extends Controller
         ]);
     }
 
-    public function settlements(Request $request): Response
-    {
-        $from = $request->get('from', now()->startOfMonth()->format('Y-m-d'));
-        $to = $request->get('to', now()->format('Y-m-d'));
-
-        return Inertia::render('Reports/Settlements', [
-            'data' => $this->service->settlement_report($from, $to),
-            'filters' => compact('from', 'to'),
-        ]);
-    }
 
     public function year_in_review(Request $request): Response
     {
@@ -135,23 +124,21 @@ class ReportController extends Controller
 
     public function export(Request $request, string $type)
     {
-        // Example $type: 'income-expense-excel' or 'income-expense-pdf'
         $parts = explode('-', $type);
-        $format = array_pop($parts); // 'excel' or 'pdf'
+        $format = array_pop($parts);
         $reportType = implode('-', $parts);
 
         if ($format === 'excel') {
             $format = 'xlsx';
         }
 
-        // Create the Export record
+        // Single-user personal app — no auth system installed
         $export = Export::create([
-            'user_id' => $request->user()->id ?? 1, // Fallback to 1 for simplicity if no auth
+            'user_id' => 1,
             'type' => $reportType,
             'format' => $format,
         ]);
 
-        // Dispatch job
         ExportReportJob::dispatch($export, $request->all());
 
         return redirect()->route('downloads.index')

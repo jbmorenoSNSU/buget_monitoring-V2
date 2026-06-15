@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Account;
-use App\Models\Debt;
 use App\Models\Transaction;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentTransactionRepository implements TransactionRepositoryInterface
 {
+    public function __construct(
+        private DebtRepositoryInterface $debtRepository
+    ) {}
     public function paginate(array $filters, int $per_page): CursorPaginator
     {
         $query = Transaction::with([
@@ -156,7 +159,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             'expense' => (function () use ($transaction, $account) {
                 $account->decrement('current_balance', (float) $transaction->amount);
                 if ($transaction->debt_id) {
-                    Debt::findOrFail($transaction->debt_id)->decrement('principal_amount', (float) $transaction->amount);
+                    $this->debtRepository->decrement_principal($transaction->debt_id, (float) $transaction->amount);
                 }
             })(),
             'transfer' => (function () use ($transaction) {
@@ -179,7 +182,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             'expense' => (function () use ($transaction, $account) {
                 $account->increment('current_balance', (float) $transaction->amount);
                 if ($transaction->debt_id) {
-                    Debt::findOrFail($transaction->debt_id)->increment('principal_amount', (float) $transaction->amount);
+                    $this->debtRepository->increment_principal($transaction->debt_id, (float) $transaction->amount);
                 }
             })(),
             'transfer' => (function () use ($transaction) {
@@ -298,6 +301,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     public function account_statement_raw(int $account_id, string $from, string $to): Collection
     {
         return Transaction::with('category:id,name,icon,color')
+            ->select(['id', 'account_id', 'category_id', 'type', 'amount', 'transaction_date', 'description', 'notes', 'reference_number', 'transfer_to_account_id'])
             ->where(function ($q) use ($account_id) {
                 $q->where('account_id', $account_id)
                     ->orWhere('transfer_to_account_id', $account_id);
@@ -341,6 +345,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection
     {
         $query = Transaction::with(['category:id,name,icon,color', 'account:id,name'])
+            ->select(['id', 'account_id', 'category_id', 'type', 'amount', 'transaction_date', 'description', 'transfer_to_account_id'])
             ->whereBetween('transaction_date', [$start, $end]);
 
         if ($account_id) {
@@ -358,18 +363,6 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $query->get();
     }
 
-    public function split_transactions_raw(string $from, string $to): Collection
-    {
-        return Transaction::with([
-            'account:id,name,person_id',
-            'account.person:id,name,color',
-            'splitWithPerson:id,name,color',
-        ])
-            ->whereNotNull('split_with_person_id')
-            ->whereBetween('transaction_date', [$from, $to])
-            ->orderBy('transaction_date', 'desc')
-            ->get();
-    }
 
     /**
      * Sum income and expense for non-recurring transactions in a date range.
@@ -400,7 +393,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     public function year_in_review_raw(string $from, string $to): Collection
     {
         return Transaction::with(['category:id,name,icon,color'])
-            ->select(['id', 'type', 'amount', 'category_id', 'transaction_date', 'split_amount'])
+            ->select(['id', 'type', 'amount', 'category_id', 'transaction_date'])
             ->whereBetween('transaction_date', [$from, $to])
             ->whereIn('type', ['income', 'expense'])
             ->get();

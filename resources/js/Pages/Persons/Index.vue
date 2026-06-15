@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Persons');
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -10,18 +15,20 @@ import ColorPicker from '@/Components/UI/ColorPicker.vue';
 import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    persons: { type: Object, default: () => ({ data: [] }) },
-});
+const props = defineProps<{
+    persons: Record<string, any>;
+}>();
 
 const { formatPeso } = useCurrency();
 const items = computed(() => props.persons?.data || []);
-const deleteTarget = ref(null);
+const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
 
-const confirmDelete = (person) => { deleteTarget.value = person; showDeleteModal.value = true; };
+const confirmDelete = (person: any) => { deleteTarget.value = person; showDeleteModal.value = true; };
 const doDelete = () => {
-    router.delete(`/persons/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
+    if (deleteTarget.value) {
+        router.delete(`/persons/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } });
+    }
 };
 
 // Form state
@@ -42,7 +49,7 @@ const openAddModal = () => {
     showFormModal.value = true;
 };
 
-const openEditModal = (person) => {
+const openEditModal = (person: any) => {
     isEdit.value = true;
     form.clearErrors();
     form.id = person.id;
@@ -60,8 +67,8 @@ const submitForm = () => {
 };
 
 // Dropdown state
-const activeDropdownId = ref(null);
-const toggleDropdown = (id, event) => {
+const activeDropdownId = ref<number | null>(null);
+const toggleDropdown = (id: number, event: Event) => {
     event.stopPropagation();
     activeDropdownId.value = activeDropdownId.value === id ? null : id;
 };
@@ -77,7 +84,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AppLayout title="Persons">
+    <Head title="Persons" />
+    <div>
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-slate-100">Manage Persons</h2>
             <AppButton @click="openAddModal">+ Add Person</AppButton>
@@ -153,16 +161,6 @@ onUnmounted(() => {
                                 <p class="text-xs font-semibold text-rose-400">{{ formatPeso(person.expense_this_month) }}</p>
                             </div>
                         </div>
-                        <div v-if="person.owes_you > 0 || person.you_owe > 0" class="flex items-center justify-between pt-3 border-t border-border/40">
-                            <div>
-                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Others Owe</p>
-                                <p class="text-xs font-semibold text-indigo-400">{{ formatPeso(person.owes_you) }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-0.5">Owes Others</p>
-                                <p class="text-xs font-semibold text-amber-400">{{ formatPeso(person.you_owe) }}</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -188,5 +186,5 @@ onUnmounted(() => {
                 </div>
             </form>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

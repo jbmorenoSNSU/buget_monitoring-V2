@@ -14,11 +14,15 @@ import { Chart } from 'chart.js';
 Chart.defaults.color = '#94A3B8';
 Chart.defaults.borderColor = '#232936';
 
+import AppLayout from './Components/Layout/AppLayout.vue';
+
 createInertiaApp({
     title: (title) => title ? `${title} — ${appName}` : appName,
-    resolve: name => {
+    resolve: async name => {
         const pages = import.meta.glob<DefineComponent>('./Pages/**/*.vue');
-        return pages[`./Pages/${name}.vue`]();
+        const page = await pages[`./Pages/${name}.vue`]();
+        page.default.layout = page.default.layout || AppLayout;
+        return page;
     },
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });

@@ -9,8 +9,8 @@ use App\Actions\Category\UpdateCategoryAction;
 use App\DTOs\CategoryDTO;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Resources\CategoryResource;
-use App\Interfaces\CategoryRepositoryInterface;
 use App\Models\Category;
+use App\Services\CategoryService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +21,7 @@ use Inertia\Response;
 class CategoryController extends Controller
 {
     public function __construct(
-        private CategoryRepositoryInterface $categoryRepository,
+        private CategoryService $service,
         private CreateCategoryAction $createCategory,
         private UpdateCategoryAction $updateCategory,
     ) {}
@@ -29,7 +29,7 @@ class CategoryController extends Controller
     public function index(): Response
     {
         return Inertia::render('Categories/Index', [
-            'categories' => CategoryResource::collection($this->categoryRepository->all()),
+            'categories' => CategoryResource::collection($this->service->get_all()),
         ]);
     }
 
@@ -52,10 +52,10 @@ class CategoryController extends Controller
     public function destroy(Category $category): RedirectResponse
     {
         $this->authorize('delete', $category);
-        if ($this->categoryRepository->has_transactions($category)) {
+        if (! $this->service->can_delete($category)) {
             return redirect()->route('categories.index')->with('error', 'Cannot delete category with transactions. Deactivate it instead.');
         }
-        $this->categoryRepository->delete($category);
+        $this->service->delete($category);
 
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
@@ -63,7 +63,7 @@ class CategoryController extends Controller
     public function toggle(Category $category): RedirectResponse
     {
         $this->authorize('update', $category);
-        $this->categoryRepository->update($category, ['is_active' => ! $category->is_active]);
+        $this->service->toggle($category);
         $status = $category->fresh()->is_active ? 'activated' : 'deactivated';
 
         return redirect()->route('categories.index')->with('success', "Category {$status} successfully.");

@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Recurring Transactions');
 import { computed, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -13,18 +18,18 @@ import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
 
-const props = defineProps({
-    recurring: { type: Array, default: () => [] },
-    accounts: { type: Array, default: () => [] },
-    categories: { type: Array, default: () => [] },
-    debts: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    recurring: any[];
+    accounts: any[];
+    categories: any[];
+    debts: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const { formatShortDate, formatRelative } = useDate();
 
 const items = computed(() => props.recurring || []);
-const deleteTarget = ref(null);
+const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
 const showGenerateModal = ref(false);
 const isGenerating = ref(false);
@@ -78,7 +83,7 @@ const openAddModal = () => {
     showFormModal.value = true;
 };
 
-const openEditModal = (rec) => {
+const openEditModal = (rec: any) => {
     isEdit.value = true;
     form.clearErrors();
     form.id = rec.id;
@@ -113,9 +118,9 @@ const columns = [
     { key: 'actions', label: '' },
 ];
 
-const confirmDelete = (r) => { deleteTarget.value = r; showDeleteModal.value = true; };
-const doDelete = () => { router.delete(`/recurring/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
-const toggle = (r) => router.patch(`/recurring/${r.id}/toggle`);
+const confirmDelete = (r: any) => { deleteTarget.value = r; showDeleteModal.value = true; };
+const doDelete = () => { if(deleteTarget.value) router.delete(`/recurring/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
+const toggle = (r: any) => router.patch(`/recurring/${r.id}/toggle`);
 
 const confirmGenerate = () => { showGenerateModal.value = true; };
 const doGenerateNow = () => { 
@@ -139,7 +144,7 @@ const perPageOptions = [
     { value: '50', label: 'Show 50 entries' },
 ];
 
-const handleSort = (columnKey) => {
+const handleSort = (columnKey: string) => {
     if (sortBy.value === columnKey) {
         sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
     } else {
@@ -222,7 +227,7 @@ const paginationLinks = computed(() => {
     return links;
 });
 
-const handlePageNavigate = (pageStr) => {
+const handlePageNavigate = (pageStr: string) => {
     if (pageStr === 'prev') {
         currentPage.value = Math.max(1, currentPage.value - 1);
     } else if (pageStr === 'next') {
@@ -234,7 +239,8 @@ const handlePageNavigate = (pageStr) => {
 </script>
 
 <template>
-    <AppLayout title="Recurring Transactions">
+    <Head title="Recurring Transactions" />
+    <div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">Recurring Transactions</h2>
             <div class="flex gap-2">
@@ -363,5 +369,5 @@ const handlePageNavigate = (pageStr) => {
                 </div>
             </form>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

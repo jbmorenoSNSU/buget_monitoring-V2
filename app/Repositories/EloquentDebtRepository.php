@@ -40,6 +40,22 @@ class EloquentDebtRepository implements DebtRepositoryInterface
         return Debt::orderBy('name')->get();
     }
 
+    public function find(int $id): Debt
+    {
+        return Debt::findOrFail($id);
+    }
+
+    public function count_active(?int $person_id = null): int
+    {
+        $query = Debt::where('status', 'active');
+
+        if ($person_id) {
+            $query->where('person_id', $person_id);
+        }
+
+        return $query->count();
+    }
+
     public function create(array $data): Debt
     {
         return Debt::create($data);
@@ -55,5 +71,15 @@ class EloquentDebtRepository implements DebtRepositoryInterface
     public function delete(Debt $debt): void
     {
         $debt->delete();
+    }
+
+    public function increment_principal(int $id, float $amount): void
+    {
+        Debt::findOrFail($id)->increment('principal_amount', $amount);
+    }
+
+    public function decrement_principal(int $id, float $amount): void
+    {
+        Debt::findOrFail($id)->decrement('principal_amount', $amount);
     }
 }

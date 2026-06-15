@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Year in Review');
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -7,10 +12,10 @@ import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    data: { type: Object, default: () => ({}) },
-    filters: { type: Object, default: () => ({}) },
-});
+const props = defineProps<{
+    data: Record<string, any>;
+    filters: Record<string, any>;
+}>();
 
 const { formatPeso } = useCurrency();
 const year = ref(props.filters.year || new Date().getFullYear());
@@ -22,7 +27,8 @@ const filter = () => {
 </script>
 
 <template>
-    <AppLayout title="Year in Review">
+    <Head title="Year in Review" />
+    <div>
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-slate-100">{{ year }} Year in Review</h2>
             <AppSelect v-model="year" :options="yearOptions" @change="filter" class="w-32" />
@@ -78,7 +84,7 @@ const filter = () => {
                         <div v-for="(cat, index) in data.top_categories" :key="index" class="relative">
                             <div class="flex justify-between items-end mb-1">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-slate-400 font-mono text-xs w-4">{{ index + 1 }}.</span>
+                                    <span class="text-slate-400 font-mono text-xs w-4">{{ Number(index) + 1 }}.</span>
                                     <AppIcon :name="cat.category_icon" size="14" :style="{ color: cat.category_color }" />
                                     <span class="text-sm font-medium text-slate-200">{{ cat.category_name }}</span>
                                 </div>
@@ -109,19 +115,8 @@ const filter = () => {
                         <p class="text-xs text-slate-500 mt-2">The month you spent the most money.</p>
                     </div>
                 </AppCard>
-
-                <AppCard class="bg-gradient-to-r from-slate-800 to-slate-900 border-l-4 border-l-cyan-500">
-                    <div class="p-6">
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mb-2">Money Split & Shared</p>
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-2xl font-bold text-slate-100">{{ formatPeso(data.total_split) }}</h3>
-                            <AppIcon name="Users" size="24" class="text-cyan-500 opacity-50" />
-                        </div>
-                        <p class="text-xs text-slate-500 mt-2">Total amount shared through split bills this year.</p>
-                    </div>
-                </AppCard>
             </div>
         </div>
 
-    </AppLayout>
+    </div>
 </template>

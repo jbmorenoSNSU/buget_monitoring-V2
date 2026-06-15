@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Financial Calendar');
 import { computed, ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -8,12 +13,12 @@ import AppButton from '@/Components/UI/AppButton.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    data: { type: Object, required: true },
-    filters: { type: Object, required: true },
-    persons: { type: Array, default: () => [] },
-    accounts: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    data: Record<string, any>;
+    filters: Record<string, any>;
+    persons: any[];
+    accounts: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 
@@ -67,7 +72,7 @@ const paddingEnd = computed(() => {
 });
 
 const applyFilters = () => {
-    const query = { month: filterMonth.value, year: filterYear.value };
+    const query: Record<string, any> = { month: filterMonth.value, year: filterYear.value };
     if (filterPerson.value) query.person_id = filterPerson.value;
     if (filterAccount.value) query.account_id = filterAccount.value;
     
@@ -82,7 +87,7 @@ const resetFilters = () => {
     applyFilters();
 };
 
-const getTransactionColor = (type) => {
+const getTransactionColor = (type: string) => {
     if (type === 'income') return 'text-income';
     if (type === 'expense') return 'text-expense';
     return 'text-transfer';
@@ -90,9 +95,9 @@ const getTransactionColor = (type) => {
 
 // Modal Logic
 const showModal = ref(false);
-const selectedDay = ref(null);
+const selectedDay = ref<any>(null);
 
-const openDayModal = (day) => {
+const openDayModal = (day: any) => {
     selectedDay.value = day;
     showModal.value = true;
 };
@@ -104,7 +109,8 @@ const closeDayModal = () => {
 </script>
 
 <template>
-    <AppLayout title="Financial Calendar">
+    <Head title="Financial Calendar" />
+    <div>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div class="flex flex-wrap gap-3 items-center">
                 <AppSelect v-model="filterMonth" :options="monthOptions" class="w-40" @change="applyFilters" />
@@ -266,7 +272,7 @@ const closeDayModal = () => {
                 </Link>
             </template>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>
 
 <style scoped>

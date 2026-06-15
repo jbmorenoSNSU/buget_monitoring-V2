@@ -16,9 +16,17 @@ interface DebtRepositoryInterface
 
     public function all(): Collection;
 
+    public function find(int $id): Debt;
+
+    public function count_active(?int $person_id = null): int;
+
     public function create(array $data): Debt;
 
     public function update(Debt $debt, array $data): Debt;
 
     public function delete(Debt $debt): void;
+
+    public function increment_principal(int $id, float $amount): void;
+
+    public function decrement_principal(int $id, float $amount): void;
 }

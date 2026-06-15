@@ -26,16 +26,6 @@ class EloquentPersonRepository implements PersonRepositoryInterface
                 $q->where('transactions.type', 'expense')
                     ->whereBetween('transactions.transaction_date', [$start_of_month, $end_of_month]);
             }], 'amount')
-            ->withSum(['transactions as owes_you' => function ($q) {
-                $q->whereNotNull('transactions.split_with_person_id');
-            }], 'split_amount')
-            // Using a raw subquery or relationship for "you_owe" because transactions relation is through accounts (owned by person)
-            // But "you_owe" is transactions where split_with_person_id = THIS person.
-            // We can define a new relationship or just use an addSelect subquery.
-            ->addSelect([
-                'you_owe' => Transaction::selectRaw('sum(split_amount)')
-                    ->whereColumn('split_with_person_id', 'persons.id'),
-            ])
             ->orderBy('name')
             ->get();
     }

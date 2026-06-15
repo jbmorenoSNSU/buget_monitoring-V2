@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Debt Payoff Planner');
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -85,7 +90,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AppLayout title="Debt Payoff Planner">
+    <Head title="Debt Payoff Planner" />
+    <div>
         <!-- Top Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
@@ -225,5 +231,5 @@ onUnmounted(() => {
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

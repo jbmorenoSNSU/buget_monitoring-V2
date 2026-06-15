@@ -43,8 +43,8 @@ defineSlots<
 
 <template>
     <div class="overflow-x-auto bg-card-bg rounded-xl border border-border shadow-sm">
-        <table class="w-full text-sm text-slate-100">
-            <thead>
+        <table class="w-full text-sm text-slate-100 max-md:block max-md:w-full">
+            <thead class="max-md:hidden">
                 <tr class="border-b border-border bg-page-bg/50">
                     <th
                         v-for="col in columns"
@@ -71,24 +71,27 @@ defineSlots<
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="max-md:block max-md:w-full">
                 <tr
                     v-for="(row, index) in rows"
                     :key="row.id || index"
-                    class="border-b border-border hover:bg-border/50 transition-colors"
+                    class="border-b border-border hover:bg-border/50 transition-colors max-md:block max-md:w-full max-md:mb-4 max-md:bg-page-bg/30 max-md:rounded-lg max-md:p-2"
                 >
                     <td
                         v-for="col in columns"
                         :key="col.key"
-                        :class="['px-4 py-3', col.cellClass || '']"
+                        :class="['px-4 py-3 max-md:block max-md:w-full max-md:flex max-md:justify-between max-md:items-center max-md:border-b max-md:border-border/30 last:max-md:border-none', col.cellClass || '']"
                     >
-                        <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-                            {{ row[col.key] }}
-                        </slot>
+                        <span class="md:hidden text-slate-400 font-medium text-xs">{{ col.label }}</span>
+                        <div class="max-md:text-right">
+                            <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
+                                {{ row[col.key] }}
+                            </slot>
+                        </div>
                     </td>
                 </tr>
-                <tr v-if="!rows.length">
-                    <td :colspan="columns.length" class="px-4 py-8 text-center text-slate-400">
+                <tr v-if="!rows.length" class="max-md:block">
+                    <td :colspan="columns.length" class="px-4 py-8 text-center text-slate-400 max-md:block">
                         {{ emptyMessage }}
                     </td>
                 </tr>

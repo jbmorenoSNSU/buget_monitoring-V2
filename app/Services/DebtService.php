@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Actions\Debt\CreateDebtAction;
+use App\Actions\Debt\DeleteDebtAction;
+use App\Actions\Debt\UpdateDebtAction;
 use App\DTOs\Debts\DebtDTO;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
@@ -13,7 +16,10 @@ use Illuminate\Database\Eloquent\Collection;
 class DebtService
 {
     public function __construct(
-        private DebtRepositoryInterface $debtRepository
+        private DebtRepositoryInterface $debtRepository,
+        private CreateDebtAction $createAction,
+        private UpdateDebtAction $updateAction,
+        private DeleteDebtAction $deleteAction
     ) {}
 
     public function paginate(?int $person_id = null): CursorPaginator
@@ -42,17 +48,17 @@ class DebtService
 
     public function create(DebtDTO $dto): Debt
     {
-        return $this->debtRepository->create((array) $dto);
+        return $this->createAction->execute($dto);
     }
 
     public function update(Debt $debt, DebtDTO $dto): Debt
     {
-        return $this->debtRepository->update($debt, (array) $dto);
+        return $this->updateAction->execute($debt, $dto);
     }
 
     public function delete(Debt $debt): void
     {
-        $this->debtRepository->delete($debt);
+        $this->deleteAction->execute($debt);
     }
 
     /**
@@ -60,9 +66,9 @@ class DebtService
      */
     private function calculate_payoff(Debt $debt): array
     {
-        $balance = $debt->principal_amount;
-        $monthly_interest_rate = ($debt->interest_rate / 100) / 12;
-        $payment = $debt->minimum_payment;
+        $balance = (float) $debt->principal_amount;
+        $monthly_interest_rate = ((float) $debt->interest_rate / 100) / 12;
+        $payment = (float) $debt->minimum_payment;
 
         if ($balance <= 0) {
             return ['months' => 0, 'payoff_date' => now()->format('M Y'), 'total_interest' => 0, 'is_possible' => true];

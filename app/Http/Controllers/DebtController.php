@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\DTOs\Debts\DebtDTO;
 use App\Http\Requests\Debts\StoreDebtRequest;
 use App\Http\Requests\Debts\UpdateDebtRequest;
+use App\Http\Resources\DebtResource;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Debt;
 use App\Services\DebtService;
@@ -27,7 +28,7 @@ class DebtController extends Controller
         $person_id = $request->filled('person_id') ? (int) $request->get('person_id') : null;
 
         return Inertia::render('Debts/Index', [
-            'debts' => $this->debtService->paginate($person_id),
+            'debts' => DebtResource::collection($this->debtService->paginate($person_id)),
             'filters' => [
                 'persons' => $this->personRepository->all_active(),
                 'selectedPersonId' => $person_id,
@@ -37,6 +38,7 @@ class DebtController extends Controller
 
     public function store(StoreDebtRequest $request): RedirectResponse
     {
+        $this->authorize('create', Debt::class);
         $this->debtService->create(DebtDTO::fromRequest($request->validated()));
 
         return redirect()->back()->with('success', 'Debt tracker created successfully.');
@@ -44,6 +46,7 @@ class DebtController extends Controller
 
     public function update(UpdateDebtRequest $request, Debt $debt): RedirectResponse
     {
+        $this->authorize('update', $debt);
         $this->debtService->update($debt, DebtDTO::fromRequest($request->validated()));
 
         return redirect()->back()->with('success', 'Debt tracker updated successfully.');
@@ -51,6 +54,7 @@ class DebtController extends Controller
 
     public function destroy(Debt $debt): RedirectResponse
     {
+        $this->authorize('delete', $debt);
         $this->debtService->delete($debt);
 
         return redirect()->back()->with('success', 'Debt tracker deleted successfully.');

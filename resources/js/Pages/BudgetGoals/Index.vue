@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Budget Goals');
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -13,13 +18,13 @@ import { useForm } from '@inertiajs/vue3';
 import { useCurrency } from '@/composables/useCurrency.js';
 import { useDate } from '@/composables/useDate.js';
 
-const props = defineProps({
-    goals: { type: Object, default: () => ({ data: [] }) },
-    month: { type: Number, default: new Date().getMonth() + 1 },
-    year: { type: Number, default: new Date().getFullYear() },
-    categories: { type: Array, default: () => [] },
-    persons: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    goals: Record<string, any>;
+    month: number;
+    year: number;
+    categories: any[];
+    persons: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const { formatMonthYear } = useDate();
@@ -27,7 +32,7 @@ const { formatMonthYear } = useDate();
 const items = computed(() => props.goals?.data || []);
 const selectedMonth = ref(props.month);
 const selectedYear = ref(props.year);
-const deleteTarget = ref(null);
+const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
 
 const monthOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(2000, i).toLocaleString('en', { month: 'long' }) }));
@@ -66,7 +71,7 @@ const openAddModal = () => {
     showFormModal.value = true;
 };
 
-const openEditModal = (goal) => {
+const openEditModal = (goal: any) => {
     isEdit.value = true;
     form.clearErrors();
     form.id = goal.id;
@@ -91,12 +96,12 @@ const filter = () => {
     router.get('/budget-goals', { month: selectedMonth.value, year: selectedYear.value }, { preserveState: true });
 };
 
-const confirmDelete = (g) => { deleteTarget.value = g; showDeleteModal.value = true; };
-const doDelete = () => { router.delete(`/budget-goals/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
+const confirmDelete = (g: any) => { deleteTarget.value = g; showDeleteModal.value = true; };
+const doDelete = () => { if(deleteTarget.value) router.delete(`/budget-goals/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
 
 // Dropdown state
-const activeDropdownId = ref(null);
-const toggleDropdown = (id, event) => {
+const activeDropdownId = ref<number | string | null>(null);
+const toggleDropdown = (id: number | string, event: Event) => {
     event.stopPropagation();
     activeDropdownId.value = activeDropdownId.value === id ? null : id;
 };
@@ -112,7 +117,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AppLayout title="Budget Goals">
+    <Head title="Budget Goals" />
+    <div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <AppSelect v-model="selectedMonth" :options="monthOptions" @change="filter" />
@@ -243,5 +249,5 @@ onUnmounted(() => {
                 </div>
             </form>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

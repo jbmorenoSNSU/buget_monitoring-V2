@@ -89,13 +89,6 @@ class ReportService
         return $this->statementReportService->calendar_report($month, $year, $person_id, $account_id);
     }
 
-    /**
-     * Delegate: Settlement report.
-     */
-    public function settlement_report(string $from, string $to): array
-    {
-        return $this->statementReportService->settlement_report($from, $to);
-    }
 
     /**
      * Delegate: Year in Review report.

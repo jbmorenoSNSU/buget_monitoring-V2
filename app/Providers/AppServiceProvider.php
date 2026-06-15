@@ -27,5 +27,10 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         Transaction::observe(TransactionObserver::class);
         Account::observe(AccountObserver::class);
+        
+        \App\Models\Transaction::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
+        \App\Models\BudgetGoal::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
+        \App\Models\Debt::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
+        \App\Models\RecurringTransaction::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
     }
 }

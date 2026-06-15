@@ -40,6 +40,7 @@ class SavingsGoalController extends Controller
      */
     public function store(StoreSavingsGoalRequest $request): RedirectResponse
     {
+        $this->authorize('create', SavingsGoal::class);
         $this->savingsGoalService->create(SavingsGoalDTO::fromRequest($request->validated()));
 
         return redirect()->back()->with('success', 'Savings goal created successfully.');
@@ -50,6 +51,7 @@ class SavingsGoalController extends Controller
      */
     public function update(UpdateSavingsGoalRequest $request, SavingsGoal $savingsGoal): RedirectResponse
     {
+        $this->authorize('update', $savingsGoal);
         $this->savingsGoalService->update($savingsGoal, SavingsGoalDTO::fromRequest($request->validated()));
 
         return redirect()->back()->with('success', 'Savings goal updated successfully.');
@@ -60,6 +62,7 @@ class SavingsGoalController extends Controller
      */
     public function destroy(SavingsGoal $savingsGoal): RedirectResponse
     {
+        $this->authorize('delete', $savingsGoal);
         $this->savingsGoalService->delete($savingsGoal);
 
         return redirect()->back()->with('success', 'Savings goal deleted successfully.');

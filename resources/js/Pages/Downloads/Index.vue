@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Downloads');
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -58,7 +62,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <AppLayout title="Downloads">
+    <div>
         <Head title="Downloads" />
 
         <div class="mb-6 flex justify-between items-center">
@@ -153,5 +157,5 @@ onUnmounted(() => {
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

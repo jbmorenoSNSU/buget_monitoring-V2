@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Account Statement Report');
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -11,11 +16,11 @@ import AppIcon from '@/Components/UI/AppIcon.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
 import { useCurrency } from '@/composables/useCurrency.js';
 
-const props = defineProps({
-    data: { type: Object, default: null },
-    filters: { type: Object, default: () => ({}) },
-    accounts: { type: Array, default: () => [] },
-});
+const props = defineProps<{
+    data: Record<string, any>;
+    filters: Record<string, any>;
+    accounts: any[];
+}>();
 
 const { formatPeso } = useCurrency();
 const account_id = ref(props.filters.account_id || '');
@@ -38,11 +43,12 @@ const columns = [
     { key: 'balance', label: 'Balance', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type) => `/reports/export/${type}?account_id=${account_id.value}&from=${from.value}&to=${to.value}`;
+const exportUrl = (type: string) => `/reports/export/${type}?account_id=${account_id.value}&from=${from.value}&to=${to.value}`;
 </script>
 
 <template>
-    <AppLayout title="Account Statement Report">
+    <Head title="Account Statement Report" />
+    <div>
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppSelect v-model="account_id" :options="accountOptions" label="Account" @change="filter" />
             <AppInput v-model="from" label="From" type="date" />
@@ -78,5 +84,5 @@ const exportUrl = (type) => `/reports/export/${type}?account_id=${account_id.val
         </template>
 
         <p v-else class="text-center text-slate-400 py-12">Select an account and date range to view the statement.</p>
-    </AppLayout>
+    </div>
 </template>

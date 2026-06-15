@@ -1,4 +1,9 @@
-<script setup>
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Categories');
 import { computed, ref, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -15,9 +20,9 @@ import ColorPicker from '@/Components/UI/ColorPicker.vue';
 import IconPicker from '@/Components/UI/IconPicker.vue';
 import { useForm } from '@inertiajs/vue3';
 
-const props = defineProps({
-    categories: { type: Object, default: () => ({ data: [] }) },
-});
+const props = defineProps<{
+    categories: Record<string, any>;
+}>();
 
 const items = computed(() => props.categories?.data || []);
 const activeTab = ref('expense');
@@ -49,7 +54,7 @@ const openAddModal = () => {
     showFormModal.value = true;
 };
 
-const openEditModal = (cat) => {
+const openEditModal = (cat: any) => {
     isEdit.value = true;
     form.clearErrors();
     form.id = cat.id;
@@ -75,7 +80,7 @@ const sortDirection = ref('asc');
 const perPage = ref('10');
 const currentPage = ref(1);
 
-const handleSort = (columnKey) => {
+const handleSort = (columnKey: string) => {
     if (sortBy.value === columnKey) {
         sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
     } else {
@@ -86,12 +91,12 @@ const handleSort = (columnKey) => {
 
 const filteredAndSortedItems = computed(() => {
     // 1. Filter by tab type
-    let list = items.value.filter(cat => cat.type === activeTab.value);
+    let list = items.value.filter((cat: any) => cat.type === activeTab.value);
 
     // 2. Filter by search string
     if (search.value.trim()) {
         const q = search.value.toLowerCase().trim();
-        list = list.filter(cat => {
+        list = list.filter((cat: any) => {
             const name = (cat.name || '').toLowerCase();
             const type = (cat.type || '').toLowerCase();
             const statusLabel = cat.is_active ? 'active' : 'inactive';
@@ -178,7 +183,7 @@ const paginationLinks = computed(() => {
     return links;
 });
 
-const handlePageNavigate = (pageStr) => {
+const handlePageNavigate = (pageStr: string) => {
     if (pageStr === 'prev') {
         currentPage.value = Math.max(1, currentPage.value - 1);
     } else if (pageStr === 'next') {
@@ -188,7 +193,7 @@ const handlePageNavigate = (pageStr) => {
     }
 };
 
-const deleteTarget = ref(null);
+const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
 
 const columns = [
@@ -200,9 +205,9 @@ const columns = [
     { key: 'actions', label: 'Actions' },
 ];
 
-const confirmDelete = (cat) => { deleteTarget.value = cat; showDeleteModal.value = true; };
-const doDelete = () => { router.delete(`/categories/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
-const toggle = (cat) => router.patch(`/categories/${cat.id}/toggle`);
+const confirmDelete = (cat: any) => { deleteTarget.value = cat; showDeleteModal.value = true; };
+const doDelete = () => { if(deleteTarget.value) router.delete(`/categories/${deleteTarget.value.id}`, { onSuccess: () => { showDeleteModal.value = false; } }); };
+const toggle = (cat: any) => router.patch(`/categories/${cat.id}/toggle`);
 
 const perPageOptions = [
     { value: '5', label: 'Show 5 entries' },
@@ -213,7 +218,8 @@ const perPageOptions = [
 </script>
 
 <template>
-    <AppLayout title="Categories">
+    <Head title="Categories" />
+    <div>
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Categories</h2>
             <AppButton @click="openAddModal">+ Add Category</AppButton>
@@ -306,5 +312,5 @@ const perPageOptions = [
                 </div>
             </form>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

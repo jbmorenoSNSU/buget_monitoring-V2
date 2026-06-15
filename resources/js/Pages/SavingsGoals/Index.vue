@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Savings Goals Tracker');
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -11,6 +16,9 @@ import AppInput from '@/Components/UI/AppInput.vue';
 import ProgressBar from '@/Components/UI/ProgressBar.vue';
 import StatCard from '@/Components/UI/StatCard.vue';
 import { useCurrency } from '@/composables/useCurrency';
+
+import SavingsGoalFormModal from './Components/SavingsGoalFormModal.vue';
+import ContributionModal from './Components/ContributionModal.vue';
 
 const props = defineProps<{
     goals: any[];
@@ -235,7 +243,8 @@ const formatDate = (dateStr: string) => {
 </script>
 
 <template>
-    <AppLayout title="Savings Goals Tracker">
+    <Head title="Savings Goals Tracker" />
+    <div>
         <!-- Filter and Top Actions Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
@@ -427,106 +436,23 @@ const formatDate = (dateStr: string) => {
             </div>
         </div>
 
-        <!-- Add/Edit Savings Goal Modal -->
-        <AppModal :show="isFormModalOpen" :title="editingGoal ? 'Edit Savings Goal' : 'Add Savings Goal'" @close="isFormModalOpen = false">
-            <form @submit.prevent="submitGoalForm" class="space-y-4">
-                <AppInput
-                    v-model="goalForm.name"
-                    label="Goal Name"
-                    placeholder="e.g. Emergency Fund"
-                    required
-                    :error="goalForm.errors.name"
-                />
+        <SavingsGoalFormModal
+            :show="isFormModalOpen"
+            :isEdit="!!editingGoal"
+            :form="goalForm"
+            :accountOptions="accountOptions"
+            :personFormOptions="personFormOptions"
+            @close="isFormModalOpen = false"
+            @submit="submitGoalForm"
+        />
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <AppInput
-                        v-model="goalForm.target_amount"
-                        type="number"
-                        step="0.01"
-                        label="Target Amount"
-                        placeholder="0.00"
-                        required
-                        :error="goalForm.errors.target_amount"
-                    />
-                    <AppInput
-                        v-model="goalForm.current_amount"
-                        type="number"
-                        step="0.01"
-                        label="Current Saved Amount"
-                        placeholder="0.00"
-                        :disabled="!!editingGoal"
-                        :error="goalForm.errors.current_amount"
-                    />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <AppSelect
-                        v-model="goalForm.account_id"
-                        :options="accountOptions"
-                        label="Link to Account"
-                        :error="goalForm.errors.account_id"
-                    />
-                    <AppSelect
-                        v-model="goalForm.person_id"
-                        :options="personFormOptions"
-                        label="Owner"
-                        :error="goalForm.errors.person_id"
-                    />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <AppInput
-                        v-model="goalForm.target_date"
-                        type="date"
-                        label="Target Completion Date"
-                        :error="goalForm.errors.target_date"
-                    />
-                </div>
-
-                <div class="flex justify-end gap-2 pt-4 border-t border-border">
-                    <AppButton variant="secondary" type="button" @click="isFormModalOpen = false">Cancel</AppButton>
-                    <AppButton type="submit" :loading="goalForm.processing">
-                        {{ editingGoal ? 'Save Changes' : 'Create Goal' }}
-                    </AppButton>
-                </div>
-            </form>
-        </AppModal>
-
-        <!-- Quick Contribution Modal -->
-        <AppModal :show="isContributionModalOpen" title="Update Savings Allocation" @close="isContributionModalOpen = false">
-            <form @submit.prevent="submitContributionForm" class="space-y-4">
-                <p class="text-xs text-slate-400">
-                    Allocating funds towards: <strong class="text-slate-100">{{ contributionGoal?.name }}</strong>
-                </p>
-
-                <div class="flex items-center gap-4 bg-sidebar/40 p-3 rounded-lg border border-border/50">
-                    <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-                        <input type="radio" :value="false" v-model="contributionForm.is_withdrawal" class="accent-indigo-500" />
-                        <span>Deposit / Contribution</span>
-                    </label>
-                    <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-                        <input type="radio" :value="true" v-model="contributionForm.is_withdrawal" class="accent-indigo-500" />
-                        <span>Withdrawal / Reallocation</span>
-                    </label>
-                </div>
-
-                <AppInput
-                    v-model="contributionForm.amount"
-                    type="number"
-                    step="0.01"
-                    label="Amount"
-                    placeholder="0.00"
-                    required
-                />
-
-                <div class="flex justify-end gap-2 pt-4 border-t border-border">
-                    <AppButton variant="secondary" type="button" @click="isContributionModalOpen = false">Cancel</AppButton>
-                    <AppButton type="submit" :loading="contributionForm.processing">
-                        Submit
-                    </AppButton>
-                </div>
-            </form>
-        </AppModal>
+        <ContributionModal
+            :show="isContributionModalOpen"
+            :form="contributionForm"
+            :goal="contributionGoal"
+            @close="isContributionModalOpen = false"
+            @submit="submitContributionForm"
+        />
 
         <!-- Delete Confirmation Modal -->
         <AppModal :show="showDeleteModal" title="Delete Savings Goal" @close="showDeleteModal = false">
@@ -538,5 +464,5 @@ const formatDate = (dateStr: string) => {
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
         </AppModal>
-    </AppLayout>
+    </div>
 </template>

@@ -7,7 +7,7 @@ defineProps({
     sidebarCollapsed: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['toggleSidebar']);
+const emit = defineEmits(['toggleSidebar', 'openQuickAdd']);
 </script>
 
 <template>
@@ -25,11 +25,9 @@ const emit = defineEmits(['toggleSidebar']);
         </div>
         <div class="flex items-center gap-4">
             <span class="text-sm text-slate-500 hidden xl:block">{{ new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-            <Link href="/transactions?action=add">
-                <AppButton size="sm" class="px-3 sm:px-4">
-                    <span class="sm:mr-1">+</span> <span class="hidden sm:inline">Add Transaction</span>
-                </AppButton>
-            </Link>
+            <AppButton size="sm" class="px-3 sm:px-4" @click="emit('openQuickAdd')">
+                <span class="sm:mr-1">+</span> <span class="hidden sm:inline">Add Transaction</span>
+            </AppButton>
             <div class="w-8 h-8 rounded-full bg-border flex items-center justify-center border border-slate-700 text-xs font-bold text-slate-300">
                 J
             </div>

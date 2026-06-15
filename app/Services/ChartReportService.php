@@ -365,9 +365,6 @@ class ChartReportService
             $busiest_month_name = $busiest_month_num ? Carbon::create($year, $busiest_month_num, 1)->format('F') : 'N/A';
             $busiest_month_amount = $months->max() ?? 0;
 
-            // Split total
-            $total_split = $all_txns->sum('split_amount');
-
             return [
                 'year' => $year,
                 'total_income' => round($total_income, 2),
@@ -378,7 +375,6 @@ class ChartReportService
                     'name' => $busiest_month_name,
                     'amount' => round($busiest_month_amount, 2),
                 ],
-                'total_split' => round($total_split, 2),
             ];
         });
     }

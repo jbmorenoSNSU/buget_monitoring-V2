@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { usePageTitle } from '@/composables/usePageTitle';
+
+const { setPageTitle } = usePageTitle();
+setPageTitle('Dashboard');
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
@@ -45,7 +50,8 @@ const onPersonChange = () => {
 </script>
 
 <template>
-    <AppLayout title="Dashboard">
+    <Head title="Dashboard" />
+    <div>
         <!-- Person Filter Selector -->
         <div class="flex items-center gap-3 mb-6">
             <span class="text-sm text-slate-400 font-medium">View as:</span>
@@ -66,5 +72,5 @@ const onPersonChange = () => {
 
         <!-- bottom activity / goals progress lists -->
         <DashboardActivity :recentTransactions="recentTransactions" :chartsAndGoals="chartsAndGoals" />
-    </AppLayout>
+    </div>
 </template>

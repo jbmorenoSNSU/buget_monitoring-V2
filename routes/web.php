@@ -46,7 +46,6 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/account-statement', [ReportController::class, 'account_statement'])->name('account-statement');
     Route::get('/budget-goal', [ReportController::class, 'budget_goal'])->name('budget-goal');
     Route::get('/calendar', [ReportController::class, 'calendar'])->name('calendar');
-    Route::get('/settlements', [ReportController::class, 'settlements'])->name('settlements');
     Route::get('/year-in-review', [ReportController::class, 'year_in_review'])->name('year-in-review');
     Route::get('/forecasting', [ReportController::class, 'forecasting'])->name('forecasting');
     Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
@@ -55,3 +54,7 @@ Route::prefix('reports')->name('reports.')->group(function () {
 Route::get('/downloads', [ExportController::class, 'index'])->name('downloads.index');
 Route::get('/downloads/{export}', [ExportController::class, 'download'])->name('downloads.download');
 Route::delete('/downloads/{export}', [ExportController::class, 'destroy'])->name('downloads.destroy');
+
+Route::prefix('api/v1')->group(function () {
+    Route::get('/quick-add-data', [\App\Http\Controllers\Api\QuickAddController::class, 'index']);
+});
