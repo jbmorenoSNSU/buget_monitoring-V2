@@ -8,6 +8,7 @@ use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardService
 {
@@ -21,9 +22,9 @@ class DashboardService
 
     public function getDashboardStats(int $month, int $year, ?int $person_id = null): array
     {
-        $cacheKey = "dashboard_stats_{$month}_{$year}_" . ($person_id ?? 'all');
-        
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addDay(), function () use ($month, $year, $person_id) {
+        $cacheKey = "dashboard_stats_{$month}_{$year}_".($person_id ?? 'all');
+
+        return Cache::remember($cacheKey, now()->addDay(), function () use ($month, $year, $person_id) {
             $totalBalance = $this->accountRepository->total_balance($person_id);
             $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
 

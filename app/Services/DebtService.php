@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
 use Illuminate\Contracts\Pagination\CursorPaginator;

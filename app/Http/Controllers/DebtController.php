@@ -7,8 +7,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Debts\StoreDebtRequest;
 use App\Http\Requests\Debts\UpdateDebtRequest;
 use App\Http\Resources\DebtResource;
+use App\Http\Resources\TransactionResource;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
+use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Debt;
 use App\Services\DebtService;
 use Illuminate\Http\RedirectResponse;
@@ -74,5 +76,17 @@ class DebtController extends Controller
         $this->debtRepository->delete($debt);
 
         return redirect()->back()->with('success', 'Debt tracker deleted successfully.');
+    }
+
+    /**
+     * Get the transaction history for a specific debt.
+     */
+    public function transactions(Debt $debt, TransactionRepositoryInterface $transactionRepo): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('view', $debt);
+        
+        $transactions = $transactionRepo->for_debt($debt->id);
+        
+        return response()->json(TransactionResource::collection($transactions));
     }
 }

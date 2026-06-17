@@ -12,7 +12,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
     public function all(): Collection
     {
-        return Category::orderBy('name')->get();
+        return Category::orderBy('name')->get(['id', 'name', 'type', 'icon', 'color', 'is_active']);
     }
 
     public function all_active(): Collection

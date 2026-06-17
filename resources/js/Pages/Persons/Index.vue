@@ -86,9 +86,12 @@ onUnmounted(() => {
 <template>
     <Head title="Persons" />
     <div>
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">Manage Persons</h2>
-            <AppButton @click="openAddModal">+ Add Person</AppButton>
+            <AppButton @click="openAddModal" class="shrink-0">
+                <AppIcon name="Plus" size="18" class="mr-2" />
+                Add Person
+            </AppButton>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

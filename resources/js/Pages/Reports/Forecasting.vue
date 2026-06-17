@@ -144,8 +144,8 @@ const milestoneColumns = [
 </script>
 
 <template>
-    <Head title="180-Day Cashflow Forecasting" />
     <div>
+        <Head title="180-Day Cashflow Forecasting" />
         <!-- Overview Banner -->
         <div class="bg-card-bg border border-border p-5 rounded-xl mb-6 relative overflow-hidden">
             <div class="absolute -right-4 -bottom-4 opacity-[0.02] text-slate-100 pointer-events-none">
@@ -174,38 +174,38 @@ const milestoneColumns = [
         <!-- Stat Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <StatCard
-                title="Starting Cash"
+                label="Starting Cash"
                 :value="formatPeso(data.starting_balance)"
                 icon="CreditCard"
-                color="text-slate-300"
+                accentColor="#CBD5E1"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Projected Ending"
+                label="Projected Ending"
                 :value="formatPeso(data.ending_balance)"
                 icon="Calendar"
-                :color="data.net_change >= 0 ? 'text-income' : 'text-expense'"
+                :accentColor="data.net_change >= 0 ? '#10B981' : '#F43F5E'"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Net Projected Change"
+                label="Net Projected Change"
                 :value="(data.net_change >= 0 ? '+' : '') + formatPeso(data.net_change)"
                 icon="ArrowUpDown"
-                :color="data.net_change >= 0 ? 'text-income' : 'text-expense'"
+                :accentColor="data.net_change >= 0 ? '#10B981' : '#F43F5E'"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Projected High"
+                label="Projected High"
                 :value="formatPeso(data.projected_high)"
                 icon="TrendingUp"
-                color="text-emerald-400"
+                accentColor="#34D399"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Projected Low"
+                label="Projected Low"
                 :value="formatPeso(data.projected_low)"
                 icon="TrendingDown"
-                :color="data.projected_low >= 0 ? 'text-slate-300' : 'text-rose-400'"
+                :accentColor="data.projected_low >= 0 ? '#CBD5E1' : '#FB7185'"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
         </div>

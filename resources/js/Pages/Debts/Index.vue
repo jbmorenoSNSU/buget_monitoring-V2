@@ -14,6 +14,7 @@ import AppSelect from '@/Components/UI/AppSelect.vue';
 import AppPagination from '@/Components/UI/AppPagination.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import DebtFormModal from './Components/DebtFormModal.vue';
+import DebtHistoryModal from './Components/DebtHistoryModal.vue';
 import { useCurrency } from '@/composables/useCurrency';
 
 const props = defineProps<{
@@ -45,6 +46,14 @@ const openCreateModal = () => {
 const openEditModal = (debt: any) => {
     editingDebt.value = debt;
     isFormModalOpen.value = true;
+};
+
+const isHistoryModalOpen = ref(false);
+const historyDebt = ref<any>(null);
+
+const openHistoryModal = (debt: any) => {
+    historyDebt.value = debt;
+    isHistoryModalOpen.value = true;
 };
 
 const showDeleteModal = ref(false);
@@ -159,6 +168,10 @@ onUnmounted(() => {
                                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
                                     <AppIcon name="Edit2" size="12" /> Edit
                                 </button>
+                                <button @click="openHistoryModal(debt); activeDropdownId = null" 
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-300 hover:bg-border hover:text-slate-100 transition-colors w-full text-left cursor-pointer">
+                                    <AppIcon name="History" size="12" /> View History
+                                </button>
                                 <div class="border-t border-border my-1"></div>
                                 <button @click="handleDelete(debt); activeDropdownId = null" 
                                     class="flex items-center gap-2 px-3 py-1.5 text-xs text-rose-400 hover:bg-border hover:text-rose-300 transition-colors w-full text-left cursor-pointer">
@@ -231,5 +244,11 @@ onUnmounted(() => {
                 <AppButton variant="danger" @click="doDelete">Delete</AppButton>
             </template>
         </AppModal>
+        <DebtHistoryModal
+            :show="isHistoryModalOpen"
+            :debt="historyDebt"
+            @close="isHistoryModalOpen = false"
+        />
+
     </div>
 </template>

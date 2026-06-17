@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRecurringTransactionRequest;
-use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
+use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Models\RecurringTransaction;
 use App\Services\RecurringTransactionService;
 use Illuminate\Http\RedirectResponse;

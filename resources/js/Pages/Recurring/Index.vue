@@ -9,6 +9,7 @@ import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppBadge from '@/Components/UI/AppBadge.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppTable from '@/Components/UI/AppTable.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
@@ -252,8 +253,14 @@ const handlePageNavigate = (pageStr: string) => {
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">Recurring Transactions</h2>
             <div class="flex gap-2">
-                <AppButton variant="secondary" @click="confirmGenerate">⚡ Generate Now</AppButton>
-                <AppButton @click="openAddModal">+ Add Recurring</AppButton>
+                <AppButton variant="secondary" @click="confirmGenerate">
+                    <AppIcon name="Zap" size="18" class="mr-2 text-yellow-400" />
+                    Generate Now
+                </AppButton>
+                <AppButton @click="openAddModal" class="shrink-0">
+                    <AppIcon name="Plus" size="18" class="mr-2" />
+                    Add Recurring
+                </AppButton>
             </div>
         </div>
 

@@ -40,12 +40,38 @@ const filter = () => router.get('/reports/category-expense', { month: month.valu
 
 const chartData = computed(() => ({
     labels: props.data.map(d => d.category_name),
-    datasets: [{ data: props.data.map(d => d.amount), backgroundColor: props.data.map(d => d.category_color), borderWidth: 2, borderColor: '#161B26' }],
+    datasets: [{ data: props.data.map(d => d.amount), backgroundColor: props.data.map(d => d.category_color), borderWidth: 1, borderColor: '#0F111A' }],
 }));
 
 const totalExpense = computed(() => {
     return props.data.reduce((sum, item) => sum + Number(item.amount), 0);
 });
+
+const maxAmount = computed(() => Math.max(...props.data.map(d => Number(d.amount)), 1));
+
+const getHeatColor = (amount: number) => {
+    const heatLevel = Number(amount) / maxAmount.value; // 0.0 to 1.0
+    
+    let r1, g1, b1, r2, g2, b2, factor;
+    
+    if (heatLevel < 0.5) {
+        // Emerald (#10B981) to Amber (#F59E0B)
+        r1 = 16; g1 = 185; b1 = 129;
+        r2 = 245; g2 = 158; b2 = 11;
+        factor = heatLevel * 2;
+    } else {
+        // Amber (#F59E0B) to Rose (#F43F5E)
+        r1 = 245; g1 = 158; b1 = 11;
+        r2 = 244; g2 = 63; b2 = 94;
+        factor = (heatLevel - 0.5) * 2;
+    }
+    
+    const r = Math.round(r1 + factor * (r2 - r1));
+    const g = Math.round(g1 + factor * (g2 - g1));
+    const b = Math.round(b1 + factor * (b2 - b1));
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
 
 const columns = [
     { key: 'category_name', label: 'Category' },
@@ -57,8 +83,8 @@ const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value
 </script>
 
 <template>
-    <Head title="Expense by Category Report" />
     <div>
+        <Head title="Expense by Category Report" />
         <div class="flex flex-wrap items-end gap-3 mb-6">
             <AppSelect v-model="month" :options="monthOptions" label="Month" @change="filter" />
             <AppSelect v-model="year" :options="yearOptions" label="Year" @change="filter" />
@@ -88,22 +114,27 @@ const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value
         </div>
 
         <div v-if="viewMode === 'heatmap'" class="mb-6">
-            <h3 class="text-sm font-semibold text-slate-100 mb-3">Spending Heatmap</h3>
-            <div class="flex flex-wrap gap-2 min-h-[320px]">
+            <h3 class="text-sm font-semibold text-slate-100 mb-1">Intensity Heatmap</h3>
+            <p class="text-xs text-slate-400 mb-4">Cards are colored based on their financial impact. Brighter, more vibrant blocks indicate higher spending.</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 <div v-for="cat in data" :key="cat.category_name"
-                     class="relative flex flex-col justify-center items-center p-4 rounded-xl shadow-inner transition-all hover:-translate-y-1 cursor-default"
+                     class="relative flex flex-col justify-center items-center p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-default border"
                      :style="{
-                         width: `calc(${Math.max(15, cat.percentage)}% - 8px)`,
-                         flexGrow: cat.percentage,
-                         backgroundColor: cat.category_color + 'E6'
+                         backgroundColor: getHeatColor(cat.amount) + '33', // 20% opacity for background
+                         borderColor: getHeatColor(cat.amount) + '66',
+                         boxShadow: `inset 0 0 20px ${getHeatColor(cat.amount)}20`
                      }">
-                     <AppIcon :name="cat.category_icon" size="24" class="text-white/80 mb-1 drop-shadow-sm" />
-                     <span class="font-bold text-white text-center drop-shadow-md line-clamp-1 leading-tight text-sm md:text-base">{{ cat.category_name }}</span>
-                     <span class="text-xs font-semibold text-white/90 mt-1">{{ formatPeso(cat.amount) }} ({{ cat.percentage }}%)</span>
+                     <AppIcon :name="cat.category_icon" size="28" class="mb-2 drop-shadow-sm" :style="{ color: getHeatColor(cat.amount) }" />
+                     <span class="font-bold text-slate-50 text-center drop-shadow-md leading-tight text-sm mb-1">{{ cat.category_name }}</span>
+                     <span class="text-sm font-black drop-shadow-sm" :style="{ color: getHeatColor(cat.amount) }">{{ formatPeso(cat.amount) }}</span>
+                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5" 
+                           :style="{ backgroundColor: getHeatColor(cat.amount) + '20', color: getHeatColor(cat.amount) }">
+                         {{ cat.percentage }}%
+                     </span>
                 </div>
-                <div v-if="data.length === 0" class="w-full flex items-center justify-center border border-dashed border-border rounded-xl text-slate-400 py-12">
-                    No expense data found for this period.
-                </div>
+            </div>
+            <div v-if="data.length === 0" class="w-full flex items-center justify-center border border-dashed border-border rounded-xl text-slate-400 py-12">
+                No expense data found for this period.
             </div>
         </div>
 

@@ -6,7 +6,6 @@ namespace App\Repositories;
 
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Person;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentPersonRepository implements PersonRepositoryInterface

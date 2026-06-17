@@ -226,6 +226,4 @@ class StatementReportService
             return $calendar;
         });
     }
-
-
 }

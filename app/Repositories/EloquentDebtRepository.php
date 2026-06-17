@@ -37,7 +37,7 @@ class EloquentDebtRepository implements DebtRepositoryInterface
 
     public function all(): Collection
     {
-        return Debt::orderBy('name')->get();
+        return Debt::orderBy('name')->get(['id', 'name', 'person_id', 'principal_amount', 'status']);
     }
 
     public function find(int $id): Debt

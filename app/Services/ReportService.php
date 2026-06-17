@@ -89,7 +89,6 @@ class ReportService
         return $this->statementReportService->calendar_report($month, $year, $person_id, $account_id);
     }
 
-
     /**
      * Delegate: Year in Review report.
      */

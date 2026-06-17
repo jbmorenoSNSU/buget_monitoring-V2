@@ -35,7 +35,6 @@ class TransactionService
         return $this->transactionRepository->paginate($filters, $per_page);
     }
 
-
     /**
      * Get the sum of all income transactions for a specific month/year.
      */

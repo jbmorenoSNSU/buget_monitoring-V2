@@ -66,29 +66,29 @@ const netSavings = computed(() => monthlyIncome.value - monthlyExpense.value);
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-            label="Total Balance"
-            :value="formatPeso(totalBalance)"
-            accentColor="var(--color-primary)"
-            icon="Wallet"
-        />
-        <StatCard
-            label="Income This Month"
-            :value="formatPeso(monthlyIncome)"
-            accentColor="var(--color-income)"
-            icon="TrendingUp"
-        />
-        <StatCard
-            label="Expenses This Month"
-            :value="formatPeso(monthlyExpense)"
-            accentColor="var(--color-expense)"
-            icon="TrendingDown"
-        />
-        <StatCard
-            label="Net Savings"
-            :value="formatPeso(netSavings)"
-            :accentColor="netSavings >= 0 ? 'var(--color-income)' : 'var(--color-expense)'"
-            icon="PiggyBank"
-        />
+                label="Total Balance"
+                :value="formatPeso(totalBalance)"
+                accentColor="#6366F1"
+                icon="Wallet"
+            />
+            <StatCard
+                label="Income This Month"
+                :value="formatPeso(monthlyIncome)"
+                accentColor="#10B981"
+                icon="TrendingUp"
+            />
+            <StatCard
+                label="Expenses This Month"
+                :value="formatPeso(monthlyExpense)"
+                accentColor="#F43F5E"
+                icon="TrendingDown"
+            />
+            <StatCard
+                label="Net Savings"
+                :value="formatPeso(netSavings)"
+                :accentColor="netSavings >= 0 ? '#10B981' : '#F43F5E'"
+                icon="PiggyBank"
+            />
         </div>
     </div>
 </template>

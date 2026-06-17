@@ -141,11 +141,14 @@ onUnmounted(() => {
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-200">Your Accounts</h2>
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Filter by Owner:</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-slate-400 font-medium whitespace-nowrap">View as:</span>
                     <AppSelect v-model="selectedPerson" :options="personOptions" class="w-44" />
                 </div>
-                <AppButton @click="openAddModal">+ Add Account</AppButton>
+                <AppButton @click="openAddModal" class="shrink-0">
+                    <AppIcon name="Plus" size="18" class="mr-2" />
+                    Add Account
+                </AppButton>
             </div>
         </div>
 

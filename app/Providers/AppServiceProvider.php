@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Account;
+use App\Models\BudgetGoal;
+use App\Models\Debt;
+use App\Models\RecurringTransaction;
 use App\Models\Transaction;
 use App\Observers\AccountObserver;
+use App\Observers\InvalidateDashboardCacheObserver;
 use App\Observers\TransactionObserver;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -27,10 +31,10 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         Transaction::observe(TransactionObserver::class);
         Account::observe(AccountObserver::class);
-        
-        \App\Models\Transaction::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
-        \App\Models\BudgetGoal::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
-        \App\Models\Debt::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
-        \App\Models\RecurringTransaction::observe(\App\Observers\InvalidateDashboardCacheObserver::class);
+
+        Transaction::observe(InvalidateDashboardCacheObserver::class);
+        BudgetGoal::observe(InvalidateDashboardCacheObserver::class);
+        Debt::observe(InvalidateDashboardCacheObserver::class);
+        RecurringTransaction::observe(InvalidateDashboardCacheObserver::class);
     }
 }

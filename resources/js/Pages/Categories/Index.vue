@@ -90,8 +90,8 @@ const handleSort = (columnKey: string) => {
 };
 
 const filteredAndSortedItems = computed(() => {
-    // 1. Filter by tab type
-    let list = items.value.filter((cat: any) => cat.type === activeTab.value);
+    // 1. Filter by tab type (include 'both' in both tabs)
+    let list = items.value.filter((cat: any) => cat.type === activeTab.value || cat.type === 'both');
 
     // 2. Filter by search string
     if (search.value.trim()) {
@@ -220,40 +220,45 @@ const perPageOptions = [
 <template>
     <Head title="Categories" />
     <div>
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Categories</h2>
-            <AppButton @click="openAddModal">+ Add Category</AppButton>
+            <AppButton @click="openAddModal" class="shrink-0">
+                <AppIcon name="Plus" size="18" class="mr-2" />
+                Add Category
+            </AppButton>
         </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-border pb-2 md:pb-0">
-            <!-- Tabs -->
-            <div class="flex gap-2">
-                <button
-                    @click="activeTab = 'expense'"
-                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'expense' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
-                >
-                    Expense Categories
-                </button>
-                <button
-                    @click="activeTab = 'income'"
-                    :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px', activeTab === 'income' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
-                >
-                    Income Categories
-                </button>
-            </div>
+        <div class="flex gap-2 mb-6 border-b border-border">
+            <button
+                @click="activeTab = 'expense'"
+                :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px outline-none', activeTab === 'expense' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
+            >
+                Expense Categories
+            </button>
+            <button
+                @click="activeTab = 'income'"
+                :class="['px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px outline-none', activeTab === 'income' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-border']"
+            >
+                Income Categories
+            </button>
+        </div>
 
+        <div class="flex justify-between items-end mb-4 gap-4">
             <!-- Search -->
-            <div class="w-full md:w-72 mb-2 md:mb-0">
+            <div class="w-full sm:w-72">
                 <AppInput v-model="search" placeholder="Search categories..." />
             </div>
-        </div>
 
-        <!-- Controls: Show entries -->
-        <div class="flex justify-end items-center mb-4">
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-400 font-medium">Page Size:</span>
+            <!-- Page Size -->
+            <div class="hidden sm:flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Page Size:</span>
                 <AppSelect v-model="perPage" :options="perPageOptions" class="w-40 select-none" />
             </div>
+        </div>
+
+        <div class="flex sm:hidden justify-end items-center mb-4 gap-2">
+            <span class="text-xs text-slate-400 font-medium">Page Size:</span>
+            <AppSelect v-model="perPage" :options="perPageOptions" class="w-32 select-none" />
         </div>
 
         <AppTable

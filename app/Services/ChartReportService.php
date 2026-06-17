@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Interfaces\AccountRepositoryInterface;
+use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\RecurringTransactionRepositoryInterface;
+use App\Interfaces\SavingsGoalRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -21,7 +23,9 @@ class ChartReportService
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
         private AccountRepositoryInterface $accountRepository,
-        private RecurringTransactionRepositoryInterface $recurringRepository
+        private RecurringTransactionRepositoryInterface $recurringRepository,
+        private DebtRepositoryInterface $debtRepository,
+        private SavingsGoalRepositoryInterface $savingsGoalRepository
     ) {}
 
     /**
@@ -328,42 +332,28 @@ class ChartReportService
                 $end = $today;
             }
 
-            // Get all transactions for the year via repository — never query models directly in a service
-            $all_txns = $this->transactionRepository->year_in_review_raw(
+            $totals = $this->transactionRepository->year_in_review_totals(
                 $start->format('Y-m-d'),
                 $end->format('Y-m-d')
             );
 
-            $total_income = $all_txns->where('type', 'income')->sum('amount');
-            $total_expense = $all_txns->where('type', 'expense')->sum('amount');
+            $total_income = $totals['income'];
+            $total_expense = $totals['expense'];
             $net_savings = $total_income - $total_expense;
 
-            // Top categories
-            $categories = $all_txns->where('type', 'expense')
-                ->groupBy('category_id')
-                ->map(function ($group) {
-                    $first = $group->first();
+            $categories = $this->transactionRepository->year_in_review_top_categories(
+                $start->format('Y-m-d'),
+                $end->format('Y-m-d'),
+                5
+            );
 
-                    return [
-                        'category_name' => $first->category?->name ?? 'Unknown',
-                        'category_icon' => $first->category?->icon ?? 'tag',
-                        'category_color' => $first->category?->color ?? '#94A3B8',
-                        'amount' => $group->sum('amount'),
-                    ];
-                })
-                ->sortByDesc('amount')
-                ->take(5)
-                ->values()
-                ->toArray();
+            $busiest = $this->transactionRepository->year_in_review_busiest_month(
+                $start->format('Y-m-d'),
+                $end->format('Y-m-d')
+            );
 
-            // Busiest month
-            $months = $all_txns->where('type', 'expense')
-                ->groupBy(fn ($t) => Carbon::parse($t->transaction_date)->month)
-                ->map(fn ($g) => $g->sum('amount'));
-
-            $busiest_month_num = $months->keys()->first(fn ($k) => $months[$k] === $months->max());
-            $busiest_month_name = $busiest_month_num ? Carbon::create($year, $busiest_month_num, 1)->format('F') : 'N/A';
-            $busiest_month_amount = $months->max() ?? 0;
+            $busiest_month_name = $busiest['month'] ? Carbon::create($year, $busiest['month'], 1)->format('F') : 'N/A';
+            $busiest_month_amount = $busiest['amount'];
 
             return [
                 'year' => $year,
@@ -443,6 +433,71 @@ class ChartReportService
                             break;
                         default:
                             break 2;
+                    }
+                }
+            }
+
+            // 2.1 Integrate Active Debt Payments
+            $debts = $this->debtRepository->get_active();
+            foreach ($debts as $debt) {
+                if (! $debt->due_date_day || ! $debt->minimum_payment) {
+                    continue;
+                }
+
+                for ($i = 0; $i < 7; $i++) {
+                    $dueDate = now()->startOfMonth()->addMonths($i);
+                    $day = min((int) $debt->due_date_day, $dueDate->daysInMonth);
+                    $dueDate->day($day)->startOfDay();
+
+                    if ($dueDate->between($startProj, $endProj)) {
+                        $dateStr = $dueDate->format('Y-m-d');
+                        if (! isset($recurringEvents[$dateStr])) {
+                            $recurringEvents[$dateStr] = [];
+                        }
+                        $recurringEvents[$dateStr][] = [
+                            'amount' => (float) $debt->minimum_payment,
+                            'type' => 'expense',
+                            'description' => "Debt Payment: {$debt->name}",
+                        ];
+                    }
+                }
+            }
+
+            // 2.2 Integrate Scheduled Savings Contributions
+            $savingsGoals = $this->savingsGoalRepository->all();
+            foreach ($savingsGoals as $goal) {
+                if ($goal->current_amount >= $goal->target_amount || ! $goal->target_date) {
+                    continue;
+                }
+
+                $targetDate = Carbon::parse($goal->target_date)->startOfDay();
+                if ($targetDate->isPast()) {
+                    continue;
+                }
+
+                $remaining = (float) $goal->target_amount - (float) $goal->current_amount;
+                $monthsRemaining = (int) ceil(now()->startOfDay()->floatDiffInMonths($targetDate));
+                if ($monthsRemaining <= 0) {
+                    $monthsRemaining = 1;
+                }
+
+                $monthlyContribution = $remaining / $monthsRemaining;
+
+                for ($i = 0; $i < 7; $i++) {
+                    $contribDate = now()->startOfMonth()->addMonths($i);
+                    $day = min($targetDate->day, $contribDate->daysInMonth);
+                    $contribDate->day($day)->startOfDay();
+
+                    if ($contribDate->between($startProj, min($endProj, $targetDate))) {
+                        $dateStr = $contribDate->format('Y-m-d');
+                        if (! isset($recurringEvents[$dateStr])) {
+                            $recurringEvents[$dateStr] = [];
+                        }
+                        $recurringEvents[$dateStr][] = [
+                            'amount' => round($monthlyContribution, 2),
+                            'type' => 'expense',
+                            'description' => "Savings: {$goal->name}",
+                        ];
                     }
                 }
             }

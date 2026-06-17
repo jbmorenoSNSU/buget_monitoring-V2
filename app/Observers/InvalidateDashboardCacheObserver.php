@@ -20,10 +20,10 @@ class InvalidateDashboardCacheObserver
         $now = now();
         $month = $now->month;
         $year = $now->year;
-        
+
         // Clear for "all" persons
         Cache::forget("dashboard_stats_{$month}_{$year}_all");
-        
+
         // Clear for specific person if applicable
         if (isset($model->person_id) && $model->person_id) {
             Cache::forget("dashboard_stats_{$month}_{$year}_{$model->person_id}");

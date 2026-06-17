@@ -42,6 +42,8 @@ interface TransactionRepositoryInterface
 
     public function calendar_transactions(string $start, string $end, ?int $person_id = null, ?int $account_id = null): Collection;
 
+    public function for_debt(int $debt_id): Collection;
+
     /**
      * Sum income and expense for non-recurring transactions in a date range.
      *
@@ -49,11 +51,9 @@ interface TransactionRepositoryInterface
      */
     public function non_recurring_net_for_projection(string $from, string $to): array;
 
-    /**
-     * Fetch all income and expense transactions for a year with category relations
-     * for the Year-in-Review report.
-     *
-     * @return Collection<int, Transaction>
-     */
-    public function year_in_review_raw(string $from, string $to): Collection;
+    public function year_in_review_totals(string $from, string $to): array;
+
+    public function year_in_review_top_categories(string $from, string $to, int $limit = 5): array;
+
+    public function year_in_review_busiest_month(string $from, string $to): array;
 }

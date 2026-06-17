@@ -125,7 +125,6 @@ class ReportController extends Controller
         ]);
     }
 
-
     /**
      * Display the year-in-review summary report.
      */

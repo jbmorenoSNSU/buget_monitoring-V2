@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Api\QuickAddController;
 use App\Http\Controllers\BudgetGoalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -56,5 +57,6 @@ Route::get('/downloads/{export}', [ExportController::class, 'download'])->name('
 Route::delete('/downloads/{export}', [ExportController::class, 'destroy'])->name('downloads.destroy');
 
 Route::prefix('api/v1')->group(function () {
-    Route::get('/quick-add-data', [\App\Http\Controllers\Api\QuickAddController::class, 'index']);
+    Route::get('/quick-add-data', [QuickAddController::class, 'index']);
+    Route::get('/debts/{debt}/transactions', [DebtController::class, 'transactions'])->name('api.debts.transactions');
 });

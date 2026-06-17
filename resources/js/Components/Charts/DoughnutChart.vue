@@ -62,7 +62,24 @@ const centerTextPlugin = {
         const { ctx, chartArea: { top, left, width, height } } = chart;
         ctx.save();
         
-        ctx.font = 'bolder 20px "Outfit", sans-serif';
+        // Calculate actual inner diameter based on chart area and cutout percentage (65%)
+        const chartDiameter = Math.min(width, height);
+        const innerDiameter = chartDiameter * 0.65;
+        const maxWidth = innerDiameter * 0.85; // Use 85% of inner diameter
+        
+        let fontSize = 24; // Base max font size
+        ctx.font = `bolder ${fontSize}px "Outfit", sans-serif`;
+        
+        // Scale down if text is too wide
+        if (maxWidth > 0) {
+            let textWidth = ctx.measureText(props.centerText).width;
+            if (textWidth > maxWidth) {
+                fontSize = Math.floor(fontSize * (maxWidth / textWidth));
+                fontSize = Math.max(fontSize, 11); // Minimum font size
+                ctx.font = `bolder ${fontSize}px "Outfit", sans-serif`;
+            }
+        }
+
         ctx.fillStyle = '#f1f5f9';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

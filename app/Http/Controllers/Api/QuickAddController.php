@@ -26,7 +26,7 @@ class QuickAddController extends Controller
             'accounts' => $this->accountRepo->all_active(),
             'categories' => $this->categoryRepo->all_active(),
             'debts' => $this->debtRepo->get_active(),
-            'persons' => $this->personRepo->all_active()
+            'persons' => $this->personRepo->all_active(),
         ]);
     }
 }

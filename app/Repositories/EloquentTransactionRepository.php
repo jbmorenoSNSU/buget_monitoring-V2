@@ -17,6 +17,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     public function __construct(
         private DebtRepositoryInterface $debtRepository
     ) {}
+
     public function paginate(array $filters, int $per_page): CursorPaginator
     {
         $query = Transaction::with([
@@ -117,7 +118,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
         return DB::transaction(function () use ($transaction, $data) {
             $transaction->loadMissing('account');
-            
+
             $oldAmount = (float) $transaction->amount;
             $transaction->update($data);
             $newAmount = (float) $transaction->amount;
@@ -404,6 +405,19 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $query->get();
     }
 
+    public function for_debt(int $debt_id): Collection
+    {
+        return Transaction::with([
+            'account:id,name,color,person_id',
+            'account.person:id,name,color',
+            'category:id,name,icon,color'
+        ])
+            ->where('debt_id', $debt_id)
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(100)
+            ->get();
+    }
 
     /**
      * Sum income and expense for non-recurring transactions in a date range.
@@ -425,18 +439,54 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return compact('income', 'expense');
     }
 
-    /**
-     * Fetch all income and expense transactions for a year with category relations
-     * for the Year-in-Review report.
-     *
-     * @return Collection<int, Transaction>
-     */
-    public function year_in_review_raw(string $from, string $to): Collection
+    public function year_in_review_totals(string $from, string $to): array
     {
-        return Transaction::with(['category:id,name,icon,color'])
-            ->select(['id', 'type', 'amount', 'category_id', 'transaction_date'])
+        $totals = Transaction::select('type', DB::raw('SUM(amount) as total'))
             ->whereBetween('transaction_date', [$from, $to])
             ->whereIn('type', ['income', 'expense'])
+            ->groupBy('type')
             ->get();
+
+        return [
+            'income' => (float) $totals->where('type', 'income')->value('total'),
+            'expense' => (float) $totals->where('type', 'expense')->value('total'),
+        ];
+    }
+
+    public function year_in_review_top_categories(string $from, string $to, int $limit = 5): array
+    {
+        return Transaction::with('category:id,name,icon,color')
+            ->select('category_id', DB::raw('SUM(amount) as total'))
+            ->whereBetween('transaction_date', [$from, $to])
+            ->where('type', 'expense')
+            ->groupBy('category_id')
+            ->orderByDesc('total')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($row) => [
+                'category_name' => $row->category?->name ?? 'Unknown',
+                'category_icon' => $row->category?->icon ?? 'tag',
+                'category_color' => $row->category?->color ?? '#94A3B8',
+                'amount' => (float) $row->total,
+            ])
+            ->toArray();
+    }
+
+    public function year_in_review_busiest_month(string $from, string $to): array
+    {
+        $driver = DB::connection()->getDriverName();
+        $month_expr = $driver === 'sqlite' ? "strftime('%m', transaction_date)" : 'MONTH(transaction_date)';
+
+        $busiest = Transaction::select(DB::raw("$month_expr as month"), DB::raw('SUM(amount) as total'))
+            ->whereBetween('transaction_date', [$from, $to])
+            ->where('type', 'expense')
+            ->groupBy('month')
+            ->orderByDesc('total')
+            ->first();
+
+        return [
+            'month' => $busiest ? (int) $busiest->month : null,
+            'amount' => $busiest ? (float) $busiest->total : 0.0,
+        ];
     }
 }

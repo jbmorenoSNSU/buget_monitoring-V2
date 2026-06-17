@@ -6,11 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Resources\TransactionResource;
-use App\Interfaces\TransactionRepositoryInterface;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
+use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\RedirectResponse;
