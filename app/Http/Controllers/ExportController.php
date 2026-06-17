@@ -21,7 +21,8 @@ class ExportController extends Controller
      */
     public function index(): Response
     {
-        $exports = Export::orderBy('created_at', 'desc')->cursorPaginate(20);
+        $exports = Export::orderBy('created_at', 'desc')
+            ->cursorPaginate(20);
 
         return Inertia::render('Downloads/Index', [
             'exports' => ExportResource::collection($exports),

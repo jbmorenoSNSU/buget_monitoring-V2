@@ -14,6 +14,7 @@ use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -24,6 +25,9 @@ class ExportReportJob implements ShouldQueue
     public $timeout = 300;
 
     public $tries = 3;
+
+    /** @var int[] */
+    public $backoff = [30, 60, 120];
 
     public function __construct(
         public Export $exportRecord,
@@ -95,7 +99,14 @@ class ExportReportJob implements ShouldQueue
         } catch (\Exception $e) {
             $this->exportRecord->update([
                 'status' => 'failed',
-                'error' => $e->getMessage(),
+                'error'  => $e->getMessage(),
+            ]);
+
+            Log::error('ExportReportJob failed', [
+                'export_id' => $this->exportRecord->id,
+                'type'      => $this->exportRecord->type,
+                'format'    => $this->exportRecord->format,
+                'error'     => $e->getMessage(),
             ]);
         }
     }
