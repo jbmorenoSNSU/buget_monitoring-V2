@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -11,7 +12,7 @@ use Illuminate\Support\Collection;
 class DashboardService
 {
     public function __construct(
-        private AccountService $accountService,
+        private AccountRepositoryInterface $accountRepository,
         private TransactionService $transactionService,
         private BudgetGoalService $budgetGoalService,
         private RecurringTransactionService $recurringService,
@@ -23,7 +24,7 @@ class DashboardService
         $cacheKey = "dashboard_stats_{$month}_{$year}_" . ($person_id ?? 'all');
         
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addDay(), function () use ($month, $year, $person_id) {
-            $totalBalance = $this->accountService->get_total_balance($person_id);
+            $totalBalance = $this->accountRepository->total_balance($person_id);
             $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
 
             $remainingBudgets = $this->calculateRemainingBudgets($budgetGoals, $person_id);

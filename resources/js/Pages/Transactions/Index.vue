@@ -23,16 +23,25 @@ import TransactionFormModal from './Components/TransactionFormModal.vue';
 const props = defineProps<{
     transactions: Record<string, any>;
     filters: Record<string, any>;
-    accounts: any[];
-    categories: any[];
-    persons: any[];
-    debts: any[];
+    accounts?: any[];
+    categories?: any[];
+    persons?: any[];
+    debts?: any[];
 }>();
 
 const { formatPeso } = useCurrency();
 const { formatShortDate } = useDate();
 
 const items = computed(() => props.transactions?.data || []);
+const totals = computed(() => {
+    return items.value.reduce((acc: { income: number, expense: number, transfer: number }, txn: any) => {
+        const amount = Number(txn.amount) || 0;
+        if (txn.type === 'income') acc.income += amount;
+        else if (txn.type === 'expense') acc.expense += amount;
+        else if (txn.type === 'transfer') acc.transfer += amount;
+        return acc;
+    }, { income: 0, expense: 0, transfer: 0 });
+});
 const links = computed(() => props.transactions?.meta?.links || props.transactions?.links || []);
 const deleteTarget = ref<any>(null);
 const showDeleteModal = ref(false);
@@ -78,6 +87,9 @@ onMounted(() => {
         newUrl.searchParams.delete('date');
         window.history.replaceState({}, '', newUrl);
     }
+
+    // Trigger deferred data load
+    router.reload({ only: ['accounts', 'categories', 'persons', 'debts'] });
 });
 
 const openEditModal = (txn: any) => {
@@ -174,12 +186,12 @@ const typeOptions = [
     { value: 'transfer', label: 'Transfer' },
 ];
 
-const personOptions = [{ value: '', label: 'All Persons' }, ...props.persons.map(p => ({ value: p.id, label: p.name }))];
-const accountOptions = [{ value: '', label: 'All Accounts' }, ...props.accounts.map(a => ({
+const personOptions = computed(() => [{ value: '', label: 'All Persons' }, ...(Array.isArray(props.persons) ? props.persons : []).map(p => ({ value: p.id, label: p.name }))]);
+const accountOptions = computed(() => [{ value: '', label: 'All Accounts' }, ...(Array.isArray(props.accounts) ? props.accounts : []).map(a => ({
     value: a.id,
     label: a.person ? `${a.name} (${a.person.name})` : a.name
-}))];
-const categoryOptions = [{ value: '', label: 'All Categories' }, ...props.categories.map(c => ({ value: c.id, label: c.name }))];
+}))]);
+const categoryOptions = computed(() => [{ value: '', label: 'All Categories' }, ...(Array.isArray(props.categories) ? props.categories : []).map(c => ({ value: c.id, label: c.name }))]);
 
 const perPageOptions = [
     { value: '10', label: 'Show 10 entries' },
@@ -195,11 +207,6 @@ const perPageOptions = [
     <div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 class="text-lg font-semibold text-slate-100">All Transactions</h2>
-            <div class="flex items-center gap-2">
-                <AppButton @click="openAddModal">
-                    <AppIcon name="Plus" size="16" class="mr-2" /> Add Transaction
-                </AppButton>
-            </div>
         </div>
 
         <!-- Filters -->
@@ -214,8 +221,23 @@ const perPageOptions = [
             <AppButton variant="secondary" size="sm" @click="clearFilters" class="w-full whitespace-nowrap shadow-sm">Clear Filters</AppButton>
         </div>
 
-        <!-- Controls: Show entries -->
-        <div class="flex justify-end items-center mb-4">
+        <!-- Totals & Controls -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+            <div class="flex gap-4">
+                <div class="flex items-center gap-1.5 bg-card-bg border border-border px-3 py-1.5 rounded-lg">
+                    <span class="text-xs text-slate-400 font-medium">Income:</span>
+                    <span class="text-sm font-bold text-income">+{{ formatPeso(totals.income) }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-card-bg border border-border px-3 py-1.5 rounded-lg">
+                    <span class="text-xs text-slate-400 font-medium">Expense:</span>
+                    <span class="text-sm font-bold text-expense">-{{ formatPeso(totals.expense) }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 bg-card-bg border border-border px-3 py-1.5 rounded-lg">
+                    <span class="text-xs text-slate-400 font-medium">Transfer:</span>
+                    <span class="text-sm font-bold text-transfer">{{ formatPeso(totals.transfer) }}</span>
+                </div>
+            </div>
+
             <div class="flex items-center gap-2">
                 <span class="text-xs text-slate-400 font-medium">Page Size:</span>
                 <AppSelect v-model="perPage" :options="perPageOptions" class="w-40 select-none" @change="applyFilters" />

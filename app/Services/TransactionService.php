@@ -35,13 +35,6 @@ class TransactionService
         return $this->transactionRepository->paginate($filters, $per_page);
     }
 
-    /**
-     * Delete a transaction.
-     */
-    public function delete(Transaction $transaction): void
-    {
-        $this->transactionRepository->delete($transaction);
-    }
 
     /**
      * Get the sum of all income transactions for a specific month/year.

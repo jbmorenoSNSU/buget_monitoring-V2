@@ -10,13 +10,15 @@ export function useFlash() {
     const page = usePage();
 
     watch(
-        () => page.props?.flash,
+        () => page.props.flash,
         (flash: any) => {
             if (flash?.success) {
                 toast.success(flash.success);
+                flash.success = null;
             }
             if (flash?.error) {
                 toast.error(flash.error);
+                flash.error = null;
             }
         },
         { immediate: true, deep: true }

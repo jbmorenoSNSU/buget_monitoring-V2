@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Person\CreatePersonAction;
-use App\Actions\Person\UpdatePersonAction;
-use App\DTOs\PersonDTO;
 use App\Http\Requests\StorePersonRequest;
 use App\Http\Resources\PersonResource;
+use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Person;
-use App\Services\PersonService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,42 +18,40 @@ use Inertia\Response;
 class PersonController extends Controller
 {
     public function __construct(
-        private PersonService $service,
-        private CreatePersonAction $createPerson,
-        private UpdatePersonAction $updatePerson,
+        private PersonRepositoryInterface $repository
     ) {}
 
     public function index(): Response
     {
         return Inertia::render('Persons/Index', [
-            'persons' => PersonResource::collection($this->service->get_all()),
+            'persons' => PersonResource::collection($this->repository->all()),
         ]);
     }
 
     public function store(StorePersonRequest $request): RedirectResponse
     {
         $this->authorize('create', Person::class);
-        $this->createPerson->execute(PersonDTO::fromArray($request->validated()));
+        $this->repository->create($request->validated());
 
-        return redirect()->route('persons.index')->with('success', 'Person created successfully.');
+        return redirect()->back()->with('success', 'Person created successfully.');
     }
 
     public function update(StorePersonRequest $request, Person $person): RedirectResponse
     {
         $this->authorize('update', $person);
-        $this->updatePerson->execute($person, PersonDTO::fromArray($request->validated()));
+        $this->repository->update($person, $request->validated());
 
-        return redirect()->route('persons.index')->with('success', 'Person updated successfully.');
+        return redirect()->back()->with('success', 'Person updated successfully.');
     }
 
     public function destroy(Person $person): RedirectResponse
     {
         $this->authorize('delete', $person);
-        if (! $this->service->can_delete($person)) {
-            return redirect()->route('persons.index')->with('error', 'Cannot delete person with linked accounts. Reassign their accounts first.');
+        if ($this->repository->has_accounts($person)) {
+            return redirect()->back()->with('error', 'Cannot delete person with linked accounts. Reassign their accounts first.');
         }
-        $this->service->delete($person);
+        $this->repository->delete($person);
 
-        return redirect()->route('persons.index')->with('success', 'Person deleted successfully.');
+        return redirect()->back()->with('success', 'Person deleted successfully.');
     }
 }

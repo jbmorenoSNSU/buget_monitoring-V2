@@ -22,7 +22,7 @@ it('renders the persons index page', function () {
 });
 
 it('stores a new person', function () {
-    $response = $this->post(route('persons.store'), [
+    $response = $this->from(route('persons.index'))->post(route('persons.store'), [
         'name' => 'Juan',
         'color' => '#3b82f6',
     ]);
@@ -39,7 +39,7 @@ it('returns 422 when name is missing', function () {
 });
 
 it('updates a person', function () {
-    $response = $this->put(route('persons.update', $this->person), [
+    $response = $this->from(route('persons.index'))->put(route('persons.update', $this->person), [
         'name' => 'Updated Name',
         'color' => '#ff0000',
     ]);
@@ -49,7 +49,7 @@ it('updates a person', function () {
 });
 
 it('deletes a person with no accounts', function () {
-    $response = $this->delete(route('persons.destroy', $this->person));
+    $response = $this->from(route('persons.index'))->delete(route('persons.destroy', $this->person));
 
     $response->assertRedirect(route('persons.index'));
     assertSoftDeleted('persons', ['id' => $this->person->id]);

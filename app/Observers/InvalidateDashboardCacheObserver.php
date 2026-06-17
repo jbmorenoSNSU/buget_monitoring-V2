@@ -27,7 +27,7 @@ class InvalidateDashboardCacheObserver
         // Clear for specific person if applicable
         if (isset($model->person_id) && $model->person_id) {
             Cache::forget("dashboard_stats_{$month}_{$year}_{$model->person_id}");
-        } elseif (isset($model->account) && $model->account->person_id) {
+        } elseif ($model->relationLoaded('account') && $model->account && $model->account->person_id) {
             Cache::forget("dashboard_stats_{$month}_{$year}_{$model->account->person_id}");
         }
     }

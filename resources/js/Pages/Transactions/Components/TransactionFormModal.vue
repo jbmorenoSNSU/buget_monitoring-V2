@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import AppModal from '@/Components/UI/AppModal.vue';
 import AppButton from '@/Components/UI/AppButton.vue';
 import AppInput from '@/Components/UI/AppInput.vue';
@@ -9,29 +9,29 @@ const props = defineProps<{
     show: boolean;
     isEdit: boolean;
     form: any;
-    accounts: any[];
-    categories: any[];
-    debts: any[];
-    persons: any[];
+    accounts?: any[];
+    categories?: any[];
+    debts?: any[];
+    persons?: any[];
 }>();
 
 const emit = defineEmits(['close', 'submit']);
 
-const formAccountOptions = computed(() => props.accounts.map(a => ({
+const formAccountOptions = computed(() => (Array.isArray(props.accounts) ? props.accounts : []).map(a => ({
     value: a.id,
     label: a.person ? `${a.name} (${a.person.name})` : a.name
 })));
 
-const debtOptions = computed(() => [{ value: '', label: 'None' }, ...props.debts.map(d => ({ value: d.id, label: d.name }))]);
+const debtOptions = computed(() => [{ value: '', label: 'None' }, ...(Array.isArray(props.debts) ? props.debts : []).map(d => ({ value: d.id, label: d.name }))]);
 
 const filteredCategories = computed(() => {
     if (props.form.type === 'transfer') return [];
-    return props.categories
+    return (Array.isArray(props.categories) ? props.categories : [])
         .filter(c => c.type === props.form.type || c.type === 'both')
         .map(c => ({ value: c.id, label: c.name }));
 });
 
-const personOptions = computed(() => props.persons.map(p => ({ value: p.id, label: p.name })));
+const personOptions = computed(() => (Array.isArray(props.persons) ? props.persons : []).map(p => ({ value: p.id, label: p.name })));
 
 const isTransfer = computed(() => props.form.type === 'transfer');
 
@@ -41,6 +41,25 @@ const typeOptions = [
     { value: 'expense', label: 'Expense' },
     { value: 'transfer', label: 'Transfer' },
 ];
+
+watch(() => props.form.type, (newType) => {
+    if (newType === 'transfer') {
+        props.form.category_id = '';
+        props.form.debt_id = '';
+        if (props.form.errors) {
+            props.form.errors.category_id = '';
+            props.form.errors.debt_id = '';
+        }
+    } else {
+        props.form.transfer_to_account_id = '';
+        if (props.form.errors) props.form.errors.transfer_to_account_id = '';
+    }
+    
+    if (newType !== 'expense') {
+        props.form.debt_id = '';
+        if (props.form.errors) props.form.errors.debt_id = '';
+    }
+});
 
 const submitForm = () => {
     emit('submit');

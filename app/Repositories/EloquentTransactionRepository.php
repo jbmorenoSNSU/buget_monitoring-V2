@@ -99,11 +99,52 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
     public function update(Transaction $transaction, array $data): Transaction
     {
+        $temp = clone $transaction;
+        $temp->fill($data);
+
+        $criticalFields = ['account_id', 'type', 'transfer_to_account_id', 'debt_id'];
+
+        if ($temp->isDirty($criticalFields)) {
+            return DB::transaction(function () use ($transaction, $data) {
+                $this->reverse_balance_effect($transaction);
+                $transaction->update($data);
+                $transaction->refresh();
+                $this->apply_balance_effect($transaction);
+
+                return $transaction;
+            });
+        }
+
         return DB::transaction(function () use ($transaction, $data) {
-            $this->reverse_balance_effect($transaction);
+            $transaction->loadMissing('account');
+            
+            $oldAmount = (float) $transaction->amount;
             $transaction->update($data);
-            $transaction->refresh();
-            $this->apply_balance_effect($transaction);
+            $newAmount = (float) $transaction->amount;
+
+            $difference = $newAmount - $oldAmount;
+
+            if ($difference != 0.0) {
+                $type = $transaction->type->value ?? $transaction->type;
+                $account = $transaction->account ?? Account::findOrFail($transaction->account_id);
+
+                match ($type) {
+                    'income' => $account->increment('current_balance', $difference),
+                    'expense' => (function () use ($transaction, $account, $difference) {
+                        $account->decrement('current_balance', $difference);
+                        if ($transaction->debt_id) {
+                            $this->debtRepository->decrement_principal((int) $transaction->debt_id, $difference);
+                        }
+                    })(),
+                    'transfer' => (function () use ($transaction, $account, $difference) {
+                        $account->decrement('current_balance', $difference);
+                        if ($transaction->transfer_to_account_id) {
+                            Account::findOrFail($transaction->transfer_to_account_id)
+                                ->increment('current_balance', $difference);
+                        }
+                    })(),
+                };
+            }
 
             return $transaction;
         });

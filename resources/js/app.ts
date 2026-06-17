@@ -32,7 +32,7 @@ createInertiaApp({
         app.use(ZiggyVue);
         app.use(pinia);
         app.use(Toast, {
-            position: 'top-right',
+            position: 'top-center',
             timeout: 3000,
             closeOnClick: true,
             pauseOnFocusLoss: true,
@@ -43,7 +43,7 @@ createInertiaApp({
             closeButton: 'button',
             icon: true,
             rtl: false,
-            transition: 'Vue-Toastification__bounce',
+            transition: 'Vue-Toastification__fade',
             maxToasts: 5,
             newestOnTop: true,
         });

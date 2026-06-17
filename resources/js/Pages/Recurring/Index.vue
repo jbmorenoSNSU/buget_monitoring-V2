@@ -67,6 +67,14 @@ const categoryOptions = computed(() =>
 
 const debtOptions = computed(() => [{ value: '', label: 'None' }, ...props.debts.map(d => ({ value: d.id, label: d.name }))]);
 
+// Clear debt_id when switching away from expense type
+watch(() => form.type, (newType) => {
+    if (newType !== 'expense') {
+        form.debt_id = '';
+        if (form.errors) form.errors.debt_id = '';
+    }
+});
+
 const openAddModal = () => {
     isEdit.value = false;
     form.clearErrors();

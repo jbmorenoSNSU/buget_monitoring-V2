@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Actions\SavingsGoal\CreateSavingsGoalAction;
-use App\Actions\SavingsGoal\DeleteSavingsGoalAction;
-use App\Actions\SavingsGoal\UpdateSavingsGoalAction;
-use App\DTOs\SavingsGoal\SavingsGoalDTO;
 use App\Interfaces\SavingsGoalRepositoryInterface;
 use App\Models\SavingsGoal;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Service class handling computed metrics for savings goals.
+ */
 class SavingsGoalService
 {
+    /**
+     * Create a new SavingsGoalService instance.
+     */
     public function __construct(
-        private SavingsGoalRepositoryInterface $savingsGoalRepository,
-        private CreateSavingsGoalAction $createAction,
-        private UpdateSavingsGoalAction $updateAction,
-        private DeleteSavingsGoalAction $deleteAction
+        private SavingsGoalRepositoryInterface $savingsGoalRepository
     ) {}
 
     /**
@@ -57,34 +56,10 @@ class SavingsGoalService
     }
 
     /**
-     * Find a savings goal.
+     * Find a savings goal by ID.
      */
     public function find(int $id): ?SavingsGoal
     {
         return $this->savingsGoalRepository->find($id);
-    }
-
-    /**
-     * Create a new savings goal.
-     */
-    public function create(SavingsGoalDTO $dto): SavingsGoal
-    {
-        return $this->createAction->execute($dto);
-    }
-
-    /**
-     * Update an existing savings goal.
-     */
-    public function update(SavingsGoal $goal, SavingsGoalDTO $dto): SavingsGoal
-    {
-        return $this->updateAction->execute($goal, $dto);
-    }
-
-    /**
-     * Delete a savings goal.
-     */
-    public function delete(SavingsGoal $goal): void
-    {
-        $this->deleteAction->execute($goal);
     }
 }

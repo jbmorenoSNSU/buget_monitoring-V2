@@ -10,50 +10,65 @@
 @theme {
     --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
- 
+
     --color-primary: #6366F1;
     --color-primary-hover: #4F46E5;
- 
+
     --color-income: #10B981;
     --color-expense: #F43F5E;
     --color-transfer: #6366F1;
- 
+
     --color-warning: #F59E0B;
     --color-danger: #F43F5E;
     --color-success: #10B981;
- 
+
     --color-sidebar: #090A0F;
     --color-page-bg: #0F111A;
     --color-card-bg: #161B26;
     --color-border: #232936;
 }
- 
+
 @layer base {
 
     /* ─── Global Scrollbar Theming ─────────────────────────────── */
+    /* scrollbar-gutter:stable reserves the scrollbar lane so content
+       never shifts when a scrollbar appears/disappears. The html and
+       body backgrounds must both be dark so the reserved gutter lane
+       is invisible when no scrollbar thumb is present. */
+    html {
+        scrollbar-gutter: stable;
+        background-color: #0F111A;
+        /* must match --color-page-bg */
+    }
+
     ::-webkit-scrollbar {
         width: 5px;
         height: 5px;
     }
+
     ::-webkit-scrollbar-track {
-        background: #090A0F;
+        background: transparent;
         border-radius: 99px;
     }
+
     ::-webkit-scrollbar-thumb {
         background: #232936;
         border-radius: 99px;
         border: 1px solid #090A0F;
     }
+
     ::-webkit-scrollbar-thumb:hover {
         background: #6366F1;
     }
+
     ::-webkit-scrollbar-corner {
-        background: #090A0F;
+        background: transparent;
     }
+
     /* Firefox scrollbar */
     * {
         scrollbar-width: thin;
-        scrollbar-color: #232936 #090A0F;
+        scrollbar-color: #232936 transparent;
     }
 
     /* ─── Number Spinners — hide on all browsers ──────────────── */
@@ -62,8 +77,10 @@
         -webkit-appearance: none;
         margin: 0;
     }
+
     input[type="number"] {
         -moz-appearance: textfield;
+        appearance: textfield;
     }
 
     /* ─── Search Cancel Button ────────────────────────────────── */
@@ -86,5 +103,25 @@
         -webkit-box-shadow: 0 0 0px 1000px #161B26 inset;
         transition: background-color 5000s ease-in-out 0s;
         caret-color: #6366F1;
+    }
+
+    /* ─── Vue-Toastification overrides (smaller toasts) ───────── */
+    .Vue-Toastification__toast {
+        min-height: 40px !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        margin-top: 16px !important;
+    }
+
+    .Vue-Toastification__icon {
+        width: 16px !important;
+        margin-right: 10px !important;
+    }
+
+    .Vue-Toastification__close-button {
+        font-size: 16px !important;
+        opacity: 0.5 !important;
     }
 }

@@ -1,3 +1,7 @@
+<script>
+export default { inheritAttrs: false };
+</script>
+
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
@@ -81,7 +85,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div>
+    <div v-bind="$attrs">
         <!-- Label -->
         <label v-if="label" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
             {{ label }}<span v-if="required" class="text-rose-400 ml-0.5">*</span>

@@ -10,7 +10,7 @@
     @inertiaHead
     @routes
 </head>
-<body class="font-sans antialiased bg-slate-100">
+<body class="font-sans antialiased bg-page-bg text-white">
     @inertia
 </body>
 </html>

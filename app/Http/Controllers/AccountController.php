@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Account\CreateAccountAction;
-use App\Actions\Account\UpdateAccountAction;
-use App\DTOs\AccountDTO;
 use App\Http\Requests\StoreAccountRequest;
 use App\Http\Resources\AccountResource;
-use App\Interfaces\AccountTypeRepositoryInterface;
+use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Account;
-use App\Services\AccountService;
+use App\Models\AccountType;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,19 +20,16 @@ use Inertia\Response;
 class AccountController extends Controller
 {
     public function __construct(
-        private AccountService $service,
-        private PersonRepositoryInterface $personRepository,
-        private AccountTypeRepositoryInterface $accountTypeRepository,
-        private CreateAccountAction $createAccount,
-        private UpdateAccountAction $updateAccount,
+        private AccountRepositoryInterface $repository,
+        private PersonRepositoryInterface $personRepository
     ) {}
 
     public function index(): Response
     {
         return Inertia::render('Accounts/Index', [
-            'accounts' => AccountResource::collection($this->service->get_all()),
-            'totalBalance' => $this->service->get_total_balance(),
-            'accountTypes' => $this->accountTypeRepository->all(),
+            'accounts' => AccountResource::collection($this->repository->all()),
+            'totalBalance' => $this->repository->total_balance(),
+            'accountTypes' => AccountType::select(['id', 'name', 'icon'])->orderBy('name')->get(),
             'persons' => $this->personRepository->all_active(),
         ]);
     }
@@ -43,36 +37,36 @@ class AccountController extends Controller
     public function store(StoreAccountRequest $request): RedirectResponse
     {
         $this->authorize('create', Account::class);
-        $this->createAccount->execute(AccountDTO::fromArray($request->validated()));
+        $this->repository->create($request->validated());
 
-        return redirect()->route('accounts.index')->with('success', 'Account created successfully.');
+        return redirect()->back()->with('success', 'Account created successfully.');
     }
 
     public function update(StoreAccountRequest $request, Account $account): RedirectResponse
     {
         $this->authorize('update', $account);
-        $this->updateAccount->execute($account, AccountDTO::fromArray($request->validated()));
+        $this->repository->update($account, $request->validated());
 
-        return redirect()->route('accounts.index')->with('success', 'Account updated successfully.');
+        return redirect()->back()->with('success', 'Account updated successfully.');
     }
 
     public function destroy(Account $account): RedirectResponse
     {
         $this->authorize('delete', $account);
-        if (! $this->service->can_delete($account)) {
-            return redirect()->route('accounts.index')->with('error', 'Cannot delete account with transactions. Deactivate it instead.');
+        if ($this->repository->has_transactions($account)) {
+            return redirect()->back()->with('error', 'Cannot delete account with transactions. Deactivate it instead.');
         }
-        $this->service->delete($account);
+        $this->repository->delete($account);
 
-        return redirect()->route('accounts.index')->with('success', 'Account deleted successfully.');
+        return redirect()->back()->with('success', 'Account deleted successfully.');
     }
 
     public function toggle(Account $account): RedirectResponse
     {
         $this->authorize('update', $account);
-        $this->service->toggle($account);
+        $this->repository->update($account, ['is_active' => ! $account->is_active]);
         $status = $account->fresh()->is_active ? 'activated' : 'deactivated';
 
-        return redirect()->route('accounts.index')->with('success', "Account {$status} successfully.");
+        return redirect()->back()->with('success', "Account {$status} successfully.");
     }
 }

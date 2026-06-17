@@ -261,31 +261,31 @@ const formatDate = (dateStr: string) => {
         <!-- Summary Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatCard
-                title="Total Saved"
+                label="Total Saved"
                 :value="formatPeso(totalSaved)"
                 icon="Compass"
-                color="text-income"
+                accentColor="#10B981"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Total Target"
+                label="Total Target"
                 :value="formatPeso(totalTarget)"
                 icon="Target"
-                color="text-indigo-400"
+                accentColor="#6366F1"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Remaining Needed"
+                label="Remaining Needed"
                 :value="formatPeso(totalRemaining)"
                 icon="ArrowUpDown"
-                color="text-warning"
+                accentColor="#F59E0B"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
             <StatCard
-                title="Completed Goals"
+                label="Completed Goals"
                 :value="`${completedCount} / ${filteredGoals.length}`"
                 icon="CheckCircle"
-                color="text-emerald-400"
+                accentColor="#34D399"
                 class="hover:-translate-y-1 transition-all duration-300"
             />
         </div>

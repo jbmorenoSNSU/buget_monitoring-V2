@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Handles HTTP actions for financial report views and export dispatching.
+ */
 class ReportController extends Controller
 {
     public function __construct(
@@ -21,11 +24,17 @@ class ReportController extends Controller
         private PersonRepositoryInterface $personRepository
     ) {}
 
+    /**
+     * Display the reports index page.
+     */
     public function index(): Response
     {
         return Inertia::render('Reports/Index');
     }
 
+    /**
+     * Display the income vs. expense report.
+     */
     public function income_expense(Request $request): Response
     {
         $from = $request->get('from', now()->subMonths(5)->startOfMonth()->format('Y-m-d'));
@@ -39,6 +48,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Display the expense breakdown by category report.
+     */
     public function category_expense(Request $request): Response
     {
         $month = (int) $request->get('month', now()->month);
@@ -52,6 +64,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Display the account statement report.
+     */
     public function account_statement(Request $request): Response
     {
         $firstAccount = $this->accountRepository->all()->first();
@@ -72,6 +87,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Display the budget goal performance report.
+     */
     public function budget_goal(Request $request): Response
     {
         $month = (int) $request->get('month', now()->month);
@@ -85,6 +103,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Display the transaction calendar report.
+     */
     public function calendar(Request $request): Response
     {
         $month = (int) $request->get('month', now()->month);
@@ -105,6 +126,9 @@ class ReportController extends Controller
     }
 
 
+    /**
+     * Display the year-in-review summary report.
+     */
     public function year_in_review(Request $request): Response
     {
         $year = (int) $request->get('year', now()->year);
@@ -115,6 +139,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Display the cash flow forecasting report.
+     */
     public function forecasting(): Response
     {
         return Inertia::render('Reports/Forecasting', [
@@ -122,6 +149,9 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Dispatch a background export job for the given report type and format.
+     */
     public function export(Request $request, string $type)
     {
         $parts = explode('-', $type);

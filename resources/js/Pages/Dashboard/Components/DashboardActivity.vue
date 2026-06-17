@@ -122,7 +122,10 @@ const activeDebts = computed<Debt[]>(() => {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Recent Transactions -->
         <AppCard class="lg:col-span-2">
-            <h3 class="text-sm font-semibold text-slate-100 mb-4">Recent Transactions</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-100">Recent Transactions</h3>
+                <Link :href="route('transactions.index')" class="text-xs text-primary hover:text-primary-hover font-medium transition-colors">View all →</Link>
+            </div>
             <div class="divide-y divide-border/40">
                 <div v-for="txn in recentTxns" :key="txn.id" class="flex items-center justify-between py-2.5 hover:bg-page-bg/30 transition-colors px-1 first:pt-0 last:pb-0">
                     <div class="flex items-center gap-2.5 min-w-0">
@@ -166,7 +169,10 @@ const activeDebts = computed<Debt[]>(() => {
         <div class="space-y-4">
             <!-- Budget Goals -->
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Budget Goals</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-100">Budget Goals</h3>
+                    <Link :href="route('budget-goals.index')" class="text-xs text-primary hover:text-primary-hover font-medium transition-colors">View all →</Link>
+                </div>
                 <div class="space-y-4">
                     <div v-for="goal in goals" :key="goal.id">
                         <div class="flex justify-between items-center mb-1">
@@ -179,13 +185,19 @@ const activeDebts = computed<Debt[]>(() => {
                         </div>
                         <ProgressBar :percent="goal.percent" :showPercent="false" />
                     </div>
-                    <p v-if="!goals.length" class="text-sm text-slate-400 text-center py-4">No goals set</p>
+                    <div v-if="!goals.length" class="text-sm text-slate-400 text-center py-4">
+                        No goals set.
+                        <Link :href="route('budget-goals.index')" class="text-primary hover:text-primary-hover font-medium">Add one</Link>
+                    </div>
                 </div>
             </AppCard>
 
             <!-- Upcoming Recurring -->
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Upcoming Recurring</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-100">Upcoming Recurring</h3>
+                    <Link :href="route('recurring.index')" class="text-xs text-primary hover:text-primary-hover font-medium transition-colors">View all →</Link>
+                </div>
                 <div class="space-y-3">
                     <div v-for="rec in upcomingRecurring" :key="rec.id" class="flex justify-between items-center p-2 rounded-lg bg-page-bg">
                         <div>
@@ -212,7 +224,10 @@ const activeDebts = computed<Debt[]>(() => {
 
             <!-- Savings Goals -->
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Savings Goals</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-100">Savings Goals</h3>
+                    <Link :href="route('savings-goals.index')" class="text-xs text-primary hover:text-primary-hover font-medium transition-colors">View all →</Link>
+                </div>
                 <div class="space-y-4">
                     <div v-for="goal in savingsGoals" :key="goal.id">
                         <div class="flex justify-between items-center mb-1">
@@ -234,7 +249,10 @@ const activeDebts = computed<Debt[]>(() => {
 
             <!-- Active Debts -->
             <AppCard>
-                <h3 class="text-sm font-semibold text-slate-100 mb-4">Active Debts</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-100">Active Debts</h3>
+                    <Link :href="route('debts.index')" class="text-xs text-primary hover:text-primary-hover font-medium transition-colors">View all →</Link>
+                </div>
                 <div class="space-y-3">
                     <div v-for="debt in activeDebts" :key="debt.id" class="flex justify-between items-center p-2 rounded-lg bg-page-bg border border-expense/10">
                         <div>

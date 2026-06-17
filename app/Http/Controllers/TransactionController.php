@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\Transaction\CreateTransactionAction;
-use App\Actions\Transaction\UpdateTransactionAction;
-use App\DTOs\TransactionDTO;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Resources\TransactionResource;
+use App\Interfaces\TransactionRepositoryInterface;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
@@ -27,12 +25,11 @@ class TransactionController extends Controller
 {
     public function __construct(
         private TransactionService $service,
+        private TransactionRepositoryInterface $repository,
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
         private PersonRepositoryInterface $personRepository,
-        private DebtRepositoryInterface $debtRepository,
-        private CreateTransactionAction $createTransaction,
-        private UpdateTransactionAction $updateTransaction,
+        private DebtRepositoryInterface $debtRepository
     ) {}
 
     public function index(Request $request): Response
@@ -45,34 +42,34 @@ class TransactionController extends Controller
         return Inertia::render('Transactions/Index', [
             'transactions' => TransactionResource::collection($this->service->get_paginated($filters)),
             'filters' => $filters,
-            'accounts' => $this->accountRepository->all_active(),
-            'categories' => $this->categoryRepository->all_active(),
-            'persons' => $this->personRepository->all_active(),
-            'debts' => $this->debtRepository->all(),
+            'accounts' => Inertia::defer(fn () => $this->accountRepository->all_active(), 'form-data'),
+            'categories' => Inertia::defer(fn () => $this->categoryRepository->all_active(), 'form-data'),
+            'persons' => Inertia::defer(fn () => $this->personRepository->all_active(), 'form-data'),
+            'debts' => Inertia::defer(fn () => $this->debtRepository->all(), 'form-data'),
         ]);
     }
 
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', Transaction::class);
-        $this->createTransaction->execute(TransactionDTO::fromArray($request->validated()));
+        $this->repository->create($request->validated());
 
-        return redirect()->route('transactions.index')->with('success', 'Transaction created successfully.');
+        return redirect()->back()->with('success', 'Transaction created successfully.');
     }
 
     public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
     {
         $this->authorize('update', $transaction);
-        $this->updateTransaction->execute($transaction, TransactionDTO::fromArray($request->validated()));
+        $this->repository->update($transaction, $request->validated());
 
-        return redirect()->route('transactions.index')->with('success', 'Transaction updated successfully.');
+        return redirect()->back()->with('success', 'Transaction updated successfully.');
     }
 
     public function destroy(Transaction $transaction): RedirectResponse
     {
         $this->authorize('delete', $transaction);
-        $this->service->delete($transaction);
+        $this->repository->delete($transaction);
 
-        return redirect()->route('transactions.index')->with('success', 'Transaction deleted successfully.');
+        return redirect()->back()->with('success', 'Transaction deleted successfully.');
     }
 }

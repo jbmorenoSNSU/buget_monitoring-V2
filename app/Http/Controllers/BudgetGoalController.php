@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\BudgetGoal\CreateBudgetGoalAction;
-use App\Actions\BudgetGoal\UpdateBudgetGoalAction;
-use App\DTOs\BudgetGoalDTO;
 use App\Http\Requests\StoreBudgetGoalRequest;
 use App\Http\Resources\BudgetGoalResource;
+use App\Interfaces\BudgetGoalRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\BudgetGoal;
@@ -25,9 +23,8 @@ class BudgetGoalController extends Controller
 {
     public function __construct(
         private BudgetGoalService $service,
+        private BudgetGoalRepositoryInterface $repository,
         private CategoryRepositoryInterface $categoryRepository,
-        private CreateBudgetGoalAction $createBudgetGoal,
-        private UpdateBudgetGoalAction $updateBudgetGoal,
         private PersonRepositoryInterface $personRepository,
     ) {}
 
@@ -48,17 +45,17 @@ class BudgetGoalController extends Controller
     public function store(StoreBudgetGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', BudgetGoal::class);
-        $this->createBudgetGoal->execute(BudgetGoalDTO::fromArray($request->validated()));
+        $this->repository->create($request->validated());
 
-        return redirect()->route('budget-goals.index')->with('success', 'Budget goal created successfully.');
+        return redirect()->back()->with('success', 'Budget goal created successfully.');
     }
 
     public function update(StoreBudgetGoalRequest $request, BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('update', $budgetGoal);
-        $this->updateBudgetGoal->execute($budgetGoal, BudgetGoalDTO::fromArray($request->validated()));
+        $this->repository->update($budgetGoal, $request->validated());
 
-        return redirect()->route('budget-goals.index')->with('success', 'Budget goal updated successfully.');
+        return redirect()->back()->with('success', 'Budget goal updated successfully.');
     }
 
     public function destroy(BudgetGoal $budgetGoal): RedirectResponse
@@ -66,6 +63,6 @@ class BudgetGoalController extends Controller
         $this->authorize('delete', $budgetGoal);
         $this->service->delete($budgetGoal);
 
-        return redirect()->route('budget-goals.index')->with('success', 'Budget goal deleted successfully.');
+        return redirect()->back()->with('success', 'Budget goal deleted successfully.');
     }
 }

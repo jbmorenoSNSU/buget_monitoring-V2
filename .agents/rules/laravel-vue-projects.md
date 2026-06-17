@@ -2,224 +2,140 @@
 trigger: always_on
 ---
 
-# Laravel + Vue 3 — Stack Standards v4
-## STACK CONFIGURATION
-Detect mode from project structure before generating code.
+# Laravel + Vue 3 — Stack Standards v4.2 (condensed)
+> Condensed for a 12,000-character limit. Carries forward the Ponytail Repository carve-out, the softened Inertia prop-count rule, and the split 300ms (queue-by-nature vs. SLA-budget) rule. No other content changed from v4.
 
-- **MODE A** — Laravel + Inertia.js + Vue 3: routes in `web.php`, `Inertia::render()`, no Vue Router, use `useForm()` for all forms.
-- **MODE B** — Laravel API-only + Vue 3 SPA: routes in `api.php` at `/api/v1/`, Vue Router 4, shared Axios instance in `src/services/api.ts`.
+## STACK CONFIG
+Detect mode from project structure first.
+- **MODE A** — Inertia: routes in `web.php`, `Inertia::render()`, no Vue Router, `useForm()` for forms.
+- **MODE B** — API+SPA: routes in `api.php` at `/api/v1/`, Vue Router 4, shared Axios in `src/services/api.ts`.
 
 Stack: Auth=Breeze/Jetstream, CSS=Tailwind v4+@theme, State=Pinia, Cache/Queue=Redis, QueueMonitor=Horizon, Search=Scout+Meilisearch, Admin=Filament, Test=Pest+Vitest+Playwright, DevDebug=Telescope, ProdMonitor=Sentry.
 
 ## DATABASE
-- PostgreSQL: advanced queries, JSON, analytics, enterprise scale. MySQL: shared hosting, simpler DevOps.
-- 20k+ rows: both fine. Enterprise/reporting: PostgreSQL preferred.
-- Configure via environment variables only.
+- PostgreSQL for advanced queries/JSON/analytics/enterprise scale; MySQL for shared hosting/simpler DevOps. Both fine at 20k+ rows. Configure via env vars only.
 
-## LARAVEL — ROUTING & CONTROLLERS
-- MODE A: `routes/web.php` → `Inertia::render('Page', [props])`.
-- MODE B: `routes/api.php` versioned `/api/v1/` → API Resource classes.
-- Use `Route::apiResource()` for CRUD; explicit HTTP verbs for custom actions.
-- Controllers: thin, one method per action, max 20 lines, no business logic.
-- Non-resource endpoints: single-action invokable (`__invoke`).
+## ROUTING & CONTROLLERS
+- MODE A: `web.php` → `Inertia::render('Page', [props])`. MODE B: `api.php` versioned `/api/v1/` → API Resource classes.
+- `Route::apiResource()` for CRUD; explicit verbs for custom actions.
+- Controllers thin: one method per action, max 20 lines, no business logic. Non-resource endpoints use invokable `__invoke`.
 - Never return raw Eloquent models or arrays from a controller.
 
-## LARAVEL — INERTIA.JS (MODE A)
-- Always use dynamic page resolver — `eager: true` is forbidden:
-  ```js
-  resolve: name => import.meta.glob('./Pages/**/*.vue')[`./Pages/${name}.vue`]()
-  ```
-- Share global data (auth user, flash, config) via `HandleInertiaRequests` middleware only.
-- Use `Inertia::lazy()` for expensive props not needed on first render.
-- Use `Inertia::defer()` for data that can load after page paint.
-- Max 5 props per `Inertia::render()` — extract to DTO if more needed.
+## INERTIA.JS (MODE A)
+- Dynamic page resolver only — `eager: true` forbidden: `resolve: name => import.meta.glob('./Pages/**/*.vue')[\`./Pages/${name}.vue\`]()`
+- Share global data (auth, flash, config) only via `HandleInertiaRequests` middleware.
+- `Inertia::lazy()` for expensive props not needed on first render; `Inertia::defer()` for post-paint data.
+- Group props that share a shape or lifecycle into a DTO; don't force a flat prop count. If props are crossing ~5-7 and clearly belong together, that's the signal to group them — not the count alone.
 
-## LARAVEL — VALIDATION & FORM REQUESTS
-- Every endpoint with a request body requires a dedicated Form Request. No exceptions.
-- Naming: `php artisan make:request {Feature}/{Action}Request`.
-- `authorize()` method handles authorization — never in the controller.
-- Use `Rule::exists()` and `Rule::unique()` for DB-backed checks.
-- Never manually catch `ValidationException` — let it propagate.
-- Complex conditional rules → custom Rule class: `php artisan make:rule`.
+## VALIDATION & FORM REQUESTS
+- Every endpoint with a request body needs a dedicated Form Request — no exceptions. `php artisan make:request {Feature}/{Action}Request`.
+- `authorize()` handles authorization, never the controller. Use `Rule::exists()`/`Rule::unique()` for DB checks.
+- Never manually catch `ValidationException` — let it propagate. Complex conditional rules → custom Rule class.
 
-## LARAVEL — DTOs
-- Location: `app/DTOs/{Feature}/{Name}DTO.php`. Readonly, typed properties, no setters.
-- Constructed at controller boundary from validated Form Request data.
-- Actions and Services always receive DTOs — never raw arrays or request objects.
+## DTOs
+- `app/DTOs/{Feature}/{Name}DTO.php`. Readonly, typed properties, no setters.
+- Constructed at controller boundary from validated Form Request data. Actions/Services always receive DTOs, never raw arrays or request objects.
 
-## LARAVEL — ACTIONS
-- Single-purpose class, one `execute()` method. Location: `app/Actions/{Feature}/{Name}Action.php`.
-- Receives a DTO, returns a domain object or void. May call repositories and other actions.
-- Never call controllers or HTTP classes. Use Services for multi-step orchestration.
+## ACTIONS
+- Single-purpose class, one `execute()` method, in `app/Actions/{Feature}/{Name}Action.php`.
+- Receives a DTO, returns a domain object or void. May call repositories and other actions, never controllers/HTTP classes. Use Services for multi-step orchestration.
 
-## LARAVEL — SERVICE & REPOSITORY LAYERS
-- Services in `app/Services/{Feature}Service.php` — multi-step orchestration only.
-- Repositories in `app/Repositories/{Model}Repository.php` — all Eloquent queries.
-- Every Repository implements `app/Interfaces/{Model}RepositoryInterface.php`.
-- Bind in `app/Providers/RepositoryServiceProvider.php`:
-  `$this->app->bind(AccountRepositoryInterface::class, EloquentAccountRepository::class);`
-- Inject interfaces via constructor — never concrete classes.
-- Never call Eloquent models directly inside controllers, actions, or services.
-- Use Eloquent scopes for reusable query conditions — no inline conditional chains.
-- Always eager-load with `with()`. Specify columns on relationships:
-  - CORRECT: `with(['transactions:id,account_id,amount,created_at'])`
-  - INCORRECT: `with(['transactions'])`
+## SERVICE & REPOSITORY LAYERS
+- Services: `app/Services/{Feature}Service.php`, multi-step orchestration only.
+- Repositories: `app/Repositories/{Model}Repository.php`, all Eloquent queries; each implements `app/Interfaces/{Model}RepositoryInterface.php`, bound in `RepositoryServiceProvider`. Inject interfaces via constructor, never concrete classes.
+- Never call Eloquent directly inside controllers, actions, or services. Use scopes for reusable query conditions, not inline conditional chains.
+- Always eager-load with `with()` and specify columns on relationships, e.g. `with(['transactions:id,account_id,amount,created_at'])`.
+- **Ponytail note:** Repository+Interface is mandatory once a model has non-trivial query logic, multiple consumers, or a realistic chance of swapped persistence. For a genuinely simple CRUD-only model, a Repository may wrap Eloquent directly without a bespoke Interface (Eloquent is already the abstraction) — default to writing the Interface when unsure.
 
-## LARAVEL — ELOQUENT & DATABASE
-- Define `$fillable` explicitly on every model — never `$guarded = []`.
-- Explicit foreign keys on all relationships. No exceptions:
-  - CORRECT: `$this->belongsTo(AccountType::class, 'account_type_id')`
-  - INCORRECT: `$this->belongsTo(AccountType::class)`
-- All schema changes via migrations — never modify DB manually.
-- Seeders + typed factories required for every new model.
-- `SoftDeletes` on all user-generated, financial, or auditable models.
-- Cast all date, boolean, JSON, decimal, and enum columns in `$casts`.
-- Use backed string enums for status and type columns.
-- `cursorPaginate()` for all list queries on tables over 500 rows — never `paginate()`.
+## ELOQUENT & DATABASE
+- Explicit `$fillable` on every model, never `$guarded = []`. Explicit foreign keys on all relationships (e.g. `belongsTo(AccountType::class, 'account_type_id')`).
+- Schema changes via migrations only. Seeders + typed factories required per model. `SoftDeletes` on user-generated/financial/auditable models.
+- Cast date/boolean/JSON/decimal/enum columns in `$casts`; use backed string enums for status/type columns.
+- `cursorPaginate()` for list queries over 500 rows — never `paginate()`.
+- **Transactions:** wrap any operation with 2+ writes in `DB::transaction()`; the action/service owns the boundary, never the caller.
 
-### Multi-step write integrity
-- Wrap every operation with 2+ DB writes in a transaction:
-  `DB::transaction(fn() => [...writes...]);`
-- The action or service owns the transaction boundary — never the caller.
+## AUTHORIZATION
+- Every mutative action (`store`/`update`/`destroy`) calls `$this->authorize()` as line 1.
+- `make:policy {Model}Policy --model={Model}`, registered in `AuthServiceProvider::$policies`. Never hardcode role checks — use Gates/Policies; `before()` for superadmin bypass.
 
-## LARAVEL — AUTHORIZATION
-- Every mutative action (`store`, `update`, `destroy`): `$this->authorize()` as line 1.
-- `php artisan make:policy {Model}Policy --model={Model}`. Register in `AuthServiceProvider::$policies`.
-- Never hardcode role/permission checks — use Gates or Policies. `before()` for superadmin bypass.
+## SEARCH & QUERY OPTIMIZATION
+- No leading-wildcard LIKE (causes full table scans) — anchor the term instead (`'term%'` not `'%term%'`).
+- Full-text: Scout + Meilisearch (`Searchable` trait, `toSearchableArray()`, `Model::search($term)->paginate()`); fallback for small datasets is `whereFullText()`.
+- Always `select(['col1','col2'])`, never `SELECT *`. Whitelist sortable columns in the repository — never raw column names from requests.
+- Every filterable/sortable/searchable column's migration must include an index. Run `explain()` on queries handling 10k+ rows before shipping.
 
-## LARAVEL — SEARCH & QUERY OPTIMIZATION
-- No leading wildcard LIKE — causes full table scans:
-  - CORRECT: `where('name', 'like', $term.'%')`
-  - INCORRECT: `where('description', 'like', '%'.$term.'%')`
-- Full-text search: **Laravel Scout + Meilisearch** (add `Searchable` trait, define `toSearchableArray()`, use `Model::search($term)->paginate()`).
-- Fallback (small datasets): `whereFullText()` with `$table->fullText('column')` migration.
-- Always `select(['col1','col2'])` — never SELECT *.
-- Whitelist sortable columns in the repository — never pass raw column names from requests.
-- Every filterable/sortable/searchable column migration must include an index.
-- Run `explain()` on any query handling 10k+ rows before shipping.
+## JOBS, EVENTS & QUEUES
+- Queue by nature, not by typical latency: email, PDF, bulk import/export, and any call to a third-party service you don't control → queued Job, regardless of how fast that service usually responds (the risk is the tail latency, not the median).
+- Separately, the 300ms figure in API response budgets is an SLA threshold for your own endpoints, not a queueing trigger — don't use it to decide whether an external call needs to be async.
+- `ShouldQueue` on all Listeners; `$tries=3`, `$backoff=[30,60,120]`, `$timeout` on all Jobs. Configure `failed_jobs`; Horizon in staging+prod.
+- `Bus::chain` for ordered workflows, `Bus::batch` for parallel fan-out.
 
-## LARAVEL — JOBS, EVENTS & QUEUES
-- Any operation >300ms → queued Job (email, PDF, bulk import/export, external API).
-- `ShouldQueue` on all Listeners. `$tries=3`, `$backoff=[30,60,120]`, `$timeout` on all Jobs.
-- Configure `failed_jobs` table. Horizon in staging+production.
-- `Bus::chain` for ordered workflows; `Bus::batch` for parallel fan-out.
-
-## LARAVEL — CACHING
-- `Cache::remember()` always. Key: `{model}:{id}:{data}`. Always set TTL.
-- Bust on create/update/delete via Eloquent observers. Redis in all non-local envs.
+## CACHING
+- `Cache::remember()` always, key pattern `{model}:{id}:{data}`, always set TTL. Bust via Eloquent observers on create/update/delete. Redis in all non-local envs.
 - Datatable key: `datatable:{model}:{md5(serialize($filters))}:{cursor}`.
 
-## LARAVEL — DEBUGGING
-**Telescope (local only)**
-- Inspect queries, requests, jobs, exceptions, logs, mail.
-- Any query >100ms in Telescope must be optimized before merging.
-- Any N+1 detected must be fixed with eager loading before merging.
-- Never commit `dd()`, `dump()`, `ray()`, `var_dump()` — enforced by linting.
-- Use `Log::debug()` for dev-only output (suppressed in production by log level).
+## DEBUGGING
+**Telescope (local only):** inspect queries/requests/jobs/exceptions/logs/mail. Any query >100ms or N+1 detected must be fixed before merging. Never commit `dd()`, `dump()`, `ray()`, `var_dump()` (lint-enforced). Use `Log::debug()` for dev-only output.
+**Sentry (staging+prod):** unhandled exceptions auto-captured via Laravel integration; release = Git commit SHA; performance monitoring on; alerts within 5 min of a new exception type.
+**Logging:** named log channels only, never write to `laravel.log` directly. Structured context on every call, e.g. `Log::error('Payment failed', ['user_id'=>$id,'amount'=>$amount])`. Never log passwords/tokens/card numbers/PII. `Log::withContext()` in middleware for request/user ID on all logs.
 
-**Sentry (staging + production)**
-- Every unhandled exception captured automatically via Laravel integration.
-- Set release to Git commit SHA for source-map tracing.
-- Enable performance monitoring with appropriate sample rate.
-- Alerts within 5 minutes of a new exception type appearing in production.
-
-**Logging**
-- Use named log channels — never write directly to `laravel.log`.
-- Structured context on all log calls:
-  `Log::error('Payment failed', ['user_id' => $id, 'amount' => $amount]);`
-- Never log passwords, tokens, card numbers, or PII.
-- Use `Log::withContext()` in middleware to attach request ID and user ID to all logs.
-
-## LARAVEL — TESTING (PEST — MANDATORY)
-- Pest only — PHPUnit syntax (`$this->assert*`) is forbidden.
-- Every Action: unit test with mocked repositories.
-- Every Service method: unit test with mocked Actions/Repositories.
+## TESTING (PEST — MANDATORY)
+- Pest only; PHPUnit-style `$this->assert*` is forbidden.
+- Every Action: unit test with mocked repositories. Every Service method: unit test with mocked Actions/Repositories.
 - Every Controller action: Feature test covering happy path (200/201), validation failure (422), unauthorized (401/403).
-- `RefreshDatabase` or `DatabaseTransactions` in all DB-touching tests.
-- `Http::fake()` for outbound HTTP; `Queue::fake()` for dispatched jobs.
-- Factory states for key variations: `User::factory()->admin()->create()`.
-- ≥80% coverage on Action, Service, Repository classes.
-- All tests pass under 2 minutes on CI.
+- `RefreshDatabase`/`DatabaseTransactions` in all DB-touching tests. `Http::fake()` for outbound HTTP, `Queue::fake()` for jobs. Factory states for key variations.
+- ≥80% coverage on Action/Service/Repository classes (Ponytail's trivial-one-liner exemption applies — see Global Standards). All tests pass under 2 minutes on CI.
 
-## LARAVEL — FILAMENT
-For CRUD-heavy admin, dashboards, HR, inventory, school/gov systems.
-- `php artisan make:filament-resource {Model} --generate`
-- Scope `getEloquentQuery()` — never expose all records by default.
-- `sortable()` and `searchable()` on indexed columns only.
-- Filters: `SelectFilter`, `TernaryFilter`, `Filter::make()` — no raw query strings.
-- `canCreate/Edit/Delete/View()` via Laravel Policy on all resources.
-- Bulk ops → Job. Widget data must be cached — no raw aggregates on page load.
+## FILAMENT
+For CRUD-heavy admin/dashboards/HR/inventory/school/gov systems.
+- `make:filament-resource {Model} --generate`. Scope `getEloquentQuery()` — never expose all records by default.
+- `sortable()`/`searchable()` only on indexed columns. Filters via `SelectFilter`/`TernaryFilter`/`Filter::make()`, no raw query strings.
+- `canCreate/Edit/Delete/View()` via Policy on all resources. Bulk ops → Job; widget data must be cached, no raw aggregates on page load.
 
 ## VUE 3 — COMPONENTS
-- Always `<script setup>` + Composition API — Options API is forbidden.
-- One component per file, PascalCase filename.
-- Structure: `Pages/` → `features/` → `components/` → `ui/`.
-- `defineProps<{}>()` with TypeScript generics — no runtime declarations.
-- `defineEmits<{}>()` — never use `$emit` undeclared.
+- `<script setup>` + Composition API only — Options API forbidden. One component per file, PascalCase filename.
+- Structure: `Pages/` → `features/` → `components/` → `ui/`. `defineProps<{}>()`/`defineEmits<{}>()` with TS generics, no runtime declarations, never undeclared `$emit`.
 - Extract non-trivial template expressions into `computed()` or composables.
-
-**SFC size limits**
-- Template: max 150 lines. Script setup: max 80 lines. Total SFC: max 250 lines.
+- **SFC size limits:** template ≤150 lines, script setup ≤80 lines, total ≤250 lines.
 
 ## VUE 3 — TAILWIND CSS V4
-- No arbitrary hex classes:
-  - CORRECT: `class="bg-sidebar border-border"`
-  - INCORRECT: `class="bg-[#090A0F] border-[#232936]"`
-- All values must use `@theme` token classes from `app.css`.
-- If a token doesn't exist, add it to `@theme` first — never use arbitrary values as shortcuts.
-- No custom CSS unless it cannot be expressed with Tailwind utilities.
-- Test dark mode variants on every new component before merging.
+- No arbitrary hex classes (`bg-[#090A0F]`) — use `@theme` token classes only (`bg-sidebar`). Add the token first if it doesn't exist.
+- No custom CSS unless it can't be expressed in Tailwind utilities. Test dark mode on every new component before merging.
 
 ## VUE 3 — COMPOSABLES
-- Location: `resources/js/composables/` (A) or `src/composables/` (B). Prefix: `use`.
-- Single concern. Return `ref`s and `computed` — never raw primitives.
-- Clean up side effects in `onUnmounted()`. Never mutate Pinia stores inside composables.
+- `resources/js/composables/` (A) or `src/composables/` (B), prefix `use`. Single concern, return refs/computed, never raw primitives.
+- Clean up side effects in `onUnmounted()`. Never mutate Pinia stores inside a composable.
 
 ## VUE 3 — PINIA
-- One store per feature. Location: `resources/js/stores/` (A) or `src/stores/` (B).
-- Actions handle all async/API — never Axios in a component. Getters for derived state.
+- One store per feature in `resources/js/stores/` (A) or `src/stores/` (B). Actions handle all async/API — never Axios in a component. Getters for derived state.
 - Never mutate state directly. Define `$reset()` in every store; call on logout.
 
 ## VUE 3 — ROUTING (MODE B)
-- `src/router/index.ts`, lazy-loaded components, named routes only.
-- `beforeEach` for auth guards — never check auth inside a component.
-- `meta: { requiresAuth: true, roles: ['admin'] }` for access control.
+- `src/router/index.ts`, lazy-loaded components, named routes only. `beforeEach` for auth guards, never check auth inside a component. `meta: { requiresAuth, roles }` for access control.
 
 ## VUE 3 — API LAYER (MODE B)
-- Single Axios instance in `src/services/api.ts` with base URL, CSRF, interceptors.
-- Request: attach `X-XSRF-TOKEN`. Response: 401→redirect login, 422→surface errors.
-- `src/services/{feature}Service.ts` — plain async functions, never import stores.
+- Single Axios instance in `src/services/api.ts` (base URL, CSRF, interceptors). Attach `X-XSRF-TOKEN`; 401→redirect login, 422→surface errors.
+- `src/services/{feature}Service.ts`: plain async functions, never import stores.
 
 ## VUE 3 — DEBUGGING
-- Vue Devtools for state — never `console.log`. No `console.*` commits (ESLint).
-- Sentry: `Sentry.init({ app, dsn: import.meta.env.VITE_SENTRY_DSN })`.
-- Capture: unhandled rejections, `app.config.errorHandler`, router errors.
+- Vue Devtools for state, never `console.log`; no `console.*` commits (ESLint). Sentry via `Sentry.init({ app, dsn })`. Capture unhandled rejections, `app.config.errorHandler`, router errors.
 
 ## VUE 3 — TESTING
-- `AccountCard.vue` → `AccountCard.spec.ts`. `createTestingPinia()` for stores.
-- `vi.mock` for Axios — no real HTTP. Playwright `/e2e` for login, forms, datatables.
+- `AccountCard.vue` → `AccountCard.spec.ts`. `createTestingPinia()` for stores, `vi.mock` for Axios (no real HTTP). Playwright `/e2e` for login, forms, datatables.
 
 ## VITE — ASSETS
-- Fingerprinting always on. `manualChunks: { vendor: ['vue','pinia','axios'] }`.
-- Fingerprinted: `Cache-Control: public, max-age=31536000, immutable`.
-- Entry points: `Cache-Control: no-cache`.
+- Fingerprinting always on. `manualChunks: { vendor: ['vue','pinia','axios'] }`. Fingerprinted assets: `Cache-Control: public, max-age=31536000, immutable`. Entry points: `no-cache`.
 
 ## SHARED CONVENTIONS
-- Dates: ISO 8601 UTC. Money: integers (centavos) in API, format in Vue via `Intl.NumberFormat`.
-- Enums: Laravel backed string enums → TypeScript union types in Vue.
-- File uploads: `/api/v1/uploads` — never base64 in JSON.
-- Search: debounce 350ms. Loading: skeleton loaders. Errors: constants, not inline strings.
-- Feature flags: Laravel Pennant.
+- Dates: ISO 8601 UTC. Money: integers (centavos) in API, format via `Intl.NumberFormat` in Vue.
+- Enums: Laravel backed string enums → TS union types. File uploads via `/api/v1/uploads`, never base64 in JSON.
+- Search debounce 350ms. Loading: skeleton loaders. Errors: constants, not inline strings. Feature flags: Laravel Pennant.
 
-## PROJECT FOLDER STRUCTURE
+## FOLDER STRUCTURE
 ```
-app/
- ├── Actions/       ├── DTOs/          ├── Services/
- ├── Repositories/  ├── Interfaces/    ├── Policies/
- ├── Jobs/          ├── Events/        ├── Listeners/
- ├── Http/
- │   ├── Controllers/  ├── Requests/  └── Resources/
- └── Models/
+app/: Actions/ DTOs/ Services/ Repositories/ Interfaces/ Policies/ Jobs/ Events/ Listeners/
+app/Http/: Controllers/ Requests/ Resources/
+app/Models/
 
 MODE A: resources/js/Pages/ | Components/features/ | Components/ui/ | composables/ | stores/
 MODE B: src/pages/ | features/ | components/ui/ | composables/ | stores/ | services/ | router/

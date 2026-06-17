@@ -31,7 +31,7 @@ it('renders the accounts index page with accounts and total balance', function (
 });
 
 it('stores a new account and redirects', function () {
-    $response = $this->post(route('accounts.store'), [
+    $response = $this->from(route('accounts.index'))->post(route('accounts.store'), [
         'account_type_id' => $this->type->id,
         'person_id' => $this->person->id,
         'name' => 'My New Account',
@@ -53,7 +53,7 @@ it('returns 422 on invalid store request', function () {
 it('updates an account', function () {
     $account = Account::factory()->for($this->person)->for($this->type)->create(['name' => 'Old Name']);
 
-    $response = $this->put(route('accounts.update', $account), [
+    $response = $this->from(route('accounts.index'))->put(route('accounts.update', $account), [
         'account_type_id' => $this->type->id,
         'person_id' => $this->person->id,
         'name' => 'Updated Name',
@@ -73,7 +73,7 @@ it('prevents deleting an account that has transactions', function () {
         'description' => 'Test',
     ]);
 
-    $response = $this->delete(route('accounts.destroy', $account));
+    $response = $this->from(route('accounts.index'))->delete(route('accounts.destroy', $account));
 
     $response->assertRedirect(route('accounts.index'));
     assertDatabaseHas('accounts', ['id' => $account->id]);

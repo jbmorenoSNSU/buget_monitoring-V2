@@ -7,8 +7,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\BudgetGoalResource;
 use App\Http\Resources\TransactionResource;
+use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
-use App\Services\AccountService;
 use App\Services\BudgetGoalService;
 use App\Services\DashboardService;
 use App\Services\DebtService;
@@ -22,7 +22,7 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     public function __construct(
-        private AccountService $accountService,
+        private AccountRepositoryInterface $accountRepository,
         private TransactionService $transactionService,
         private BudgetGoalService $budgetGoalService,
         private ReportService $reportService,
@@ -47,7 +47,7 @@ class DashboardController extends Controller
                 'persons' => $this->personRepository->all_active(),
                 'selectedPersonId' => $person_id,
             ],
-            'accounts' => AccountResource::collection($this->accountService->get_active($person_id)),
+            'accounts' => AccountResource::collection($this->accountRepository->all_active($person_id)),
             'recentTransactions' => Inertia::defer(fn () => TransactionResource::collection(
                 $this->transactionService->get_recent_transactions(15, $person_id)
             )),

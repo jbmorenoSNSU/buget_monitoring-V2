@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Actions\RecurringTransaction\CreateRecurringTransactionAction;
-use App\Actions\RecurringTransaction\UpdateRecurringTransactionAction;
-use App\DTOs\RecurringTransactionDTO;
 use App\Http\Requests\StoreRecurringTransactionRequest;
+use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
@@ -24,11 +22,10 @@ class RecurringTransactionController extends Controller
 {
     public function __construct(
         private RecurringTransactionService $service,
+        private RecurringTransactionRepositoryInterface $repository,
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
-        private DebtRepositoryInterface $debtRepository,
-        private CreateRecurringTransactionAction $createRecurring,
-        private UpdateRecurringTransactionAction $updateRecurring,
+        private DebtRepositoryInterface $debtRepository
     ) {}
 
     public function index(): Response
@@ -44,17 +41,17 @@ class RecurringTransactionController extends Controller
     public function store(StoreRecurringTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', RecurringTransaction::class);
-        $this->createRecurring->execute(RecurringTransactionDTO::fromArray($request->validated()));
+        $this->repository->create($request->validated());
 
-        return redirect()->route('recurring.index')->with('success', 'Recurring transaction created successfully.');
+        return redirect()->back()->with('success', 'Recurring transaction created successfully.');
     }
 
     public function update(StoreRecurringTransactionRequest $request, RecurringTransaction $recurring): RedirectResponse
     {
         $this->authorize('update', $recurring);
-        $this->updateRecurring->execute($recurring, RecurringTransactionDTO::fromArray($request->validated()));
+        $this->repository->update($recurring, $request->validated());
 
-        return redirect()->route('recurring.index')->with('success', 'Recurring transaction updated successfully.');
+        return redirect()->back()->with('success', 'Recurring transaction updated successfully.');
     }
 
     public function destroy(RecurringTransaction $recurring): RedirectResponse
@@ -62,7 +59,7 @@ class RecurringTransactionController extends Controller
         $this->authorize('delete', $recurring);
         $this->service->delete($recurring);
 
-        return redirect()->route('recurring.index')->with('success', 'Recurring transaction deleted successfully.');
+        return redirect()->back()->with('success', 'Recurring transaction deleted successfully.');
     }
 
     public function toggle(RecurringTransaction $recurring): RedirectResponse
@@ -71,7 +68,7 @@ class RecurringTransactionController extends Controller
         $this->service->toggle($recurring);
         $status = $recurring->fresh()->is_active ? 'activated' : 'paused';
 
-        return redirect()->route('recurring.index')->with('success', "Recurring transaction {$status}.");
+        return redirect()->back()->with('success', "Recurring transaction {$status}.");
     }
 
     public function generate_now(): RedirectResponse
@@ -79,6 +76,6 @@ class RecurringTransactionController extends Controller
         $this->authorize('create', RecurringTransaction::class);
         $count = $this->service->generate_due();
 
-        return redirect()->route('recurring.index')->with('success', "{$count} recurring transaction(s) generated.");
+        return redirect()->back()->with('success', "{$count} recurring transaction(s) generated.");
     }
 }

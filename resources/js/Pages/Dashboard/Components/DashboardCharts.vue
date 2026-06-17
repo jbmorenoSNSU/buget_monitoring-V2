@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import AppCard from '@/Components/UI/AppCard.vue';
+import AppIcon from '@/Components/UI/AppIcon.vue';
 import BarChart from '@/Components/Charts/BarChart.vue';
 import DoughnutChart from '@/Components/Charts/DoughnutChart.vue';
 import LineChart from '@/Components/Charts/LineChart.vue';
@@ -181,7 +182,7 @@ const doughnutData = computed(() => {
         datasets: [{
             data: amounts,
             backgroundColor: itemColors,
-            borderWidth: 2,
+            borderWidth: 1,
             borderColor: '#0F111A', // aligned with --color-page-bg
         }],
     };

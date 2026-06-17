@@ -4,7 +4,7 @@ import { usePageTitle } from '@/composables/usePageTitle';
 
 const { setPageTitle } = usePageTitle();
 setPageTitle('Dashboard');
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Components/Layout/AppLayout.vue';
 import AppSelect from '@/Components/UI/AppSelect.vue';
@@ -32,8 +32,8 @@ const props = defineProps<{
     stats: any;
     filters: Filters;
     accounts: any;
-    recentTransactions: any;
-    chartsAndGoals: any;
+    recentTransactions?: any;
+    chartsAndGoals?: any;
 }>();
 
 const selectedPerson = ref(props.filters?.selectedPersonId ? props.filters.selectedPersonId.toString() : '');
@@ -47,6 +47,11 @@ const onPersonChange = () => {
     const params = selectedPerson.value ? { person_id: selectedPerson.value } : {};
     router.get('/dashboard', params, { preserveState: false });
 };
+
+onMounted(() => {
+    // Manually trigger the fetch for deferred props so children can manage their own skeletons
+    router.reload({ only: ['recentTransactions', 'chartsAndGoals'] });
+});
 </script>
 
 <template>

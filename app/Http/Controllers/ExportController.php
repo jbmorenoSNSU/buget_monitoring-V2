@@ -11,8 +11,14 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Handles HTTP actions for export file downloads.
+ */
 class ExportController extends Controller
 {
+    /**
+     * Display all available exports.
+     */
     public function index(): Response
     {
         $exports = Export::orderBy('created_at', 'desc')->cursorPaginate(20);
@@ -22,6 +28,9 @@ class ExportController extends Controller
         ]);
     }
 
+    /**
+     * Download a completed export file.
+     */
     public function download(Export $export)
     {
         $this->authorize('download', $export);
@@ -33,6 +42,9 @@ class ExportController extends Controller
         return Storage::disk('public')->download($export->file_path, $export->file_name);
     }
 
+    /**
+     * Delete an export record and its file from storage.
+     */
     public function destroy(Export $export): RedirectResponse
     {
         $this->authorize('delete', $export);

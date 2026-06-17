@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Actions\Debt\CreateDebtAction;
-use App\Actions\Debt\DeleteDebtAction;
-use App\Actions\Debt\UpdateDebtAction;
-use App\DTOs\Debts\DebtDTO;
+
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Service class handling business logic for debt payoff projections.
+ */
 class DebtService
 {
     public function __construct(
-        private DebtRepositoryInterface $debtRepository,
-        private CreateDebtAction $createAction,
-        private UpdateDebtAction $updateAction,
-        private DeleteDebtAction $deleteAction
+        private DebtRepositoryInterface $debtRepository
     ) {}
 
+    /**
+     * Get paginated debts with payoff projections.
+     */
     public function paginate(?int $person_id = null): CursorPaginator
     {
         $paginator = $this->debtRepository->paginate($person_id);
@@ -35,6 +35,11 @@ class DebtService
         return $paginator;
     }
 
+    /**
+     * Get all active debts with payoff projections.
+     *
+     * @return Collection<int, Debt>
+     */
     public function get_active(?int $person_id = null): Collection
     {
         $debts = $this->debtRepository->get_active($person_id);
@@ -44,21 +49,6 @@ class DebtService
 
             return $debt;
         });
-    }
-
-    public function create(DebtDTO $dto): Debt
-    {
-        return $this->createAction->execute($dto);
-    }
-
-    public function update(Debt $debt, DebtDTO $dto): Debt
-    {
-        return $this->updateAction->execute($debt, $dto);
-    }
-
-    public function delete(Debt $debt): void
-    {
-        $this->deleteAction->execute($debt);
     }
 
     /**
