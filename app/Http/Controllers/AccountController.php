@@ -9,7 +9,6 @@ use App\Http\Resources\AccountResource;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\Account;
-use App\Models\AccountType;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,16 +23,22 @@ class AccountController extends Controller
         private PersonRepositoryInterface $personRepository
     ) {}
 
+    /**
+     * Display a listing of financial accounts.
+     */
     public function index(): Response
     {
         return Inertia::render('Accounts/Index', [
-            'accounts' => AccountResource::collection($this->repository->all()),
+            'accounts'     => AccountResource::collection($this->repository->all()),
             'totalBalance' => $this->repository->total_balance(),
-            'accountTypes' => AccountType::select(['id', 'name', 'icon'])->orderBy('name')->get(),
-            'persons' => $this->personRepository->all_active(),
+            'accountTypes' => $this->repository->all_types(),
+            'persons'      => $this->personRepository->all_active(),
         ]);
     }
 
+    /**
+     * Store a newly created financial account.
+     */
     public function store(StoreAccountRequest $request): RedirectResponse
     {
         $this->authorize('create', Account::class);
@@ -42,6 +47,9 @@ class AccountController extends Controller
         return redirect()->back()->with('success', 'Account created successfully.');
     }
 
+    /**
+     * Update the specified financial account.
+     */
     public function update(StoreAccountRequest $request, Account $account): RedirectResponse
     {
         $this->authorize('update', $account);
@@ -50,6 +58,9 @@ class AccountController extends Controller
         return redirect()->back()->with('success', 'Account updated successfully.');
     }
 
+    /**
+     * Remove the specified financial account if it has no transactions.
+     */
     public function destroy(Account $account): RedirectResponse
     {
         $this->authorize('delete', $account);
@@ -61,6 +72,9 @@ class AccountController extends Controller
         return redirect()->back()->with('success', 'Account deleted successfully.');
     }
 
+    /**
+     * Toggle the active/inactive status of a financial account.
+     */
     public function toggle(Account $account): RedirectResponse
     {
         $this->authorize('update', $account);

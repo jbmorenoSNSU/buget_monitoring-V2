@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Handles HTTP actions for the main dashboard view.
+ */
 class DashboardController extends Controller
 {
     public function __construct(
@@ -32,6 +35,9 @@ class DashboardController extends Controller
         private PersonRepositoryInterface $personRepository,
     ) {}
 
+    /**
+     * Display the main dashboard for the current month.
+     */
     public function index(Request $request): Response
     {
         $now = now();
@@ -39,7 +45,7 @@ class DashboardController extends Controller
         $year = $now->year;
         $person_id = $request->filled('person_id') ? (int) $request->get('person_id') : null;
 
-        $stats = $this->dashboardService->getDashboardStats($month, $year, $person_id);
+        $stats = $this->dashboardService->get_dashboard_stats($month, $year, $person_id);
 
         return Inertia::render('Dashboard/Index', [
             'stats' => $stats,
@@ -57,11 +63,11 @@ class DashboardController extends Controller
                 ),
                 'savingsGoals' => $this->savingsGoalService->all($person_id),
                 'activeDebts' => $this->debtService->get_active($person_id),
-                'upcomingRecurring' => $this->dashboardService->getUpcomingRecurring($person_id),
+                'upcomingRecurring' => $this->dashboardService->get_upcoming_recurring($person_id),
                 'chartData' => [
                     'sixMonths' => $this->reportService->last_6_months_chart($person_id),
                     'categoryExpense' => $this->reportService->category_expense($month, $year, $person_id),
-                    'cashFlowForecast' => $this->dashboardService->generateCashFlowForecast($stats['totalBalance'], $person_id),
+                    'cashFlowForecast' => $this->dashboardService->generate_cash_flow_forecast($stats['totalBalance'], $person_id),
                     'spendingTrend' => [
                         'daily' => $this->reportService->daily_spending_trend($month, $year, $person_id),
                         'weekly' => $this->reportService->weekly_spending_trend($person_id),

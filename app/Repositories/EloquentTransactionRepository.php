@@ -410,7 +410,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return Transaction::with([
             'account:id,name,color,person_id',
             'account.person:id,name,color',
-            'category:id,name,icon,color'
+            'category:id,name,icon,color',
         ])
             ->where('debt_id', $debt_id)
             ->orderBy('transaction_date', 'desc')

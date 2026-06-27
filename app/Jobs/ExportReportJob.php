@@ -99,14 +99,14 @@ class ExportReportJob implements ShouldQueue
         } catch (\Exception $e) {
             $this->exportRecord->update([
                 'status' => 'failed',
-                'error'  => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             Log::error('ExportReportJob failed', [
                 'export_id' => $this->exportRecord->id,
-                'type'      => $this->exportRecord->type,
-                'format'    => $this->exportRecord->format,
-                'error'     => $e->getMessage(),
+                'type' => $this->exportRecord->type,
+                'format' => $this->exportRecord->format,
+                'error' => $e->getMessage(),
             ]);
         }
     }

@@ -62,14 +62,6 @@ class BudgetGoalService
     }
 
     /**
-     * Delete a budget goal.
-     */
-    public function delete(BudgetGoal $goal): void
-    {
-        $this->budgetGoalRepository->delete($goal);
-    }
-
-    /**
      * Check if any budget goal has warning status (90%+ spent).
      */
     public function has_warnings(int $month, int $year): bool

@@ -13,6 +13,7 @@ use App\Interfaces\PersonRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Debt;
 use App\Services\DebtService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -81,12 +82,12 @@ class DebtController extends Controller
     /**
      * Get the transaction history for a specific debt.
      */
-    public function transactions(Debt $debt, TransactionRepositoryInterface $transactionRepo): \Illuminate\Http\JsonResponse
+    public function transactions(Debt $debt, TransactionRepositoryInterface $transactionRepo): JsonResponse
     {
         $this->authorize('view', $debt);
-        
+
         $transactions = $transactionRepo->for_debt($debt->id);
-        
+
         return response()->json(TransactionResource::collection($transactions));
     }
 }

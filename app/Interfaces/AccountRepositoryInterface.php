@@ -24,4 +24,6 @@ interface AccountRepositoryInterface
     public function total_balance(?int $person_id = null): float;
 
     public function has_transactions(Account $account): bool;
+
+    public function all_types(): Collection;
 }

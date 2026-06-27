@@ -32,6 +32,9 @@ class TransactionController extends Controller
         private DebtRepositoryInterface $debtRepository
     ) {}
 
+    /**
+     * Display a paginated, filterable listing of transactions.
+     */
     public function index(Request $request): Response
     {
         $filters = $request->only([
@@ -49,6 +52,9 @@ class TransactionController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created transaction.
+     */
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', Transaction::class);
@@ -57,6 +63,9 @@ class TransactionController extends Controller
         return redirect()->back()->with('success', 'Transaction created successfully.');
     }
 
+    /**
+     * Update the specified transaction.
+     */
     public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
     {
         $this->authorize('update', $transaction);
@@ -65,6 +74,9 @@ class TransactionController extends Controller
         return redirect()->back()->with('success', 'Transaction updated successfully.');
     }
 
+    /**
+     * Remove the specified transaction.
+     */
     public function destroy(Transaction $transaction): RedirectResponse
     {
         $this->authorize('delete', $transaction);

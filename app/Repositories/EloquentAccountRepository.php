@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Interfaces\AccountRepositoryInterface;
 use App\Models\Account;
+use App\Models\AccountType;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentAccountRepository implements AccountRepositoryInterface
@@ -68,5 +69,10 @@ class EloquentAccountRepository implements AccountRepositoryInterface
     public function has_transactions(Account $account): bool
     {
         return $account->transactions()->exists();
+    }
+
+    public function all_types(): Collection
+    {
+        return AccountType::select(['id', 'name', 'icon'])->orderBy('name')->get();
     }
 }

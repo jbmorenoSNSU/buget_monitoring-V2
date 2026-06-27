@@ -1,66 +1,70 @@
+import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
 interface Account {
-  id: number;
-  name: string;
-  is_active: boolean;
-  current_balance: number;
-  description?: string;
-  initial_balance: number;
-  person?: {
     id: number;
     name: string;
-    color: string;
-  };
-  account_type?: {
-    id: number;
-    name: string;
-  };
+    is_active: boolean;
+    current_balance: number;
+    description?: string;
+    initial_balance: number;
+    person?: {
+        id: number;
+        name: string;
+        color: string;
+    };
+    account_type?: {
+        id: number;
+        name: string;
+    };
 }
 
-export const useAccountStore = defineStore('account', {
-  state: () => ({
-    accounts: [] as Account[],
-    loading: false,
-    error: null as string | null,
-  }),
+/**
+ * Store for managing financial account state and toggle actions.
+ */
+export const useAccountStore = defineStore('account', () => {
+    const accounts = ref<Account[]>([]);
+    const loading = ref(false);
+    const error = ref<string | null>(null);
 
-  getters: {
-    totalBalance: (state) => {
-      return state.accounts.reduce((sum, account) => sum + (account.is_active ? Number(account.current_balance) : 0), 0);
-    },
-    activeAccounts: (state) => {
-      return state.accounts.filter(account => account.is_active);
+    const totalBalance = computed(() =>
+        accounts.value.reduce(
+            (sum, account) => sum + (account.is_active ? Number(account.current_balance) : 0),
+            0
+        )
+    );
+
+    const activeAccounts = computed(() =>
+        accounts.value.filter((account) => account.is_active)
+    );
+
+    function setAccounts(data: Account[]): void {
+        accounts.value = data;
     }
-  },
 
-  actions: {
-    setAccounts(accounts: Account[]) {
-      this.accounts = accounts;
-    },
-
-    async toggleAccount(id: number) {
-      this.loading = true;
-      this.error = null;
-      try {
-        await axios.patch(route('accounts.toggle', id));
-        const account = this.accounts.find(a => a.id === id);
-        if (account) {
-          account.is_active = !account.is_active;
+    async function toggleAccount(id: number): Promise<void> {
+        loading.value = true;
+        error.value = null;
+        try {
+            await axios.patch(route('accounts.toggle', id));
+            const account = accounts.value.find((a) => a.id === id);
+            if (account) {
+                account.is_active = !account.is_active;
+            }
+        } catch (err: unknown) {
+            error.value = err instanceof Error ? err.message : 'Failed to toggle account';
+            throw err;
+        } finally {
+            loading.value = false;
         }
-      } catch (err: any) {
-        this.error = err.message || 'Failed to toggle account';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    $reset() {
-      this.accounts = [];
-      this.loading = false;
-      this.error = null;
     }
-  }
+
+    function $reset(): void {
+        accounts.value = [];
+        loading.value = false;
+        error.value = null;
+    }
+
+    return { accounts, loading, error, totalBalance, activeAccounts, setAccounts, toggleAccount, $reset };
 });

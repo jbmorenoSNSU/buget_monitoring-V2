@@ -38,9 +38,9 @@ if %errorlevel% equ 0 (
     start /b php artisan queue:work
 )
 
-:: 2.6 Run Monthly Budget Rollover
-echo Running Budget Rollovers...
-start /b php artisan budget:rollover
+:: 2.6 Run Recurring Transactions Generator
+echo Running Recurring Transactions...
+start /b php artisan recurring:generate
 
 :: 2.7 Check if Vite Dev Server is running, if not start it
 netstat -ano | find "LISTENING" | find ":5173" > nul
@@ -59,6 +59,19 @@ if %errorlevel% neq 0 (
 )
 echo App Server is ready!
 
+:: 3.5 Wait for Vite Dev Server (Port 5173) to be fully active
+echo Waiting for Vite Dev Server to be ready...
+:CHECK_VITE
+netstat -ano | find "LISTENING" | find ":5173" > nul
+if %errorlevel% neq 0 (
+    timeout /t 1 /nobreak > nul
+    goto CHECK_VITE
+)
+echo Vite Dev Server is ready!
+
 :: 4. Finally open the browser in "App Mode"
 start chrome --app=http://localhost:8000
-exit
+
+:: 5. Keep the hidden console alive so background processes don't terminate
+:: Use stop_server.bat to kill the processes
+pause > nul

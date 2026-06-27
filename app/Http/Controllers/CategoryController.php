@@ -21,6 +21,9 @@ class CategoryController extends Controller
         private CategoryRepositoryInterface $repository
     ) {}
 
+    /**
+     * Display a listing of categories.
+     */
     public function index(): Response
     {
         return Inertia::render('Categories/Index', [
@@ -28,6 +31,9 @@ class CategoryController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created category.
+     */
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         $this->authorize('create', Category::class);
@@ -36,6 +42,9 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category created successfully.');
     }
 
+    /**
+     * Update the specified category.
+     */
     public function update(StoreCategoryRequest $request, Category $category): RedirectResponse
     {
         $this->authorize('update', $category);
@@ -44,6 +53,9 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category updated successfully.');
     }
 
+    /**
+     * Remove the specified category if it has no transactions.
+     */
     public function destroy(Category $category): RedirectResponse
     {
         $this->authorize('delete', $category);
@@ -55,6 +67,9 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category deleted successfully.');
     }
 
+    /**
+     * Toggle the active/inactive status of a category.
+     */
     public function toggle(Category $category): RedirectResponse
     {
         $this->authorize('update', $category);

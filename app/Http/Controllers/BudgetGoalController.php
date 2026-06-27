@@ -28,6 +28,9 @@ class BudgetGoalController extends Controller
         private PersonRepositoryInterface $personRepository,
     ) {}
 
+    /**
+     * Display a listing of budget goals for the selected month.
+     */
     public function index(Request $request): Response
     {
         $month = (int) $request->get('month', now()->month);
@@ -42,6 +45,9 @@ class BudgetGoalController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created budget goal.
+     */
     public function store(StoreBudgetGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', BudgetGoal::class);
@@ -50,6 +56,9 @@ class BudgetGoalController extends Controller
         return redirect()->back()->with('success', 'Budget goal created successfully.');
     }
 
+    /**
+     * Update the specified budget goal.
+     */
     public function update(StoreBudgetGoalRequest $request, BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('update', $budgetGoal);
@@ -58,10 +67,13 @@ class BudgetGoalController extends Controller
         return redirect()->back()->with('success', 'Budget goal updated successfully.');
     }
 
+    /**
+     * Remove the specified budget goal.
+     */
     public function destroy(BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('delete', $budgetGoal);
-        $this->service->delete($budgetGoal);
+        $this->repository->delete($budgetGoal);
 
         return redirect()->back()->with('success', 'Budget goal deleted successfully.');
     }

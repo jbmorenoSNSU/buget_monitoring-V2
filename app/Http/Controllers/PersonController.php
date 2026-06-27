@@ -21,6 +21,9 @@ class PersonController extends Controller
         private PersonRepositoryInterface $repository
     ) {}
 
+    /**
+     * Display a listing of persons.
+     */
     public function index(): Response
     {
         return Inertia::render('Persons/Index', [
@@ -28,6 +31,9 @@ class PersonController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created person.
+     */
     public function store(StorePersonRequest $request): RedirectResponse
     {
         $this->authorize('create', Person::class);
@@ -36,6 +42,9 @@ class PersonController extends Controller
         return redirect()->back()->with('success', 'Person created successfully.');
     }
 
+    /**
+     * Update the specified person.
+     */
     public function update(StorePersonRequest $request, Person $person): RedirectResponse
     {
         $this->authorize('update', $person);
@@ -44,6 +53,9 @@ class PersonController extends Controller
         return redirect()->back()->with('success', 'Person updated successfully.');
     }
 
+    /**
+     * Remove the specified person if they have no linked accounts.
+     */
     public function destroy(Person $person): RedirectResponse
     {
         $this->authorize('delete', $person);

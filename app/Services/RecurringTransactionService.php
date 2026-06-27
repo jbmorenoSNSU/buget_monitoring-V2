@@ -25,32 +25,6 @@ class RecurringTransactionService
     ) {}
 
     /**
-     * Get all recurring transaction templates.
-     *
-     * @return Collection<int, RecurringTransaction>
-     */
-    public function get_all(): Collection
-    {
-        return $this->recurringRepository->all();
-    }
-
-    /**
-     * Toggle the active status of a recurring transaction template.
-     */
-    public function toggle(RecurringTransaction $recurring): RecurringTransaction
-    {
-        return $this->recurringRepository->update($recurring, ['is_active' => ! $recurring->is_active]);
-    }
-
-    /**
-     * Delete a recurring transaction template.
-     */
-    public function delete(RecurringTransaction $recurring): void
-    {
-        $this->recurringRepository->delete($recurring);
-    }
-
-    /**
      * Process and generate transactions that are due.
      *
      * @return int Count of transactions generated.

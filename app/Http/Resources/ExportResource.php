@@ -13,12 +13,12 @@ class ExportResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'         => $this->id,
-            'type'       => $this->type,
-            'format'     => $this->format,
-            'file_name'  => $this->file_name,
-            'status'     => $this->status,
-            'error'      => $this->error,
+            'id' => $this->id,
+            'type' => $this->type,
+            'format' => $this->format,
+            'file_name' => $this->file_name,
+            'status' => $this->status,
+            'error' => $this->error,
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

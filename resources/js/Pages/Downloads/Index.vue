@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 
 import { usePageTitle } from '@/composables/usePageTitle';
-import AppLayout from '@/Components/Layout/AppLayout.vue';
-import AppCard from '@/Components/UI/AppCard.vue';
 import AppIcon from '@/Components/UI/AppIcon.vue';
 import AppPagination from '@/Components/UI/AppPagination.vue';
 import AppTable from '@/Components/UI/AppTable.vue';

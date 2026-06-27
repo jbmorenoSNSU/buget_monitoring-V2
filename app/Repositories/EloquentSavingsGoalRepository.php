@@ -10,11 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 
 class EloquentSavingsGoalRepository implements SavingsGoalRepositoryInterface
 {
-    /**
-     * Get all savings goals with eager loaded accounts.
-     *
-     * @return Collection<int, SavingsGoal>
-     */
     public function all(?int $person_id = null): Collection
     {
         $query = SavingsGoal::query()
@@ -29,9 +24,6 @@ class EloquentSavingsGoalRepository implements SavingsGoalRepositoryInterface
             ->get();
     }
 
-    /**
-     * Find a specific savings goal by ID.
-     */
     public function find(int $id): ?SavingsGoal
     {
         return SavingsGoal::query()
@@ -39,17 +31,11 @@ class EloquentSavingsGoalRepository implements SavingsGoalRepositoryInterface
             ->find($id);
     }
 
-    /**
-     * Create a new savings goal.
-     */
     public function create(array $data): SavingsGoal
     {
         return SavingsGoal::create($data);
     }
 
-    /**
-     * Update an existing savings goal.
-     */
     public function update(SavingsGoal $goal, array $data): SavingsGoal
     {
         $goal->update($data);
@@ -57,9 +43,6 @@ class EloquentSavingsGoalRepository implements SavingsGoalRepositoryInterface
         return $goal->fresh(['account:id,name,current_balance,color', 'person:id,name,color']);
     }
 
-    /**
-     * Delete a savings goal.
-     */
     public function delete(SavingsGoal $goal): void
     {
         $goal->delete();

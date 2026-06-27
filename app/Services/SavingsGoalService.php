@@ -22,7 +22,7 @@ class SavingsGoalService
     ) {}
 
     /**
-     * Get all savings goals with computed metrics.
+     * Get all savings goals with computed progress metrics.
      *
      * @return Collection<int, SavingsGoal>
      */
@@ -34,13 +34,13 @@ class SavingsGoalService
             $target = (float) $goal->target_amount;
             $current = (float) $goal->current_amount;
 
-            $goal->percent = $target > 0 ? round(($current / $target) * 100, 1) : 0;
+            $goal->percent          = $target > 0 ? round(($current / $target) * 100, 1) : 0;
             $goal->remaining_amount = max(0.0, $target - $current);
-            $goal->is_completed = $current >= $target;
+            $goal->is_completed     = $current >= $target;
 
             if ($goal->target_date) {
                 $targetDate = Carbon::parse($goal->target_date)->startOfDay();
-                $today = now()->startOfDay();
+                $today      = now()->startOfDay();
 
                 if ($targetDate->lt($today)) {
                     $goal->days_remaining = -$today->diffInDays($targetDate);
@@ -53,13 +53,5 @@ class SavingsGoalService
 
             return $goal;
         });
-    }
-
-    /**
-     * Find a savings goal by ID.
-     */
-    public function find(int $id): ?SavingsGoal
-    {
-        return $this->savingsGoalRepository->find($id);
     }
 }

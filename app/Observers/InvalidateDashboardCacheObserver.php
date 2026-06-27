@@ -22,13 +22,13 @@ class InvalidateDashboardCacheObserver
         $year = $now->year;
 
         // Clear for "all" persons
-        Cache::forget("dashboard_stats_{$month}_{$year}_all");
+        Cache::forget("dashboard:stats:{$month}:{$year}:all");
 
         // Clear for specific person if applicable
         if (isset($model->person_id) && $model->person_id) {
-            Cache::forget("dashboard_stats_{$month}_{$year}_{$model->person_id}");
+            Cache::forget("dashboard:stats:{$month}:{$year}:{$model->person_id}");
         } elseif ($model->relationLoaded('account') && $model->account && $model->account->person_id) {
-            Cache::forget("dashboard_stats_{$month}_{$year}_{$model->account->person_id}");
+            Cache::forget("dashboard:stats:{$month}:{$year}:{$model->account->person_id}");
         }
     }
 

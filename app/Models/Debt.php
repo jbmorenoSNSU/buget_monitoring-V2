@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Represents a tracked debt or liability (e.g. credit card, loan).
+ */
 class Debt extends Model
 {
     use HasFactory, SoftDeletes;

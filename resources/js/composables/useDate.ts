@@ -20,8 +20,9 @@ export function useDate() {
 
     const formatRelative = (date: string | Date | null | undefined): string => {
         if (!date) return '';
-        const d = dayjs(date);
-        const diff = d.diff(dayjs(), 'day');
+        const today = dayjs().format('YYYY-MM-DD');
+        const target = dayjs(date).format('YYYY-MM-DD');
+        const diff = dayjs(target).diff(dayjs(today), 'day');
         if (diff === 0) return 'Today';
         if (diff === 1) return 'Tomorrow';
         if (diff === -1) return 'Yesterday';
