@@ -15,16 +15,27 @@ class InvalidateDashboardCacheObserver
      * Since Cache::tags() is not supported by standard file/database cache,
      * we will clear the specific current month's cache.
      */
-    protected function clearCache($model)
+    protected function clearCache($model): void
     {
         $now = now();
-        $month = $now->month;
-        $year = $now->year;
 
-        // Clear for "all" persons
+        // Always clear current month's stats (most common case)
+        $this->forgetKey($now->month, $now->year, $model);
+
+        // Also clear the month the transaction itself belongs to (handles backdated/future entries)
+        // ponytail: duck-type — only transactions have transaction_date, others fall through silently
+        if (isset($model->transaction_date) && $model->transaction_date) {
+            $txDate = \Carbon\Carbon::parse($model->transaction_date);
+            if ($txDate->month !== $now->month || $txDate->year !== $now->year) {
+                $this->forgetKey($txDate->month, $txDate->year, $model);
+            }
+        }
+    }
+
+    private function forgetKey(int $month, int $year, $model): void
+    {
         Cache::forget("dashboard:stats:{$month}:{$year}:all");
 
-        // Clear for specific person if applicable
         if (isset($model->person_id) && $model->person_id) {
             Cache::forget("dashboard:stats:{$month}:{$year}:{$model->person_id}");
         } elseif ($model->relationLoaded('account') && $model->account && $model->account->person_id) {

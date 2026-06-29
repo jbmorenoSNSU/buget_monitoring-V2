@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Represents a monthly budget goal/limit for a specific category.
  */
 class BudgetGoal extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /** @var array<int, string> */
     protected $fillable = [

@@ -54,4 +54,21 @@ class SavingsGoalService
             return $goal;
         });
     }
+
+    /** @param array<string, mixed> $data */
+    public function create(array $data): SavingsGoal
+    {
+        return $this->savingsGoalRepository->create($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function update(SavingsGoal $goal, array $data): SavingsGoal
+    {
+        return $this->savingsGoalRepository->update($goal, $data);
+    }
+
+    public function delete(SavingsGoal $goal): void
+    {
+        $this->savingsGoalRepository->delete($goal);
+    }
 }

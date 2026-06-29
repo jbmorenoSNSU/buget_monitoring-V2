@@ -8,7 +8,6 @@ use App\Http\Requests\StoreSavingsGoalRequest;
 use App\Http\Requests\UpdateSavingsGoalRequest;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
-use App\Interfaces\SavingsGoalRepositoryInterface;
 use App\Models\SavingsGoal;
 use App\Services\SavingsGoalService;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +21,6 @@ class SavingsGoalController extends Controller
 {
     public function __construct(
         private SavingsGoalService $service,
-        private SavingsGoalRepositoryInterface $repository,
         private AccountRepositoryInterface $accountRepository,
         private PersonRepositoryInterface $personRepository
     ) {}
@@ -33,7 +31,7 @@ class SavingsGoalController extends Controller
     public function index(): Response
     {
         return Inertia::render('SavingsGoals/Index', [
-            'goals'   => $this->service->all(),
+            'goals'    => $this->service->all(),
             'accounts' => $this->accountRepository->all_active(),
             'persons'  => $this->personRepository->all_active(),
         ]);
@@ -45,7 +43,7 @@ class SavingsGoalController extends Controller
     public function store(StoreSavingsGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', SavingsGoal::class);
-        $this->repository->create($request->validated());
+        $this->service->create($request->validated());
 
         return redirect()->back()->with('success', 'Savings goal created successfully.');
     }
@@ -56,7 +54,7 @@ class SavingsGoalController extends Controller
     public function update(UpdateSavingsGoalRequest $request, SavingsGoal $savingsGoal): RedirectResponse
     {
         $this->authorize('update', $savingsGoal);
-        $this->repository->update($savingsGoal, $request->validated());
+        $this->service->update($savingsGoal, $request->validated());
 
         return redirect()->back()->with('success', 'Savings goal updated successfully.');
     }
@@ -67,7 +65,7 @@ class SavingsGoalController extends Controller
     public function destroy(SavingsGoal $savingsGoal): RedirectResponse
     {
         $this->authorize('delete', $savingsGoal);
-        $this->repository->delete($savingsGoal);
+        $this->service->delete($savingsGoal);
 
         return redirect()->back()->with('success', 'Savings goal deleted successfully.');
     }

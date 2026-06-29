@@ -21,7 +21,11 @@ class ExportController extends Controller
      */
     public function index(): Response
     {
-        $exports = Export::orderBy('created_at', 'desc')
+        $this->authorize('viewAny', Export::class);
+
+        // Single-user app — user_id is always 1, but scope keeps the query correct if auth is added later
+        $exports = Export::where('user_id', 1)
+            ->orderBy('created_at', 'desc')
             ->cursorPaginate(20);
 
         return Inertia::render('Downloads/Index', [

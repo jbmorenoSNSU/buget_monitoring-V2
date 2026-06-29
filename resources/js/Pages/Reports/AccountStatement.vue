@@ -43,7 +43,7 @@ const columns = [
     { key: 'balance', label: 'Balance', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type: string) => `/reports/export/${type}?account_id=${account_id.value}&from=${from.value}&to=${to.value}`;
+const triggerExport = (type: string) => router.post(`/reports/export/${type}`, { account_id: account_id.value, from: from.value, to: to.value });
 </script>
 
 <template>
@@ -54,18 +54,14 @@ const exportUrl = (type: string) => `/reports/export/${type}?account_id=${accoun
             <AppInput v-model="from" label="From" type="date" />
             <AppInput v-model="to" label="To" type="date" />
             <AppButton @click="filter">Apply</AppButton>
-            <a :href="exportUrl('account-statement-excel')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
-                    Excel
-                </AppButton>
-            </a>
-            <a :href="exportUrl('account-statement-pdf')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileText" size="18" class="text-rose-500" />
-                    PDF
-                </AppButton>
-            </a>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('account-statement-excel')">
+                <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                Excel
+            </AppButton>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('account-statement-pdf')">
+                <AppIcon name="FileText" size="18" class="text-rose-500" />
+                PDF
+            </AppButton>
         </div>
 
         <template v-if="data">

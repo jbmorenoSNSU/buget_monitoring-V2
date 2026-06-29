@@ -27,6 +27,9 @@ class DashboardService
 
     /**
      * Get aggregated stats for the dashboard (cached per month/year/person).
+     * Think of this as the "Snapshot" generator. It grabs your total money,
+     * subtracts what you owe and what you planned to spend, and calculates
+     * exactly how much money is "Safe to Spend" right now.
      *
      * @return array<string, mixed>
      */
@@ -80,6 +83,9 @@ class DashboardService
 
     /**
      * Generate a 30-day cash flow forecast based on active recurring transactions.
+     * This acts like a time machine. It takes your current bank balance and walks
+     * forward day-by-day for the next 30 days, adding expected income and subtracting
+     * expected bills to show you what your balance WILL be on any given day.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -135,6 +141,12 @@ class DashboardService
         return $forecast;
     }
 
+    /**
+     * Calculates how much money is left inside your monthly budget envelopes.
+     * If you set a budget of $500 for groceries and spent $200, this adds the
+     * remaining $300 to the total. This total is later subtracted from your 
+     * actual bank balance to figure out your "Safe to Spend" amount.
+     */
     private function calculateRemainingBudgets(Collection $budgetGoals, ?int $person_id): float
     {
         if ($person_id === null) {
@@ -168,6 +180,12 @@ class DashboardService
         return $safeToSpend / $daysRemaining;
     }
 
+    /**
+     * Calculates the Financial Health Score (0-100) and awards badges.
+     * It grades the user based on their savings rate (income vs expense),
+     * if they have a healthy cash buffer, if they are staying under budget,
+     * and if they are completely debt-free.
+     */
     private function calculateHealthScore(float $monthlyIncome, float $monthlyExpense, float $safeToSpend, Collection $budgetGoals, ?int $person_id): array
     {
         $healthScore = 0;

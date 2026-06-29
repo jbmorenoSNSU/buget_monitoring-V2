@@ -43,7 +43,7 @@ const columns = [
     { key: 'percent', label: '% Used', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value}&year=${year.value}&person_id=${person_id.value || ''}`;
+const triggerExport = (type: string) => router.post(`/reports/export/${type}`, { month: month.value, year: year.value, person_id: person_id.value || null });
 </script>
 
 <template>
@@ -53,18 +53,14 @@ const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value
             <AppSelect v-model="month" :options="monthOptions" label="Month" @change="filter" />
             <AppSelect v-model="year" :options="yearOptions" label="Year" @change="filter" />
             <AppSelect v-model="person_id" :options="personOptions" label="Person" @change="filter" />
-            <a :href="exportUrl('budget-goal-excel')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
-                    Excel
-                </AppButton>
-            </a>
-            <a :href="exportUrl('budget-goal-pdf')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileText" size="18" class="text-rose-500" />
-                    PDF
-                </AppButton>
-            </a>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('budget-goal-excel')">
+                <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                Excel
+            </AppButton>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('budget-goal-pdf')">
+                <AppIcon name="FileText" size="18" class="text-rose-500" />
+                PDF
+            </AppButton>
         </div>
 
         <AppTable :columns="columns" :rows="data">

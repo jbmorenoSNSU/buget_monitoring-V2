@@ -50,6 +50,23 @@ class DebtService
         });
     }
 
+    /** @param array<string, mixed> $data */
+    public function create(array $data): Debt
+    {
+        return $this->debtRepository->create($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function update(Debt $debt, array $data): Debt
+    {
+        return $this->debtRepository->update($debt, $data);
+    }
+
+    public function delete(Debt $debt): void
+    {
+        $this->debtRepository->delete($debt);
+    }
+
     /**
      * Calculates the payoff date and total interest paid based on minimum payment.
      */

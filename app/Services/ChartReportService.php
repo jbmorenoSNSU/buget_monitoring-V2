@@ -30,6 +30,9 @@ class ChartReportService
 
     /**
      * Generate income vs expense aggregates grouped by month.
+     * This method looks back over the past few months (usually 6), adds up all the
+     * money that came in (income) and went out (expense), and subtracts them to
+     * figure out your "Net" money for each month.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -120,6 +123,9 @@ class ChartReportService
 
     /**
      * Compute the daily spending trend for a specific month and year.
+     * This compares how much you spent on Day 1, Day 2, Day 3, etc. of the current month
+     * versus exactly how much you spent on those exact same days last month.
+     * It helps you see if you are spending faster or slower than before.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -315,6 +321,9 @@ class ChartReportService
 
     /**
      * Compute a Year-in-Review summary for a given year.
+     * This generates a "Spotify Wrapped" style summary of your finances for the year,
+     * finding your total savings, your top 5 most expensive categories, and the single 
+     * month where you spent the most money.
      *
      * @return array<string, mixed>
      */
@@ -371,6 +380,12 @@ class ChartReportService
 
     /**
      * Generate 180-day daily cashflow balance projections.
+     * This is the most complex financial calculation in the app. It figures out 
+     * exactly how much money you will have every day for the next 6 months by:
+     * 1. Looking at your past 90 days to figure out your average daily "random" spending.
+     * 2. Looking at all your upcoming Bills, Subscriptions, and Debt Payments.
+     * 3. Looking at your scheduled Savings Goal contributions.
+     * 4. Simulating your bank balance day-by-day combining all of the above.
      *
      * @return array<string, mixed>
      */

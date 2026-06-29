@@ -88,6 +88,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return Transaction::with(['account:id,name', 'category:id,name,icon,color', 'transferToAccount:id,name'])->find($id);
     }
 
+    /**
+     * Create a new transaction and automatically adjust the linked account's balance.
+     * We wrap this in a database "transaction" so that if the balance update fails,
+     * the new transaction record isn't saved either (preventing ghost money).
+     */
     public function create(array $data): Transaction
     {
         return DB::transaction(function () use ($data) {
@@ -98,13 +103,20 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         });
     }
 
+    /**
+     * Update an existing transaction. This requires careful math to ensure balances stay correct.
+     */
     public function update(Transaction $transaction, array $data): Transaction
     {
         $temp = clone $transaction;
         $temp->fill($data);
 
+        // These are core fields that change where the money is going or coming from.
         $criticalFields = ['account_id', 'type', 'transfer_to_account_id', 'debt_id'];
 
+        // If the user changed the account or the type (e.g., Expense to Income),
+        // the safest way to fix the math is to completely undo the old transaction's 
+        // effect, save the new details, and apply the new effect.
         if ($temp->isDirty($criticalFields)) {
             return DB::transaction(function () use ($transaction, $data) {
                 $this->reverse_balance_effect($transaction);
@@ -116,6 +128,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             });
         }
 
+        // If the user only changed the amount (and not the accounts or type),
+        // we can just calculate the difference and adjust the balances directly.
         return DB::transaction(function () use ($transaction, $data) {
             $transaction->loadMissing('account');
 
@@ -151,6 +165,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         });
     }
 
+    /**
+     * Delete a transaction. Before removing the record, we must "undo" its effect
+     * on the account's current balance so the money is returned to how it was.
+     */
     public function delete(Transaction $transaction): void
     {
         DB::transaction(function () use ($transaction) {
@@ -191,6 +209,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $query->limit($limit)->get();
     }
 
+    /**
+     * Applies the financial effect of a transaction to the relevant accounts.
+     * For example, an 'income' increases the balance, an 'expense' decreases it.
+     */
     private function apply_balance_effect(Transaction $transaction): void
     {
         $account = $transaction->account ?? Account::findOrFail($transaction->account_id);
@@ -204,8 +226,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
                     $this->debtRepository->decrement_principal($transaction->debt_id, (float) $transaction->amount);
                 }
             })(),
-            'transfer' => (function () use ($transaction) {
-                $transaction->account->decrement('current_balance', (float) $transaction->amount);
+            'transfer' => (function () use ($transaction, $account) {
+                $account->decrement('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
                     Account::findOrFail($transaction->transfer_to_account_id)
                         ->increment('current_balance', (float) $transaction->amount);
@@ -214,6 +236,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         };
     }
 
+    /**
+     * Undoes the financial effect of a transaction. This is the exact mathematical
+     * opposite of apply_balance_effect. Used when deleting or radically changing a transaction.
+     */
     private function reverse_balance_effect(Transaction $transaction): void
     {
         $account = $transaction->account ?? Account::findOrFail($transaction->account_id);
@@ -227,8 +253,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
                     $this->debtRepository->increment_principal($transaction->debt_id, (float) $transaction->amount);
                 }
             })(),
-            'transfer' => (function () use ($transaction) {
-                $transaction->account->increment('current_balance', (float) $transaction->amount);
+            'transfer' => (function () use ($transaction, $account) {
+                $account->increment('current_balance', (float) $transaction->amount);
                 if ($transaction->transfer_to_account_id) {
                     Account::findOrFail($transaction->transfer_to_account_id)
                         ->decrement('current_balance', (float) $transaction->amount);
@@ -358,10 +384,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         $totals = Transaction::where('transaction_date', '<', $before)
             ->selectRaw('
-                COALESCE(SUM(CASE WHEN type = "income" AND account_id = ? THEN amount ELSE 0 END), 0) as income,
-                COALESCE(SUM(CASE WHEN type = "expense" AND account_id = ? THEN amount ELSE 0 END), 0) as expense,
-                COALESCE(SUM(CASE WHEN type = "transfer" AND account_id = ? THEN amount ELSE 0 END), 0) as transfer_out,
-                COALESCE(SUM(CASE WHEN type = "transfer" AND transfer_to_account_id = ? THEN amount ELSE 0 END), 0) as transfer_in
+                COALESCE(SUM(CASE WHEN type = \'income\' AND account_id = ? THEN amount ELSE 0 END), 0) as income,
+                COALESCE(SUM(CASE WHEN type = \'expense\' AND account_id = ? THEN amount ELSE 0 END), 0) as expense,
+                COALESCE(SUM(CASE WHEN type = \'transfer\' AND account_id = ? THEN amount ELSE 0 END), 0) as transfer_out,
+                COALESCE(SUM(CASE WHEN type = \'transfer\' AND transfer_to_account_id = ? THEN amount ELSE 0 END), 0) as transfer_in
             ', [$account_id, $account_id, $account_id, $account_id])
             ->first();
 

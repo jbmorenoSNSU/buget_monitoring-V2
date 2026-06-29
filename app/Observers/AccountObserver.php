@@ -5,47 +5,13 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\Account;
-use Illuminate\Support\Facades\Cache;
 
+/**
+ * Handles Account model events.
+ * Cache busting is handled by InvalidateDashboardCacheObserver.
+ */
 class AccountObserver
 {
-    /**
-     * Handle the Account "created" event.
-     */
-    public function created(Account $account): void
-    {
-        Cache::increment('reports_cache_version');
-    }
-
-    /**
-     * Handle the Account "updated" event.
-     */
-    public function updated(Account $account): void
-    {
-        Cache::increment('reports_cache_version');
-    }
-
-    /**
-     * Handle the Account "deleted" event.
-     */
-    public function deleted(Account $account): void
-    {
-        Cache::increment('reports_cache_version');
-    }
-
-    /**
-     * Handle the Account "restored" event.
-     */
-    public function restored(Account $account): void
-    {
-        Cache::increment('reports_cache_version');
-    }
-
-    /**
-     * Handle the Account "force deleted" event.
-     */
-    public function forceDeleted(Account $account): void
-    {
-        Cache::increment('reports_cache_version');
-    }
+    // ponytail: no-op observer kept as extension point for future per-model event hooks.
+    // Dashboard cache is invalidated by InvalidateDashboardCacheObserver registered in AppServiceProvider.
 }

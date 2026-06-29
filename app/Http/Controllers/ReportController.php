@@ -153,6 +153,8 @@ class ReportController extends Controller
      */
     public function export(Request $request, string $type)
     {
+        $this->authorize('create', Export::class);
+
         $parts = explode('-', $type);
         $format = array_pop($parts);
         $reportType = implode('-', $parts);

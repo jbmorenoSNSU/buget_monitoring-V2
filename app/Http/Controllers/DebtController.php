@@ -8,7 +8,6 @@ use App\Http\Requests\Debts\StoreDebtRequest;
 use App\Http\Requests\Debts\UpdateDebtRequest;
 use App\Http\Resources\DebtResource;
 use App\Http\Resources\TransactionResource;
-use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Debt;
@@ -26,7 +25,6 @@ class DebtController extends Controller
 {
     public function __construct(
         private DebtService $debtService,
-        private DebtRepositoryInterface $debtRepository,
         private PersonRepositoryInterface $personRepository
     ) {}
 
@@ -52,7 +50,7 @@ class DebtController extends Controller
     public function store(StoreDebtRequest $request): RedirectResponse
     {
         $this->authorize('create', Debt::class);
-        $this->debtRepository->create($request->validated());
+        $this->debtService->create($request->validated());
 
         return redirect()->back()->with('success', 'Debt tracker created successfully.');
     }
@@ -63,7 +61,7 @@ class DebtController extends Controller
     public function update(UpdateDebtRequest $request, Debt $debt): RedirectResponse
     {
         $this->authorize('update', $debt);
-        $this->debtRepository->update($debt, $request->validated());
+        $this->debtService->update($debt, $request->validated());
 
         return redirect()->back()->with('success', 'Debt tracker updated successfully.');
     }
@@ -74,7 +72,7 @@ class DebtController extends Controller
     public function destroy(Debt $debt): RedirectResponse
     {
         $this->authorize('delete', $debt);
-        $this->debtRepository->delete($debt);
+        $this->debtService->delete($debt);
 
         return redirect()->back()->with('success', 'Debt tracker deleted successfully.');
     }

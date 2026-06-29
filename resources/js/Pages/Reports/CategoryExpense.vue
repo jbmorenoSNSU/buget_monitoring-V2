@@ -79,7 +79,7 @@ const columns = [
     { key: 'percentage', label: '% of Total', class: 'text-right', cellClass: 'text-right' },
 ];
 
-const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value}&year=${year.value}&person_id=${person_id.value || ''}`;
+const triggerExport = (type: string) => router.post(`/reports/export/${type}`, { month: month.value, year: year.value, person_id: person_id.value || null });
 </script>
 
 <template>
@@ -99,18 +99,14 @@ const exportUrl = (type: string) => `/reports/export/${type}?month=${month.value
                 </button>
             </div>
 
-            <a :href="exportUrl('category-expense-excel')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
-                    Excel
-                </AppButton>
-            </a>
-            <a :href="exportUrl('category-expense-pdf')" class="inline-block">
-                <AppButton variant="secondary" class="gap-2">
-                    <AppIcon name="FileText" size="18" class="text-rose-500" />
-                    PDF
-                </AppButton>
-            </a>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('category-expense-excel')">
+                <AppIcon name="FileSpreadsheet" size="18" class="text-emerald-500" />
+                Excel
+            </AppButton>
+            <AppButton variant="secondary" class="gap-2" @click="triggerExport('category-expense-pdf')">
+                <AppIcon name="FileText" size="18" class="text-rose-500" />
+                PDF
+            </AppButton>
         </div>
 
         <div v-if="viewMode === 'heatmap'" class="mb-6">

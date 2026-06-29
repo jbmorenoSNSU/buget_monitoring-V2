@@ -32,7 +32,7 @@ test('export dispatches job and redirects', function () {
     Queue::fake();
 
     $user = User::factory()->create();
-    $response = $this->actingAs($user)->get('/reports/export/income-expense-excel');
+    $response = $this->actingAs($user)->post('/reports/export/income-expense-excel');
 
     $response->assertRedirect('/downloads');
     $response->assertSessionHas('success');

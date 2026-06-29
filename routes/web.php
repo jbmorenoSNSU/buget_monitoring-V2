@@ -49,7 +49,7 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/calendar', [ReportController::class, 'calendar'])->name('calendar');
     Route::get('/year-in-review', [ReportController::class, 'year_in_review'])->name('year-in-review');
     Route::get('/forecasting', [ReportController::class, 'forecasting'])->name('forecasting');
-    Route::get('/export/{type}', [ReportController::class, 'export'])->name('export');
+    Route::post('/export/{type}', [ReportController::class, 'export'])->name('export');
 });
 
 Route::get('/downloads', [ExportController::class, 'index'])->name('downloads.index');

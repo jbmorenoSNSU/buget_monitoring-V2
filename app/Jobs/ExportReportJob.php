@@ -108,6 +108,8 @@ class ExportReportJob implements ShouldQueue
                 'format' => $this->exportRecord->format,
                 'error' => $e->getMessage(),
             ]);
+
+            throw $e; // let the queue worker retry ($tries/$backoff) and write to failed_jobs
         }
     }
 }
