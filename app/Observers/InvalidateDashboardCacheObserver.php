@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class InvalidateDashboardCacheObserver
@@ -25,7 +26,7 @@ class InvalidateDashboardCacheObserver
         // Also clear the month the transaction itself belongs to (handles backdated/future entries)
         // ponytail: duck-type — only transactions have transaction_date, others fall through silently
         if (isset($model->transaction_date) && $model->transaction_date) {
-            $txDate = \Carbon\Carbon::parse($model->transaction_date);
+            $txDate = Carbon::parse($model->transaction_date);
             if ($txDate->month !== $now->month || $txDate->year !== $now->year) {
                 $this->forgetKey($txDate->month, $txDate->year, $model);
             }

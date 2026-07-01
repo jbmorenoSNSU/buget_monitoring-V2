@@ -322,7 +322,7 @@ class ChartReportService
     /**
      * Compute a Year-in-Review summary for a given year.
      * This generates a "Spotify Wrapped" style summary of your finances for the year,
-     * finding your total savings, your top 5 most expensive categories, and the single 
+     * finding your total savings, your top 5 most expensive categories, and the single
      * month where you spent the most money.
      *
      * @return array<string, mixed>
@@ -380,7 +380,7 @@ class ChartReportService
 
     /**
      * Generate 180-day daily cashflow balance projections.
-     * This is the most complex financial calculation in the app. It figures out 
+     * This is the most complex financial calculation in the app. It figures out
      * exactly how much money you will have every day for the next 6 months by:
      * 1. Looking at your past 90 days to figure out your average daily "random" spending.
      * 2. Looking at all your upcoming Bills, Subscriptions, and Debt Payments.

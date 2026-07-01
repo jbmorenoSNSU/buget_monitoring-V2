@@ -31,9 +31,9 @@ class SavingsGoalController extends Controller
     public function index(): Response
     {
         return Inertia::render('SavingsGoals/Index', [
-            'goals'    => $this->service->all(),
+            'goals' => $this->service->all(),
             'accounts' => $this->accountRepository->all_active(),
-            'persons'  => $this->personRepository->all_active(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 

@@ -29,10 +29,10 @@ class AccountController extends Controller
     public function index(): Response
     {
         return Inertia::render('Accounts/Index', [
-            'accounts'     => AccountResource::collection($this->repository->all()),
+            'accounts' => AccountResource::collection($this->repository->all()),
             'totalBalance' => $this->repository->total_balance(),
             'accountTypes' => $this->repository->all_types(),
-            'persons'      => $this->personRepository->all_active(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 

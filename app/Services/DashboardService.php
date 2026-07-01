@@ -39,28 +39,28 @@ class DashboardService
 
         return Cache::remember($key, now()->addDay(), function () use ($month, $year, $person_id) {
             $totalBalance = $this->accountRepository->total_balance($person_id);
-            $budgetGoals  = $this->budgetGoalService->get_for_month($month, $year, $person_id);
+            $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
 
-            $remainingBudgets       = $this->calculateRemainingBudgets($budgetGoals, $person_id);
+            $remainingBudgets = $this->calculateRemainingBudgets($budgetGoals, $person_id);
             $filteredUpcomingRecurring = $this->get_upcoming_recurring($person_id);
-            $upcomingExpenses       = $this->calculateUpcomingExpenses($filteredUpcomingRecurring);
+            $upcomingExpenses = $this->calculateUpcomingExpenses($filteredUpcomingRecurring);
 
-            $safeToSpend      = max(0, $totalBalance - $remainingBudgets - $upcomingExpenses);
+            $safeToSpend = max(0, $totalBalance - $remainingBudgets - $upcomingExpenses);
             $safeToSpendDaily = $this->calculateDailySafeToSpend($safeToSpend, $month, $year);
 
-            $monthlyIncome  = $this->transactionService->get_monthly_income($month, $year, $person_id);
+            $monthlyIncome = $this->transactionService->get_monthly_income($month, $year, $person_id);
             $monthlyExpense = $this->transactionService->get_monthly_expense($month, $year, $person_id);
 
             $healthScoreAndBadges = $this->calculateHealthScore($monthlyIncome, $monthlyExpense, $safeToSpend, $budgetGoals, $person_id);
 
             return [
-                'totalBalance'     => $totalBalance,
-                'safeToSpend'      => $safeToSpend,
+                'totalBalance' => $totalBalance,
+                'safeToSpend' => $safeToSpend,
                 'safeToSpendDaily' => $safeToSpendDaily,
-                'healthScore'      => $healthScoreAndBadges['score'],
-                'badges'           => $healthScoreAndBadges['badges'],
-                'monthlyIncome'    => $monthlyIncome,
-                'monthlyExpense'   => $monthlyExpense,
+                'healthScore' => $healthScoreAndBadges['score'],
+                'badges' => $healthScoreAndBadges['badges'],
+                'monthlyIncome' => $monthlyIncome,
+                'monthlyExpense' => $monthlyExpense,
             ];
         });
     }
@@ -91,11 +91,11 @@ class DashboardService
      */
     public function generate_cash_flow_forecast(float $initialBalance, ?int $person_id = null): array
     {
-        $forecast         = [];
+        $forecast = [];
         $projectedBalance = $initialBalance;
-        $today            = now()->startOfDay();
-        $dailyHits        = array_fill(0, 31, 0);
-        $allRecurring     = $this->recurringRepository->all();
+        $today = now()->startOfDay();
+        $dailyHits = array_fill(0, 31, 0);
+        $allRecurring = $this->recurringRepository->all();
 
         foreach ($allRecurring as $rec) {
             if (! $rec->is_active) {
@@ -107,12 +107,12 @@ class DashboardService
 
             $nextDue = Carbon::parse($rec->next_due_date)->startOfDay();
             $endDate = $rec->end_date ? Carbon::parse($rec->end_date)->startOfDay() : null;
-            $amount  = (float) $rec->amount;
-            $type    = $rec->type->value ?? $rec->type;
-            $amount  = $type === 'income' ? $amount : -$amount;
+            $amount = (float) $rec->amount;
+            $type = $rec->type->value ?? $rec->type;
+            $amount = $type === 'income' ? $amount : -$amount;
 
             $hitDate = $nextDue->copy();
-            $freq    = $rec->frequency->value ?? $rec->frequency;
+            $freq = $rec->frequency->value ?? $rec->frequency;
 
             while ($hitDate->diffInDays($today, false) >= -30) {
                 $daysFromNow = max(0, (int) $today->diffInDays($hitDate, false));
@@ -122,10 +122,10 @@ class DashboardService
                 }
 
                 match ($freq) {
-                    'daily'   => $hitDate->addDay(),
-                    'weekly'  => $hitDate->addWeek(),
+                    'daily' => $hitDate->addDay(),
+                    'weekly' => $hitDate->addWeek(),
                     'monthly' => $hitDate->addMonth(),
-                    'yearly'  => $hitDate->addYear(),
+                    'yearly' => $hitDate->addYear(),
                 };
             }
         }
@@ -133,7 +133,7 @@ class DashboardService
         for ($i = 0; $i <= 30; $i++) {
             $projectedBalance += $dailyHits[$i];
             $forecast[] = [
-                'date'    => now()->addDays($i)->format('M d'),
+                'date' => now()->addDays($i)->format('M d'),
                 'balance' => $projectedBalance,
             ];
         }
@@ -144,7 +144,7 @@ class DashboardService
     /**
      * Calculates how much money is left inside your monthly budget envelopes.
      * If you set a budget of $500 for groceries and spent $200, this adds the
-     * remaining $300 to the total. This total is later subtracted from your 
+     * remaining $300 to the total. This total is later subtracted from your
      * actual bank balance to figure out your "Safe to Spend" amount.
      */
     private function calculateRemainingBudgets(Collection $budgetGoals, ?int $person_id): float
@@ -171,7 +171,7 @@ class DashboardService
     {
         $now = now();
         if ($now->month !== $month || $now->year !== $year) {
-            $now           = Carbon::createFromDate($year, $month, 1);
+            $now = Carbon::createFromDate($year, $month, 1);
             $daysRemaining = $now->daysInMonth;
         } else {
             $daysRemaining = max(1, $now->daysInMonth - $now->day + 1);
@@ -189,7 +189,7 @@ class DashboardService
     private function calculateHealthScore(float $monthlyIncome, float $monthlyExpense, float $safeToSpend, Collection $budgetGoals, ?int $person_id): array
     {
         $healthScore = 0;
-        $badges      = [];
+        $badges = [];
 
         if ($monthlyIncome > 0) {
             $savingsRate = ($monthlyIncome - $monthlyExpense) / $monthlyIncome;
@@ -227,7 +227,7 @@ class DashboardService
         }
 
         return [
-            'score'  => min(100, $healthScore),
+            'score' => min(100, $healthScore),
             'badges' => $badges,
         ];
     }

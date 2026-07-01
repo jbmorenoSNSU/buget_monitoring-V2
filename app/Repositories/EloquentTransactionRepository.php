@@ -115,7 +115,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         $criticalFields = ['account_id', 'type', 'transfer_to_account_id', 'debt_id'];
 
         // If the user changed the account or the type (e.g., Expense to Income),
-        // the safest way to fix the math is to completely undo the old transaction's 
+        // the safest way to fix the math is to completely undo the old transaction's
         // effect, save the new details, and apply the new effect.
         if ($temp->isDirty($criticalFields)) {
             return DB::transaction(function () use ($transaction, $data) {
@@ -212,6 +212,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     /**
      * Applies the financial effect of a transaction to the relevant accounts.
      * For example, an 'income' increases the balance, an 'expense' decreases it.
+     *
+     * For debt-linked expenses: the full payment amount is deducted from principal_amount.
+     * This is correct for fixed installment loans (APR = 0) where the lender has already
+     * baked the interest into the fixed monthly payment. Set interest_rate = 0 on the
+     * debt record for this to work as expected.
      */
     private function apply_balance_effect(Transaction $transaction): void
     {

@@ -29,10 +29,10 @@ class QuickAddController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'accounts'   => $this->accountRepository->all_active(),
+            'accounts' => $this->accountRepository->all_active(),
             'categories' => $this->categoryRepository->all_active(),
-            'debts'      => $this->debtRepository->get_active(),
-            'persons'    => $this->personRepository->all_active(),
+            'debts' => $this->debtRepository->get_active(),
+            'persons' => $this->personRepository->all_active(),
         ]);
     }
 }

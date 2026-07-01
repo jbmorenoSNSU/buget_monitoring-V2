@@ -38,7 +38,11 @@ class CategorySeeder extends Seeder
         ];
 
         foreach ($categories as $category) {
-            Category::create($category);
+            // firstOrCreate: safe to re-run — only inserts if name+type doesn't exist yet.
+            Category::firstOrCreate(
+                ['name' => $category['name'], 'type' => $category['type']],
+                ['icon' => $category['icon'], 'color' => $category['color']]
+            );
         }
     }
 }
