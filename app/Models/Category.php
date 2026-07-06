@@ -70,7 +70,7 @@ class Category extends Model
      */
     public function scopeByType(Builder $query, string $type): Builder
     {
-        return $query->where('type', $type)->orWhere('type', 'both');
+        return $query->whereIn('type', [$type, 'both']);
     }
 
     /**

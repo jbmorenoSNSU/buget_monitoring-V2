@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\DebtStatus;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +35,7 @@ class Debt extends Model
         'interest_rate' => 'decimal:2',
         'minimum_payment' => 'decimal:2',
         'due_date_day' => 'integer',
+        'status' => DebtStatus::class,
     ];
 
     public function person(): BelongsTo

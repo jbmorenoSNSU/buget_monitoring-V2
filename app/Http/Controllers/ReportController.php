@@ -9,6 +9,7 @@ use App\Interfaces\PersonRepositoryInterface;
 use App\Jobs\ExportReportJob;
 use App\Models\Export;
 use App\Services\ReportService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -151,7 +152,7 @@ class ReportController extends Controller
     /**
      * Dispatch a background export job for the given report type and format.
      */
-    public function export(Request $request, string $type)
+    public function export(Request $request, string $type): RedirectResponse
     {
         $this->authorize('create', Export::class);
 

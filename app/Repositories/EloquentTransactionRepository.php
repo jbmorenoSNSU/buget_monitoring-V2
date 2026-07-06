@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Account;
+use App\Models\Debt;
 use App\Models\Transaction;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -134,6 +135,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             $transaction->loadMissing('account');
 
             $oldAmount = (float) $transaction->amount;
+            $oldPrincipalApplied = (float) ($transaction->debt_principal_applied ?? $transaction->amount);
+            
             $transaction->update($data);
             $newAmount = (float) $transaction->amount;
 
@@ -145,10 +148,11 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
                 match ($type) {
                     'income' => $account->increment('current_balance', $difference),
-                    'expense' => (function () use ($transaction, $account, $difference) {
+                    'expense' => (function () use ($transaction, $account, $difference, $oldPrincipalApplied) {
                         $account->decrement('current_balance', $difference);
                         if ($transaction->debt_id) {
                             $this->debtRepository->decrement_principal((int) $transaction->debt_id, $difference);
+                            $transaction->updateQuietly(['debt_principal_applied' => $oldPrincipalApplied + $difference]);
                         }
                     })(),
                     'transfer' => (function () use ($transaction, $account, $difference) {
@@ -181,10 +185,10 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         $query = Transaction::byType($type)->forMonth($month, $year);
         if ($person_id) {
-            $query->where(function ($q) use ($person_id) {
-                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
-                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
-            });
+            // ponytail: income/expense belong to their source account only;
+            // transfer_to_account_id is NULL for these types so the old
+            // orWhereHas(transferToAccount) was a no-op — removed for clarity.
+            $query->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id));
         }
 
         return (float) $query->sum('amount');
@@ -228,7 +232,23 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             'expense' => (function () use ($transaction, $account) {
                 $account->decrement('current_balance', (float) $transaction->amount);
                 if ($transaction->debt_id) {
-                    $this->debtRepository->decrement_principal($transaction->debt_id, (float) $transaction->amount);
+                    $debt = Debt::find($transaction->debt_id);
+                    $rate = (float) $debt->interest_rate;
+
+                    if ($rate > 0) {
+                        $monthly_rate = $rate / 100 / 12;
+                        $interest = (float) $debt->principal_amount * $monthly_rate;
+                        $principal_portion = max(0.0, (float) $transaction->amount - $interest);
+                        
+                        // Prevent overpaying principal on the final installment
+                        $principal_portion = min((float) $debt->principal_amount, $principal_portion);
+                        
+                        $this->debtRepository->decrement_principal($transaction->debt_id, $principal_portion);
+                        $transaction->updateQuietly(['debt_principal_applied' => $principal_portion]);
+                    } else {
+                        $this->debtRepository->decrement_principal($transaction->debt_id, (float) $transaction->amount);
+                        $transaction->updateQuietly(['debt_principal_applied' => (float) $transaction->amount]);
+                    }
                 }
             })(),
             'transfer' => (function () use ($transaction, $account) {
@@ -255,7 +275,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             'expense' => (function () use ($transaction, $account) {
                 $account->increment('current_balance', (float) $transaction->amount);
                 if ($transaction->debt_id) {
-                    $this->debtRepository->increment_principal($transaction->debt_id, (float) $transaction->amount);
+                    $principal_applied = (float) ($transaction->debt_principal_applied ?? $transaction->amount);
+                    $this->debtRepository->increment_principal($transaction->debt_id, $principal_applied);
                 }
             })(),
             'transfer' => (function () use ($transaction, $account) {
@@ -288,10 +309,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->groupBy('category_id');
 
         if ($person_id) {
-            $query->where(function ($q) use ($person_id) {
-                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
-                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
-            });
+            // ponytail: expense type never has transfer_to_account_id — no orWhereHas needed.
+            $query->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id));
         }
 
         return $query->pluck('spent', 'category_id')->toArray();
@@ -340,10 +359,9 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->whereBetween('transaction_date', [$from, $to]);
 
         if ($person_id) {
-            $query->where(function ($q) use ($person_id) {
-                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
-                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
-            });
+            // ponytail: already scoped to type IN (income, expense) — transfers excluded,
+            // so transfer_to_account_id is always NULL. No orWhereHas needed.
+            $query->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id));
         }
 
         return $query->groupBy('year', 'month', 'type')
@@ -359,10 +377,9 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->forMonth($month, $year);
 
         if ($person_id) {
-            $query->where(function ($q) use ($person_id) {
-                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
-                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
-            });
+            // ponytail: expense belongs to its source account only;
+            // same rationale as monthly_sum — no orWhereHas(transferToAccount) needed.
+            $query->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id));
         }
 
         return $query->with('category:id,name,color,icon')
@@ -406,10 +423,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->whereBetween('transaction_date', [$from, $to]);
 
         if ($person_id) {
-            $query->where(function ($q) use ($person_id) {
-                $q->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id))
-                    ->orWhereHas('transferToAccount', fn ($sq) => $sq->where('person_id', $person_id));
-            });
+            // ponytail: already scoped to type=expense — no transfer_to_account_id possible.
+            $query->whereHas('account', fn ($sq) => $sq->where('person_id', $person_id));
         }
 
         return $query->orderBy('transaction_date')->get();

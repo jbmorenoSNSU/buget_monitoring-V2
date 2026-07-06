@@ -42,8 +42,13 @@ class DashboardService
             $budgetGoals = $this->budgetGoalService->get_for_month($month, $year, $person_id);
 
             $remainingBudgets = $this->calculateRemainingBudgets($budgetGoals, $person_id);
-            $filteredUpcomingRecurring = $this->get_upcoming_recurring($person_id);
-            $upcomingExpenses = $this->calculateUpcomingExpenses($filteredUpcomingRecurring);
+
+            // For safe-to-spend: only deduct expenses due within the CURRENT month.
+            // Using end-of-next-month here would incorrectly penalise next month's bills.
+            $daysLeftInMonth = max(1, (int) now()->startOfDay()->diffInDays(now()->endOfMonth()->startOfDay()));
+            $currentMonthUpcoming = $this->recurringService->get_upcoming($daysLeftInMonth)
+                ->filter(fn ($r) => ! ($person_id && $r->account && $r->account->person_id !== $person_id));
+            $upcomingExpenses = $this->calculateUpcomingExpenses($currentMonthUpcoming);
 
             $safeToSpend = max(0, $totalBalance - $remainingBudgets - $upcomingExpenses);
             $safeToSpendDaily = $this->calculateDailySafeToSpend($safeToSpend, $month, $year);
@@ -70,7 +75,14 @@ class DashboardService
      */
     public function get_upcoming_recurring(?int $person_id = null): Collection
     {
-        $upcomingRecurring = $this->recurringService->get_upcoming(30);
+        // Show everything due through the end of next calendar month so you
+        // always see the full next billing cycle, not just a rolling 30-day window.
+        // ponytail: ceiling — if 'next month' spans 62 days from late in current month,
+        // upgrade to an explicit date-cutoff parameter if needed.
+        $daysUntilEndOfNextMonth = (int) now()->startOfDay()->diffInDays(
+            now()->addMonth()->endOfMonth()->startOfDay()
+        );
+        $upcomingRecurring = $this->recurringService->get_upcoming($daysUntilEndOfNextMonth);
 
         return $upcomingRecurring->filter(function ($r) use ($person_id) {
             if ($person_id && $r->account && $r->account->person_id !== $person_id) {
@@ -111,7 +123,10 @@ class DashboardService
             $type = $rec->type->value ?? $rec->type;
             $amount = $type === 'income' ? $amount : -$amount;
 
-            $hitDate = $nextDue->copy();
+            // ponytail: clamp to today so overdue records don't loop backwards
+            // through history — ceiling: daily-frequency record months overdue would
+            // otherwise iterate 100s of times before reaching the guard.
+            $hitDate = $nextDue->copy()->max($today->copy());
             $freq = $rec->frequency->value ?? $rec->frequency;
 
             while ($hitDate->diffInDays($today, false) >= -30) {

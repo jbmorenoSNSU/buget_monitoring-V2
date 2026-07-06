@@ -45,6 +45,7 @@ class TransactionResource extends JsonResource
             ]),
             'recurring_id' => $this->recurring_id,
             'debt_id' => $this->debt_id,
+            'debt_principal_applied' => $this->debt_principal_applied !== null ? (float) $this->debt_principal_applied : ($this->debt_id ? (float) $this->amount : null),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

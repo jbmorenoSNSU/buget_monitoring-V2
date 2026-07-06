@@ -30,6 +30,7 @@ class BudgetGoal extends Model
     /** @var array<string, string> */
     protected $casts = [
         'category_id' => 'integer',
+        'person_id' => 'integer',
         'month' => 'integer',
         'year' => 'integer',
         'limit_amount' => 'decimal:2',

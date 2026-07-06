@@ -25,7 +25,7 @@ class DebtResource extends JsonResource
             'interest_rate' => (float) $this->interest_rate,
             'minimum_payment' => (float) $this->minimum_payment,
             'due_date_day' => $this->due_date_day,
-            'status' => $this->status,
+            'status' => $this->status->value ?? $this->status,
             'payoff_projection' => $this->payoff_projection ?? null,
             'created_at' => $this->created_at?->toISOString(),
         ];

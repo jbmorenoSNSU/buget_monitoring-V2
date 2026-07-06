@@ -62,7 +62,10 @@ const select = (value) => {
 const toggle = async () => {
     if (props.disabled) return;
     isOpen.value = !isOpen.value;
-    if (isOpen.value) await computePosition();
+    if (isOpen.value) {
+        await computePosition();
+        scrollToSelected();
+    }
 };
 
 const onOutside = (e) => {
@@ -71,6 +74,65 @@ const onOutside = (e) => {
     }
 };
 const onScroll = () => { if (isOpen.value) computePosition(); };
+
+const searchString = ref('');
+let searchTimeout = null;
+
+const onKeydown = (e) => {
+    if (props.disabled) return;
+
+    if (e.key === 'Escape') {
+        isOpen.value = false;
+        return;
+    }
+
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    if (e.key.length === 1) {
+        if (e.key === ' ' && !searchString.value) return; // Let space toggle open/close
+        
+        e.preventDefault();
+        searchString.value += e.key.toLowerCase();
+        
+        const matchIndex = props.options.findIndex(opt => {
+            const label = String(opt.label ?? opt.name).toLowerCase();
+            return label.startsWith(searchString.value);
+        });
+
+        if (matchIndex !== -1) {
+            const opt = props.options[matchIndex];
+            emit('update:modelValue', String(opt.value ?? opt.id));
+            emit('change', String(opt.value ?? opt.id));
+            
+            if (isOpen.value) {
+                scrollToOption(matchIndex);
+            }
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchString.value = '';
+        }, 1000);
+    }
+};
+
+const scrollToOption = async (index) => {
+    await nextTick();
+    if (!panelRef.value) return;
+    const ul = panelRef.value.querySelector('ul');
+    const lis = ul?.querySelectorAll('li[data-opt-index]');
+    const li = lis ? lis[index] : null;
+    if (li) {
+        li.scrollIntoView({ block: 'nearest' });
+    }
+};
+
+const scrollToSelected = () => {
+    const matchIndex = props.options.findIndex(opt => String(opt.value ?? opt.id) === String(props.modelValue));
+    if (matchIndex !== -1) {
+        scrollToOption(matchIndex);
+    }
+};
 
 onMounted(() => {
     document.addEventListener('mousedown', onOutside);
@@ -96,6 +158,7 @@ onUnmounted(() => {
             ref="triggerRef"
             type="button"
             @click="toggle"
+            @keydown="onKeydown"
             :disabled="disabled"
             :class="[
                 'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all duration-200 text-left focus:outline-none',
@@ -103,7 +166,7 @@ onUnmounted(() => {
                     ? 'border-rose-500/60 bg-rose-950/20 focus:border-rose-400 focus:ring-1 focus:ring-rose-400/30'
                     : isOpen
                         ? 'border-primary/70 bg-card-bg ring-1 ring-primary/30'
-                        : 'border-border bg-card-bg hover:border-slate-600',
+                        : 'border-border bg-card-bg hover:border-slate-600 focus:border-primary/70 focus:ring-1 focus:ring-primary/30',
                 disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             ]"
         >
@@ -140,8 +203,9 @@ onUnmounted(() => {
                         {{ placeholder }}
                     </li>
                     <li
-                        v-for="opt in options"
+                        v-for="(opt, index) in options"
                         :key="opt.value ?? opt.id"
+                        :data-opt-index="index"
                         @click="select(String(opt.value ?? opt.id))"
                         :class="[
                             'flex items-center gap-2.5 px-3 py-2.5 mx-1 text-sm cursor-pointer transition-colors duration-100 rounded-lg',

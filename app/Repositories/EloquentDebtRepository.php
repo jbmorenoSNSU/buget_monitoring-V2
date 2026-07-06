@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Enums\DebtStatus;
+
 use App\Interfaces\DebtRepositoryInterface;
 use App\Models\Debt;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -26,7 +28,7 @@ class EloquentDebtRepository implements DebtRepositoryInterface
 
     public function get_active(?int $person_id = null): Collection
     {
-        $query = Debt::query()->with('person:id,name,color')->where('status', 'active');
+        $query = Debt::query()->with('person:id,name,color')->where('status', DebtStatus::Active);
 
         if ($person_id) {
             $query->where('person_id', $person_id);
@@ -47,7 +49,7 @@ class EloquentDebtRepository implements DebtRepositoryInterface
 
     public function count_active(?int $person_id = null): int
     {
-        $query = Debt::where('status', 'active');
+        $query = Debt::where('status', DebtStatus::Active);
 
         if ($person_id) {
             $query->where('person_id', $person_id);

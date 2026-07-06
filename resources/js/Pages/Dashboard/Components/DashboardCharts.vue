@@ -169,16 +169,20 @@ const doughnutData = computed(() => {
 
     const labels = new Array(data.length);
     const amounts = new Array(data.length);
+    const percentages = new Array(data.length);
     const itemColors = new Array(data.length);
 
     for (let i = 0; i < data.length; i++) {
         labels[i] = data[i].category_name;
         amounts[i] = data[i].amount;
+        percentages[i] = data[i].percentage ?? 0;
         itemColors[i] = data[i].category_color;
     }
 
     return {
         labels,
+        // Store percentages as a secondary dataset property so the tooltip can read it
+        _percentages: percentages,
         datasets: [{
             data: amounts,
             backgroundColor: itemColors,
@@ -187,6 +191,20 @@ const doughnutData = computed(() => {
         }],
     };
 });
+
+// Tooltip options: show "CategoryName\n₱amount (X%)"
+const doughnutOptions = computed(() => ({
+    plugins: {
+        tooltip: {
+            callbacks: {
+                label(ctx: any) {
+                    const pct = ctx.chart.data._percentages?.[ctx.dataIndex] ?? 0;
+                    return ` ${formatPeso(ctx.parsed)} (${pct}%)`;
+                },
+            },
+        },
+    },
+}));
 
 const lineChartData = computed(() => {
     const trendType = selectedTrendInterval.value;
@@ -277,7 +295,7 @@ const cashFlowChartData = computed(() => {
             </AppCard>
             <AppCard data-chart-id="doughnut">
                 <h3 class="text-sm font-semibold text-slate-100 mb-4">Expenses by Category (This Month)</h3>
-                <DoughnutChart v-if="chartsVisible.doughnut" :chartData="doughnutData" :height="280" :centerText="formatPeso(monthlyExpense)" />
+                <DoughnutChart v-if="chartsVisible.doughnut" :chartData="doughnutData" :options="doughnutOptions" :height="280" :centerText="formatPeso(monthlyExpense)" />
                 <div v-else class="h-[280px] bg-page-bg rounded-lg animate-pulse" />
             </AppCard>
         </div>

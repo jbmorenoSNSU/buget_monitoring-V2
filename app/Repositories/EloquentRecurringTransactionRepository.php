@@ -29,8 +29,11 @@ class EloquentRecurringTransactionRepository implements RecurringTransactionRepo
 
     public function upcoming(int $days): Collection
     {
+        // Lower bound (>= today) excludes overdue records that haven't been
+        // generated yet — they belong in the "Overdue" view, not "Upcoming".
         return RecurringTransaction::with(['account:id,name,person_id', 'account.person:id,name,color', 'category:id,name,icon'])
             ->active()
+            ->where('next_due_date', '>=', now()->toDateString())
             ->where('next_due_date', '<=', now()->addDays($days)->toDateString())
             ->orderBy('next_due_date')
             ->get();

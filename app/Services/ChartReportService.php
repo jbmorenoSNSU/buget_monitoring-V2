@@ -39,7 +39,8 @@ class ChartReportService
     public function income_vs_expense(?string $from = null, ?string $to = null, ?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:income_vs_expense:{$from}:{$to}:{$person_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $key = "reports:income_vs_expense:{$from}:{$to}:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($from, $to, $person_id) {
             $fromDate = $from ? Carbon::parse($from)->startOfMonth() : now()->subMonths(5)->startOfMonth();
@@ -90,7 +91,10 @@ class ChartReportService
     public function category_expense(int $month, int $year, ?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:category_expense:{$month}:{$year}:{$person_id}:v{$version}";
+        // ponytail: null interpolates to "" in PHP strings, making the key ambiguous.
+        // Use an explicit 'all' sentinel so the key is readable and unique.
+        $pid = $person_id ?? 'all';
+        $key = "reports:category_expense:{$month}:{$year}:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($month, $year, $person_id) {
             $data = $this->transactionRepository->category_expense_raw($month, $year, $person_id);
@@ -132,7 +136,8 @@ class ChartReportService
     public function daily_spending_trend(int $month, int $year, ?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:daily_spending_trend:{$month}:{$year}:{$person_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $key = "reports:daily_spending_trend:{$month}:{$year}:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($month, $year, $person_id) {
             $current_start = Carbon::create($year, $month, 1);
@@ -193,7 +198,8 @@ class ChartReportService
     public function weekly_spending_trend(?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:weekly_spending_trend:{$person_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $key = "reports:weekly_spending_trend:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($person_id) {
             $today = now();
@@ -268,7 +274,8 @@ class ChartReportService
     public function yearly_spending_trend(int $year, ?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:yearly_spending_trend:{$year}:{$person_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $key = "reports:yearly_spending_trend:{$year}:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($year, $person_id) {
             $current_start = Carbon::create($year, 1, 1)->startOfYear();
@@ -453,8 +460,15 @@ class ChartReportService
             }
 
             // 2.1 Integrate Active Debt Payments
+            // ponytail: skip debts that already have a recurring transaction — they're
+            // already counted in the recurring loop above. Counting them again would
+            // double the outflow in the forecast.
+            $debtsWithRecurring = $recurrings->pluck('debt_id')->filter()->unique();
             $debts = $this->debtRepository->get_active();
             foreach ($debts as $debt) {
+                if ($debtsWithRecurring->contains($debt->id)) {
+                    continue;
+                }
                 if (! $debt->due_date_day || ! $debt->minimum_payment) {
                     continue;
                 }

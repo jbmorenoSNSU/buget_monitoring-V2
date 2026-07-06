@@ -82,7 +82,8 @@ class StatementReportService
     public function budget_goal_report(int $month, int $year, ?int $person_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:budget_goal_report:{$month}:{$year}:{$person_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $key = "reports:budget_goal_report:{$month}:{$year}:{$pid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($month, $year, $person_id) {
             $goals = $this->budgetGoalRepository->for_month($month, $year, $person_id);
@@ -122,7 +123,9 @@ class StatementReportService
     public function calendar_report(int $month, int $year, ?int $person_id = null, ?int $account_id = null): array
     {
         $version = Cache::get('reports_cache_version', 1);
-        $key = "reports:calendar_report:{$month}:{$year}:{$person_id}:{$account_id}:v{$version}";
+        $pid = $person_id ?? 'all';
+        $aid = $account_id ?? 'all';
+        $key = "reports:calendar_report:{$month}:{$year}:{$pid}:{$aid}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($month, $year, $person_id, $account_id) {
             $start = Carbon::create($year, $month, 1)->startOfMonth();

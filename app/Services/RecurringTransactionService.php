@@ -83,6 +83,16 @@ class RecurringTransactionService
     }
 
     /**
+     * Get all recurring transactions (active and inactive).
+     *
+     * @return Collection<int, RecurringTransaction>
+     */
+    public function get_all(): Collection
+    {
+        return $this->recurringRepository->all();
+    }
+
+    /**
      * Get upcoming recurring transactions due in the specified number of days.
      *
      * @return Collection<int, RecurringTransaction>

@@ -20,6 +20,10 @@ class InvalidateDashboardCacheObserver
     {
         $now = now();
 
+        // Bump the version counter so all report caches (income/expense, category,
+        // calendar, statement, etc.) are effectively invalidated on next read.
+        Cache::increment('reports_cache_version');
+
         // Always clear current month's stats (most common case)
         $this->forgetKey($now->month, $now->year, $model);
 
@@ -39,8 +43,15 @@ class InvalidateDashboardCacheObserver
 
         if (isset($model->person_id) && $model->person_id) {
             Cache::forget("dashboard:stats:{$month}:{$year}:{$model->person_id}");
-        } elseif ($model->relationLoaded('account') && $model->account && $model->account->person_id) {
-            Cache::forget("dashboard:stats:{$month}:{$year}:{$model->account->person_id}");
+        } elseif (isset($model->account_id) && $model->account_id) {
+            // Load account on-demand so person_id is always available,
+            // even when the Transaction was created without eager-loading.
+            $account = $model->relationLoaded('account')
+                ? $model->account
+                : $model->load('account')->account;
+            if ($account && $account->person_id) {
+                Cache::forget("dashboard:stats:{$month}:{$year}:{$account->person_id}");
+            }
         }
     }
 

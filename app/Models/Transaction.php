@@ -24,6 +24,7 @@ class Transaction extends Model
         'category_id',
         'type',
         'amount',
+        'debt_principal_applied',
         'transaction_date',
         'description',
         'notes',
@@ -41,6 +42,7 @@ class Transaction extends Model
         'recurring_id' => 'integer',
         'type' => TransactionType::class,
         'amount' => 'decimal:2',
+        'debt_principal_applied' => 'decimal:2',
         'transaction_date' => 'date',
         'debt_id' => 'integer',
     ];

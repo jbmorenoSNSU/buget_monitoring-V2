@@ -36,7 +36,7 @@ class RecalculateDebtBalances extends Command
         // Show current state.
         $this->table(
             ['ID', 'Name', 'Status', 'Stored Balance'],
-            $debts->map(fn ($d) => [$d->id, $d->name, $d->status, number_format((float) $d->principal_amount, 2)])->toArray()
+            $debts->map(fn ($d) => [$d->id, $d->name, $d->status->value ?? $d->status, number_format((float) $d->principal_amount, 2)])->toArray()
         );
 
         $id = $this->argument('id') ?? $this->ask('Debt ID to correct');

@@ -85,11 +85,22 @@ watch(() => props.show, (newVal) => {
                             </div>
                         </div>
                     </div>
-                    <div class="text-right shrink-0">
+                    <div class="text-right shrink-0 min-w-[120px]">
                         <p class="font-bold text-emerald-400">
                             {{ formatPeso(transaction.amount) }}
                         </p>
-                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Paid</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Total Paid</p>
+                        
+                        <div v-if="transaction.debt_principal_applied !== null && transaction.debt_principal_applied !== undefined" class="mt-2 pt-2 border-t border-border/40 space-y-0.5">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-slate-500">Principal:</span>
+                                <span class="text-slate-300 font-medium">{{ formatPeso(transaction.debt_principal_applied) }}</span>
+                            </div>
+                            <div v-if="transaction.amount > transaction.debt_principal_applied" class="flex justify-between items-center text-[10px]">
+                                <span class="text-slate-500">Interest:</span>
+                                <span class="text-rose-400 font-medium">{{ formatPeso(transaction.amount - transaction.debt_principal_applied) }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

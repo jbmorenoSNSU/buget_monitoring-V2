@@ -30,7 +30,7 @@ class AccountResource extends JsonResource
             'description' => $this->description,
             'initial_balance' => (float) $this->initial_balance,
             'current_balance' => (float) $this->current_balance,
-            'color' => $this->relationLoaded('person') && $this->person ? $this->person->color : '#94A3B8',
+            'color' => $this->color ?? ($this->person?->color ?? '#94A3B8'),
             'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
         ];

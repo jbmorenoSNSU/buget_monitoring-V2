@@ -34,6 +34,7 @@ class BudgetGoalResource extends JsonResource
             'remaining' => (float) ($this->remaining ?? $this->limit_amount),
             'percent' => (float) ($this->percent ?? 0),
             'status' => $this->status ?? 'safe',
+            'is_rollover_enabled' => (bool) ($this->is_rollover_enabled ?? false),
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

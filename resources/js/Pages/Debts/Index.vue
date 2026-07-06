@@ -149,6 +149,16 @@ onUnmounted(() => {
                                     <span class="text-[10px] text-slate-400 leading-none">
                                         {{ debt.status === 'active' ? `${debt.interest_rate}% APR` : 'Paid Off' }}
                                     </span>
+                                    <span v-if="debt.status === 'active' && debt.interest_rate > 0" 
+                                        class="text-[9px] font-bold px-1.5 py-0.5 rounded text-rose-400 bg-rose-400/10 border border-rose-400/20 leading-none ml-0.5" 
+                                        title="Declining Balance Methodology">
+                                        Declining Bal.
+                                    </span>
+                                    <span v-else-if="debt.status === 'active'" 
+                                        class="text-[9px] font-bold px-1.5 py-0.5 rounded text-slate-400 bg-slate-400/10 border border-slate-400/20 leading-none ml-0.5" 
+                                        title="Fixed 0% Interest">
+                                        Fixed
+                                    </span>
                                 </div>
                             </div>
                         </div>
