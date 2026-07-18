@@ -60,14 +60,4 @@ class BudgetGoalService
     {
         return $this->budgetGoalRepository->spent_by_category($category_id, $month, $year, $person_id);
     }
-
-    /**
-     * Check if any budget goal has warning status (90%+ spent).
-     */
-    public function has_warnings(int $month, int $year): bool
-    {
-        $goals = $this->get_for_month($month, $year);
-
-        return $goals->contains(fn ($g) => $g->percent >= 90);
-    }
 }

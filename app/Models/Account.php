@@ -79,11 +79,4 @@ class Account extends Model
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope: filter by account type.
-     */
-    public function scopeByType(Builder $query, int $typeId): Builder
-    {
-        return $query->where('account_type_id', $typeId);
-    }
 }

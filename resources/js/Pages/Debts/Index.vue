@@ -101,6 +101,19 @@ onUnmounted(() => {
 <template>
     <Head title="Debt Payoff Planner" />
     <div>
+        <!-- Debt Payoff Description / Purpose -->
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-4 shadow-inner">
+            <div class="bg-indigo-500/20 p-2 rounded-lg shrink-0 mt-0.5">
+                <AppIcon name="CreditCard" class="text-indigo-400" size="20" />
+            </div>
+            <div class="text-sm text-indigo-100/90 leading-relaxed max-w-4xl">
+                <h2 class="font-semibold text-indigo-100 mb-1">How does the Debt Planner work?</h2>
+                <p>
+                    The Debt Payoff Planner helps you map out a clear path to becoming debt-free. By tracking your total principal, interest rates, and minimum payments, the planner automatically forecasts exactly when you will finish paying off each loan. This visibility empowers you to strategize additional payments, reduce total interest, and stay motivated as you watch your balances decline over time.
+                </p>
+            </div>
+        </div>
+
         <!-- Top Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">

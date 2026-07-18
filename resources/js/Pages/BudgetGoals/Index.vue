@@ -119,6 +119,19 @@ onUnmounted(() => {
 <template>
     <Head title="Budget Goals" />
     <div>
+        <!-- Budget Goals Description / Purpose -->
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-4 shadow-inner">
+            <div class="bg-indigo-500/20 p-2 rounded-lg shrink-0 mt-0.5">
+                <AppIcon name="Target" class="text-indigo-400" size="20" />
+            </div>
+            <div class="text-sm text-indigo-100/90 leading-relaxed max-w-4xl">
+                <h2 class="font-semibold text-indigo-100 mb-1">How do Budget Goals work?</h2>
+                <p>
+                    Budget Goals allow you to set spending limits for specific categories each month. This proactively manages your cashflow rather than just tracking expenses after the fact. If you enable the "Rollover" feature, any unspent money automatically carries over to next month's limit, rewarding financial discipline and allowing you to save up for larger category expenses over time.
+                </p>
+            </div>
+        </div>
+
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <AppSelect v-model="selectedMonth" :options="monthOptions" @change="filter" />

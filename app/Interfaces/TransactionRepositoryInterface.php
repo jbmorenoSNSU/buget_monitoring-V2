@@ -12,8 +12,6 @@ interface TransactionRepositoryInterface
 {
     public function paginate(array $filters, int $per_page): CursorPaginator;
 
-    public function find(int $id): ?Transaction;
-
     public function create(array $data): Transaction;
 
     public function update(Transaction $transaction, array $data): Transaction;
@@ -24,7 +22,6 @@ interface TransactionRepositoryInterface
 
     public function recent(int $limit, ?int $person_id = null): Collection;
 
-    public function sum_by_account_and_type(int $accountId, string $type, bool $isTransferTo = false): float;
 
     public function spent_by_category_map(int $month, int $year, ?int $person_id = null): array;
 

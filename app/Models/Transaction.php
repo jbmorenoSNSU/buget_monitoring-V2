@@ -119,14 +119,6 @@ class Transaction extends Model
         return $query->whereBetween('transaction_date', [$from, $to]);
     }
 
-    /**
-     * Scope: current month transactions.
-     */
-    public function scopeThisMonth(Builder $query): Builder
-    {
-        return $query->whereMonth('transaction_date', now()->month)
-            ->whereYear('transaction_date', now()->year);
-    }
 
     /**
      * Scope: for a specific month and year.

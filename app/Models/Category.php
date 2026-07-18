@@ -64,28 +64,4 @@ class Category extends Model
     {
         return $query->where('is_active', true);
     }
-
-    /**
-     * Scope: filter by category type.
-     */
-    public function scopeByType(Builder $query, string $type): Builder
-    {
-        return $query->whereIn('type', [$type, 'both']);
-    }
-
-    /**
-     * Scope: income categories only.
-     */
-    public function scopeIncome(Builder $query): Builder
-    {
-        return $query->whereIn('type', ['income', 'both']);
-    }
-
-    /**
-     * Scope: expense categories only.
-     */
-    public function scopeExpense(Builder $query): Builder
-    {
-        return $query->whereIn('type', ['expense', 'both']);
-    }
 }

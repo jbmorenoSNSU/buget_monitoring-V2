@@ -84,11 +84,6 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $query->cursorPaginate($per_page)->withQueryString();
     }
 
-    public function find(int $id): ?Transaction
-    {
-        return Transaction::with(['account:id,name', 'category:id,name,icon,color', 'transferToAccount:id,name'])->find($id);
-    }
-
     /**
      * Create a new transaction and automatically adjust the linked account's balance.
      * We wrap this in a database "transaction" so that if the balance update fails,
@@ -289,17 +284,6 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         };
     }
 
-    public function sum_by_account_and_type(int $accountId, string $type, bool $isTransferTo = false): float
-    {
-        $query = Transaction::query();
-        if ($isTransferTo) {
-            $query->where('transfer_to_account_id', $accountId);
-        } else {
-            $query->where('account_id', $accountId);
-        }
-
-        return (float) $query->where('type', $type)->sum('amount');
-    }
 
     public function spent_by_category_map(int $month, int $year, ?int $person_id = null): array
     {

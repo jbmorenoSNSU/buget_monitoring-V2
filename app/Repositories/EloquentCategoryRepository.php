@@ -22,7 +22,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
 
     public function all_active_expense(): Collection
     {
-        return Category::active()->expense()->orderBy('name')->get(['id', 'name', 'icon', 'color']);
+        return Category::active()->whereIn('type', ['expense', 'both'])->orderBy('name')->get(['id', 'name', 'icon', 'color']);
     }
 
     public function find(int $id): ?Category

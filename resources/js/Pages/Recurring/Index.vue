@@ -264,8 +264,10 @@ const handlePageNavigate = (pageStr: string) => {
             </div>
         </div>
 
-        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-3 shadow-inner">
-            <AppIcon name="Info" size="20" class="text-indigo-400 shrink-0 mt-0.5" />
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-4 shadow-inner">
+            <div class="bg-indigo-500/20 p-2 rounded-lg shrink-0 mt-0.5">
+                <AppIcon name="Info" class="text-indigo-400" size="20" />
+            </div>
             <div class="text-sm text-indigo-100/90 leading-relaxed">
                 <p class="font-semibold text-indigo-100 mb-1">How Recurring Transactions Work</p>
                 <p>

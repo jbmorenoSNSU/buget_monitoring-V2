@@ -245,6 +245,22 @@ const formatDate = (dateStr: string) => {
 <template>
     <Head title="Savings Goals Tracker" />
     <div>
+        <!-- Tracker Description / Purpose -->
+        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-6 flex items-start gap-4 shadow-inner">
+            <div class="bg-indigo-500/20 p-2 rounded-lg shrink-0 mt-0.5">
+                <AppIcon name="Lightbulb" class="text-indigo-400" size="20" />
+            </div>
+            <div class="text-sm text-indigo-100/90 leading-relaxed max-w-4xl">
+                <h2 class="font-semibold text-indigo-100 mb-1">Why track savings goals?</h2>
+                <p>
+                    The Savings Goals Tracker helps build financial discipline by giving your money a specific purpose. 
+                    Whether you are saving for an emergency fund, a new gadget, or a vacation, visualizing your progress 
+                    creates a psychological commitment that prevents impulsive spending. It effectively separates your "safe to spend" 
+                    money from your future priorities, ensuring you stay on track.
+                </p>
+            </div>
+        </div>
+
         <!-- Filter and Top Actions Bar -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div class="flex items-center gap-3">
