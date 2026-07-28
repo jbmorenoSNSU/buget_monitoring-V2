@@ -169,20 +169,16 @@ const doughnutData = computed(() => {
 
     const labels = new Array(data.length);
     const amounts = new Array(data.length);
-    const percentages = new Array(data.length);
     const itemColors = new Array(data.length);
 
     for (let i = 0; i < data.length; i++) {
         labels[i] = data[i].category_name;
         amounts[i] = data[i].amount;
-        percentages[i] = data[i].percentage ?? 0;
         itemColors[i] = data[i].category_color;
     }
 
     return {
         labels,
-        // Store percentages as a secondary dataset property so the tooltip can read it
-        _percentages: percentages,
         datasets: [{
             data: amounts,
             backgroundColor: itemColors,
@@ -192,13 +188,16 @@ const doughnutData = computed(() => {
     };
 });
 
-// Tooltip options: show "CategoryName\n₱amount (X%)"
+// ponytail: compute percentage from the dataset values directly —
+// Chart.js strips custom properties like _percentages from data objects.
 const doughnutOptions = computed(() => ({
     plugins: {
         tooltip: {
             callbacks: {
                 label(ctx: any) {
-                    const pct = ctx.chart.data._percentages?.[ctx.dataIndex] ?? 0;
+                    const dataset = ctx.dataset.data as number[];
+                    const total = dataset.reduce((s: number, v: number) => s + v, 0);
+                    const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0.0';
                     return ` ${formatPeso(ctx.parsed)} (${pct}%)`;
                 },
             },
