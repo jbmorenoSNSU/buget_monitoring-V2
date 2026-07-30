@@ -232,7 +232,23 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
                     if ($rate > 0) {
                         $monthly_rate = $rate / 100 / 12;
-                        $interest = (float) $debt->principal_amount * $monthly_rate;
+                        $full_monthly_interest = (float) $debt->principal_amount * $monthly_rate;
+
+                        // ponytail: sequential interest-first — each payment covers outstanding
+                        // interest before touching principal. Sum what was already paid toward
+                        // interest this calendar month, charge only the remainder.
+                        $txn_date = $transaction->transaction_date;
+                        $month_start = date('Y-m-01', strtotime($txn_date));
+                        $month_end = date('Y-m-t', strtotime($txn_date));
+
+                        $already_paid_this_month = (float) Transaction::where('debt_id', $transaction->debt_id)
+                            ->where('id', '!=', $transaction->id)
+                            ->whereBetween('transaction_date', [$month_start, $month_end])
+                            ->get()
+                            ->sum(fn ($t) => (float) $t->amount - (float) ($t->debt_principal_applied ?? 0));
+
+                        $remaining_interest = max(0.0, $full_monthly_interest - $already_paid_this_month);
+                        $interest = min((float) $transaction->amount, $remaining_interest);
                         $principal_portion = max(0.0, (float) $transaction->amount - $interest);
                         
                         // Prevent overpaying principal on the final installment
