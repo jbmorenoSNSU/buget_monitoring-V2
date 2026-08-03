@@ -57,4 +57,11 @@ class EloquentRecurringTransactionRepository implements RecurringTransactionRepo
     {
         $recurring->delete();
     }
+
+    public function find_active_by_debt(int $debt_id): ?RecurringTransaction
+    {
+        return RecurringTransaction::active()
+            ->where('debt_id', $debt_id)
+            ->first();
+    }
 }

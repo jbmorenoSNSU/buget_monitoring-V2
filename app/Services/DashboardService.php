@@ -119,9 +119,10 @@ class DashboardService
 
             $nextDue = Carbon::parse($rec->next_due_date)->startOfDay();
             $endDate = $rec->end_date ? Carbon::parse($rec->end_date)->startOfDay() : null;
-            $amount = (float) $rec->amount;
+            $full_amount = (float) $rec->amount;
+            $credit = (float) ($rec->advance_credit ?? 0);
             $type = $rec->type->value ?? $rec->type;
-            $amount = $type === 'income' ? $amount : -$amount;
+            $is_first_hit = true;
 
             // ponytail: clamp to today so overdue records don't loop backwards
             // through history — ceiling: daily-frequency record months overdue would
@@ -133,7 +134,11 @@ class DashboardService
                 $daysFromNow = max(0, (int) $today->diffInDays($hitDate, false));
 
                 if ($daysFromNow <= 30 && (! $endDate || $hitDate->lte($endDate))) {
-                    $dailyHits[$daysFromNow] += $amount;
+                    // ponytail: apply advance credit only on the first upcoming hit
+                    $hit_amount = $is_first_hit ? max(0, $full_amount - $credit) : $full_amount;
+                    $hit_amount = $type === 'income' ? $hit_amount : -$hit_amount;
+                    $dailyHits[$daysFromNow] += $hit_amount;
+                    $is_first_hit = false;
                 }
 
                 match ($freq) {
@@ -179,7 +184,7 @@ class DashboardService
             $type = $r->type->value ?? $r->type;
 
             return $type === 'expense';
-        })->sum('amount');
+        })->sum(fn ($r) => max(0, (float) $r->amount - (float) ($r->advance_credit ?? 0)));
     }
 
     private function calculateDailySafeToSpend(float $safeToSpend, int $month, int $year): float

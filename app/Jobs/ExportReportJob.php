@@ -46,7 +46,7 @@ class ExportReportJob implements ShouldQueue
                 $exportObj = match ($this->exportRecord->type) {
                     'income-expense' => new IncomeExpenseExport($this->params['from'] ?? null, $this->params['to'] ?? null, $this->params['person_id'] ?? null),
                     'category-expense' => new CategoryExpenseExport($this->params['month'] ?? now()->month, $this->params['year'] ?? now()->year, $this->params['person_id'] ?? null),
-                    'account-statement' => new AccountStatementExport($this->params['account_id'], $this->params['from'] ?? null, $this->params['to'] ?? null),
+                    'account-statement' => new AccountStatementExport($this->params['account_id'] ?? 0, $this->params['from'] ?? null, $this->params['to'] ?? null),
                     'budget-goal' => new BudgetGoalExport($this->params['month'] ?? now()->month, $this->params['year'] ?? now()->year, $this->params['person_id'] ?? null),
                 };
 
@@ -71,9 +71,9 @@ class ExportReportJob implements ShouldQueue
                     'account-statement' => [
                         'view' => 'pdf.account-statement',
                         'data' => [
-                            'data' => $reportService->account_statement($this->params['account_id'], $this->params['from'] ?? null, $this->params['to'] ?? null),
+                            'data' => $reportService->account_statement($this->params['account_id'] ?? 0, $this->params['from'] ?? null, $this->params['to'] ?? null),
                             'title' => 'Account Statement Report',
-                            'account' => $accountRepository->find($this->params['account_id']),
+                            'account' => $accountRepository->find($this->params['account_id'] ?? 0),
                         ],
                     ],
                     'budget-goal' => [

@@ -10,7 +10,6 @@ use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
-use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +24,6 @@ class TransactionController extends Controller
 {
     public function __construct(
         private TransactionService $service,
-        private TransactionRepositoryInterface $repository,
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
         private PersonRepositoryInterface $personRepository,
@@ -58,7 +56,7 @@ class TransactionController extends Controller
     public function store(StoreTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', Transaction::class);
-        $this->repository->create($request->validated());
+        $this->service->create($request->validated());
 
         return redirect()->back()->with('success', 'Transaction created successfully.');
     }
@@ -69,7 +67,7 @@ class TransactionController extends Controller
     public function update(StoreTransactionRequest $request, Transaction $transaction): RedirectResponse
     {
         $this->authorize('update', $transaction);
-        $this->repository->update($transaction, $request->validated());
+        $this->service->update($transaction, $request->validated());
 
         return redirect()->back()->with('success', 'Transaction updated successfully.');
     }
@@ -80,7 +78,7 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction): RedirectResponse
     {
         $this->authorize('delete', $transaction);
-        $this->repository->delete($transaction);
+        $this->service->delete($transaction);
 
         return redirect()->back()->with('success', 'Transaction deleted successfully.');
     }

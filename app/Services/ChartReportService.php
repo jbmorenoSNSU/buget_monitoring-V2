@@ -38,7 +38,7 @@ class ChartReportService
      */
     public function income_vs_expense(?string $from = null, ?string $to = null, ?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $key = "reports:income_vs_expense:{$from}:{$to}:{$pid}:v{$version}";
 
@@ -90,7 +90,7 @@ class ChartReportService
      */
     public function category_expense(int $month, int $year, ?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         // ponytail: null interpolates to "" in PHP strings, making the key ambiguous.
         // Use an explicit 'all' sentinel so the key is readable and unique.
         $pid = $person_id ?? 'all';
@@ -135,7 +135,7 @@ class ChartReportService
      */
     public function daily_spending_trend(int $month, int $year, ?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $key = "reports:daily_spending_trend:{$month}:{$year}:{$pid}:v{$version}";
 
@@ -197,7 +197,7 @@ class ChartReportService
      */
     public function weekly_spending_trend(?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $key = "reports:weekly_spending_trend:{$pid}:v{$version}";
 
@@ -273,7 +273,7 @@ class ChartReportService
      */
     public function yearly_spending_trend(int $year, ?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $key = "reports:yearly_spending_trend:{$year}:{$pid}:v{$version}";
 
@@ -336,7 +336,7 @@ class ChartReportService
      */
     public function year_in_review(int $year): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $key = "reports:year_in_review:{$year}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($year) {
@@ -398,7 +398,7 @@ class ChartReportService
      */
     public function cashflow_projection(): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $key = "reports:cashflow_projection:v{$version}";
 
         return Cache::remember($key, 3600, function () {

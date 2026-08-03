@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBudgetGoalRequest;
 use App\Http\Resources\BudgetGoalResource;
-use App\Interfaces\BudgetGoalRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Models\BudgetGoal;
@@ -23,7 +22,6 @@ class BudgetGoalController extends Controller
 {
     public function __construct(
         private BudgetGoalService $service,
-        private BudgetGoalRepositoryInterface $repository,
         private CategoryRepositoryInterface $categoryRepository,
         private PersonRepositoryInterface $personRepository,
     ) {}
@@ -51,7 +49,7 @@ class BudgetGoalController extends Controller
     public function store(StoreBudgetGoalRequest $request): RedirectResponse
     {
         $this->authorize('create', BudgetGoal::class);
-        $this->repository->create($request->validated());
+        $this->service->create($request->validated());
 
         return redirect()->back()->with('success', 'Budget goal created successfully.');
     }
@@ -62,7 +60,7 @@ class BudgetGoalController extends Controller
     public function update(StoreBudgetGoalRequest $request, BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('update', $budgetGoal);
-        $this->repository->update($budgetGoal, $request->validated());
+        $this->service->update($budgetGoal, $request->validated());
 
         return redirect()->back()->with('success', 'Budget goal updated successfully.');
     }
@@ -73,7 +71,7 @@ class BudgetGoalController extends Controller
     public function destroy(BudgetGoal $budgetGoal): RedirectResponse
     {
         $this->authorize('delete', $budgetGoal);
-        $this->repository->delete($budgetGoal);
+        $this->service->delete($budgetGoal);
 
         return redirect()->back()->with('success', 'Budget goal deleted successfully.');
     }

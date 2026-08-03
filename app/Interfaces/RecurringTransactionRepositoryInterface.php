@@ -22,4 +22,6 @@ interface RecurringTransactionRepositoryInterface
     public function update(RecurringTransaction $recurring, array $data): RecurringTransaction;
 
     public function delete(RecurringTransaction $recurring): void;
+
+    public function find_active_by_debt(int $debt_id): ?RecurringTransaction;
 }

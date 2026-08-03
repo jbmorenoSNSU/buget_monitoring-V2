@@ -32,7 +32,7 @@ class StatementReportService
      */
     public function account_statement(int $account_id, string $from, string $to): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $key = "reports:account_statement:{$account_id}:{$from}:{$to}:v{$version}";
 
         return Cache::remember($key, 3600, function () use ($account_id, $from, $to) {
@@ -81,7 +81,7 @@ class StatementReportService
      */
     public function budget_goal_report(int $month, int $year, ?int $person_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $key = "reports:budget_goal_report:{$month}:{$year}:{$pid}:v{$version}";
 
@@ -122,7 +122,7 @@ class StatementReportService
      */
     public function calendar_report(int $month, int $year, ?int $person_id = null, ?int $account_id = null): array
     {
-        $version = Cache::get('reports_cache_version', 1);
+        $version = Cache::get('reports_cache_version', 0);
         $pid = $person_id ?? 'all';
         $aid = $account_id ?? 'all';
         $key = "reports:calendar_report:{$month}:{$year}:{$pid}:{$aid}:v{$version}";

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ExportResource;
+use App\Interfaces\ExportRepositoryInterface;
 use App\Models\Export;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,10 @@ use Inertia\Response;
  */
 class ExportController extends Controller
 {
+    public function __construct(
+        private ExportRepositoryInterface $repository
+    ) {}
+
     /**
      * Display all available exports.
      */
@@ -24,9 +29,7 @@ class ExportController extends Controller
         $this->authorize('viewAny', Export::class);
 
         // Single-user app — user_id is always 1, but scope keeps the query correct if auth is added later
-        $exports = Export::where('user_id', 1)
-            ->orderBy('created_at', 'desc')
-            ->cursorPaginate(20);
+        $exports = $this->repository->paginate_for_user(1, 20);
 
         return Inertia::render('Downloads/Index', [
             'exports' => ExportResource::collection($exports),
@@ -58,7 +61,7 @@ class ExportController extends Controller
             Storage::disk('public')->delete($export->file_path);
         }
 
-        $export->delete();
+        $this->repository->delete($export);
 
         return redirect()->back()->with('success', 'Export deleted successfully.');
     }

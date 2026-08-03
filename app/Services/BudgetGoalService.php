@@ -60,4 +60,21 @@ class BudgetGoalService
     {
         return $this->budgetGoalRepository->spent_by_category($category_id, $month, $year, $person_id);
     }
+
+    /** @param array<string, mixed> $data */
+    public function create(array $data): BudgetGoal
+    {
+        return $this->budgetGoalRepository->create($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function update(BudgetGoal $goal, array $data): BudgetGoal
+    {
+        return $this->budgetGoalRepository->update($goal, $data);
+    }
+
+    public function delete(BudgetGoal $goal): void
+    {
+        $this->budgetGoalRepository->delete($goal);
+    }
 }

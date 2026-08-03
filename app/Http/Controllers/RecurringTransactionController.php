@@ -8,8 +8,8 @@ use App\Http\Requests\StoreRecurringTransactionRequest;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
-use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Models\RecurringTransaction;
+use App\Http\Resources\RecurringTransactionResource;
 use App\Services\RecurringTransactionService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -22,7 +22,6 @@ class RecurringTransactionController extends Controller
 {
     public function __construct(
         private RecurringTransactionService $service,
-        private RecurringTransactionRepositoryInterface $repository,
         private AccountRepositoryInterface $accountRepository,
         private CategoryRepositoryInterface $categoryRepository,
         private DebtRepositoryInterface $debtRepository
@@ -34,7 +33,7 @@ class RecurringTransactionController extends Controller
     public function index(): Response
     {
         return Inertia::render('Recurring/Index', [
-            'recurring' => $this->repository->all(),
+            'recurring' => RecurringTransactionResource::collection($this->service->get_all())->resolve(),
             'accounts' => $this->accountRepository->all_active(),
             'categories' => $this->categoryRepository->all_active(),
             'debts' => $this->debtRepository->all(),
@@ -47,7 +46,7 @@ class RecurringTransactionController extends Controller
     public function store(StoreRecurringTransactionRequest $request): RedirectResponse
     {
         $this->authorize('create', RecurringTransaction::class);
-        $this->repository->create($request->validated());
+        $this->service->create($request->validated());
 
         return redirect()->back()->with('success', 'Recurring transaction created successfully.');
     }
@@ -58,7 +57,7 @@ class RecurringTransactionController extends Controller
     public function update(StoreRecurringTransactionRequest $request, RecurringTransaction $recurring): RedirectResponse
     {
         $this->authorize('update', $recurring);
-        $this->repository->update($recurring, $request->validated());
+        $this->service->update($recurring, $request->validated());
 
         return redirect()->back()->with('success', 'Recurring transaction updated successfully.');
     }
@@ -69,7 +68,7 @@ class RecurringTransactionController extends Controller
     public function destroy(RecurringTransaction $recurring): RedirectResponse
     {
         $this->authorize('delete', $recurring);
-        $this->repository->delete($recurring);
+        $this->service->delete($recurring);
 
         return redirect()->back()->with('success', 'Recurring transaction deleted successfully.');
     }
@@ -80,7 +79,7 @@ class RecurringTransactionController extends Controller
     public function toggle(RecurringTransaction $recurring): RedirectResponse
     {
         $this->authorize('update', $recurring);
-        $this->repository->update($recurring, ['is_active' => ! $recurring->is_active]);
+        $this->service->toggle($recurring);
         $status = $recurring->fresh()->is_active ? 'activated' : 'paused';
 
         return redirect()->back()->with('success', "Recurring transaction {$status}.");

@@ -9,6 +9,7 @@ use App\Interfaces\TransactionRepositoryInterface;
 use App\Models\Account;
 use App\Models\Debt;
 use App\Models\Transaction;
+use App\Services\RecurringTransactionService;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -95,6 +96,14 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             $transaction = Transaction::create($data);
             $this->apply_balance_effect($transaction);
 
+            // ponytail: reconcile advance payment only for manual debt-linked expenses
+            // (recurring_id is set when auto-generated — those don't count as "advance")
+            $type = $transaction->type->value ?? $transaction->type;
+            if ($type === 'expense' && $transaction->debt_id && ! $transaction->recurring_id) {
+                app(RecurringTransactionService::class)
+                    ->reconcile_advance_payment((int) $transaction->debt_id, (float) $transaction->amount);
+            }
+
             return $transaction;
         });
     }
@@ -172,6 +181,14 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         DB::transaction(function () use ($transaction) {
             $this->reverse_balance_effect($transaction);
+
+            // ponytail: reverse advance credit for manual debt-linked expenses
+            $type = $transaction->type->value ?? $transaction->type;
+            if ($type === 'expense' && $transaction->debt_id && ! $transaction->recurring_id) {
+                app(RecurringTransactionService::class)
+                    ->reverse_advance_credit((int) $transaction->debt_id, (float) $transaction->amount);
+            }
+
             $transaction->delete();
         });
     }

@@ -320,9 +320,26 @@ const handlePageNavigate = (pageStr: string) => {
                 <AppBadge :type="row.type" :label="row.type" />
             </template>
             <template #cell-amount="{ row }">
-                <span :class="['font-semibold', row.type === 'income' ? 'text-income' : row.type === 'transfer' ? 'text-transfer' : 'text-expense']">
-                    {{ row.type === 'income' ? '+' : row.type === 'transfer' ? '' : '-' }}{{ formatPeso(row.amount) }}
-                </span>
+                <div class="flex flex-col items-end gap-1">
+                    <!-- Original amount (struck through when partially paid) -->
+                    <span v-if="row.advance_credit > 0 && row.effective_amount > 0" class="text-[11px] text-slate-500 line-through">
+                        {{ formatPeso(row.amount) }}
+                    </span>
+                    <!-- Effective or full amount -->
+                    <span :class="['font-semibold', row.type === 'income' ? 'text-income' : row.type === 'transfer' ? 'text-transfer' : 'text-expense']">
+                        {{ row.type === 'income' ? '+' : row.type === 'transfer' ? '' : '-' }}{{ formatPeso(row.advance_credit > 0 ? row.effective_amount : row.amount) }}
+                    </span>
+                    <!-- Partial payment progress -->
+                    <div v-if="row.advance_credit > 0 && row.effective_amount > 0" class="w-full max-w-[120px] flex flex-col items-end gap-0.5">
+                        <div class="w-full h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full transition-all" 
+                                :style="{ width: Math.min(100, (row.advance_credit / row.amount) * 100) + '%' }" />
+                        </div>
+                        <span class="text-[10px] text-emerald-400 font-medium">
+                            {{ formatPeso(row.advance_credit) }} paid · {{ Math.round((row.advance_credit / row.amount) * 100) }}%
+                        </span>
+                    </div>
+                </div>
             </template>
             <template #cell-frequency="{ row }">
                 <span class="capitalize text-sm text-slate-400">{{ row.frequency }}</span>

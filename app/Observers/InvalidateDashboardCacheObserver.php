@@ -20,9 +20,10 @@ class InvalidateDashboardCacheObserver
     {
         $now = now();
 
-        // Bump the version counter so all report caches (income/expense, category,
-        // calendar, statement, etc.) are effectively invalidated on next read.
-        Cache::increment('reports_cache_version');
+        // ponytail: Cache::increment() on the database driver silently fails when the
+        // key doesn't exist, leaving version at the default and serving stale data.
+        // A microtime stamp guarantees uniqueness on every mutation.
+        Cache::forever('reports_cache_version', (string) microtime(true));
 
         // Always clear current month's stats (most common case)
         $this->forgetKey($now->month, $now->year, $model);

@@ -8,6 +8,7 @@ use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\BudgetGoalRepositoryInterface;
 use App\Interfaces\CategoryRepositoryInterface;
 use App\Interfaces\DebtRepositoryInterface;
+use App\Interfaces\ExportRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
 use App\Interfaces\RecurringTransactionRepositoryInterface;
 use App\Interfaces\SavingsGoalRepositoryInterface;
@@ -16,6 +17,7 @@ use App\Repositories\EloquentAccountRepository;
 use App\Repositories\EloquentBudgetGoalRepository;
 use App\Repositories\EloquentCategoryRepository;
 use App\Repositories\EloquentDebtRepository;
+use App\Repositories\EloquentExportRepository;
 use App\Repositories\EloquentPersonRepository;
 use App\Repositories\EloquentRecurringTransactionRepository;
 use App\Repositories\EloquentSavingsGoalRepository;
@@ -36,6 +38,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(RecurringTransactionRepositoryInterface::class, EloquentRecurringTransactionRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, EloquentCategoryRepository::class);
         $this->app->bind(DebtRepositoryInterface::class, EloquentDebtRepository::class);
+        $this->app->bind(ExportRepositoryInterface::class, EloquentExportRepository::class);
         $this->app->bind(SavingsGoalRepositoryInterface::class, EloquentSavingsGoalRepository::class);
     }
 

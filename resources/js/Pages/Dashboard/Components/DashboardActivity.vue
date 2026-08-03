@@ -48,6 +48,7 @@ interface UpcomingRecurring {
     description: string;
     next_due_date: string;
     amount: number;
+    advance_credit?: number;
     type: 'income' | 'expense' | 'transfer';
     account?: Account;
 }
@@ -214,9 +215,26 @@ const activeDebts = computed<Debt[]>(() => {
                                 <p class="text-xs text-slate-400">{{ formatRelative(rec.next_due_date) }}</p>
                             </div>
                         </div>
-                        <span :class="['text-sm font-semibold', rec.type === 'income' ? 'text-income' : rec.type === 'transfer' ? 'text-transfer' : 'text-expense']">
-                            {{ rec.type === 'income' ? '+' : rec.type === 'transfer' ? '' : '-' }}{{ formatPeso(rec.amount) }}
-                        </span>
+                        <div class="flex flex-col items-end gap-1">
+                            <!-- Original amount (struck through when partially paid) -->
+                            <span v-if="(rec.advance_credit || 0) > 0 && Math.max(0, rec.amount - (rec.advance_credit || 0)) > 0" class="text-[11px] text-slate-500 line-through">
+                                {{ formatPeso(rec.amount) }}
+                            </span>
+                            <!-- Effective or full amount -->
+                            <span :class="['text-sm font-semibold', rec.type === 'income' ? 'text-income' : rec.type === 'transfer' ? 'text-transfer' : 'text-expense']">
+                                {{ rec.type === 'income' ? '+' : rec.type === 'transfer' ? '' : '-' }}{{ formatPeso((rec.advance_credit || 0) > 0 ? Math.max(0, rec.amount - (rec.advance_credit || 0)) : rec.amount) }}
+                            </span>
+                            <!-- Partial payment progress -->
+                            <div v-if="(rec.advance_credit || 0) > 0 && Math.max(0, rec.amount - (rec.advance_credit || 0)) > 0" class="w-full min-w-[100px] flex flex-col items-end gap-0.5 mt-0.5">
+                                <div class="w-full h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full transition-all" 
+                                        :style="{ width: Math.min(100, (rec.advance_credit! / rec.amount) * 100) + '%' }" />
+                                </div>
+                                <span class="text-[9px] text-emerald-400 font-medium">
+                                    {{ formatPeso(rec.advance_credit!) }} paid · {{ Math.round((rec.advance_credit! / rec.amount) * 100) }}%
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <p v-if="!upcomingRecurring.length" class="text-sm text-slate-400 text-center py-4">Nothing upcoming</p>
                 </div>

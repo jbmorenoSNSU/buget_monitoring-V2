@@ -8,6 +8,7 @@ use App\Http\Requests\StoreSavingsGoalRequest;
 use App\Http\Requests\UpdateSavingsGoalRequest;
 use App\Interfaces\AccountRepositoryInterface;
 use App\Interfaces\PersonRepositoryInterface;
+use App\Http\Resources\SavingsGoalResource;
 use App\Models\SavingsGoal;
 use App\Services\SavingsGoalService;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,7 @@ class SavingsGoalController extends Controller
     public function index(): Response
     {
         return Inertia::render('SavingsGoals/Index', [
-            'goals' => $this->service->all(),
+            'goals' => SavingsGoalResource::collection($this->service->all())->resolve(),
             'accounts' => $this->accountRepository->all_active(),
             'persons' => $this->personRepository->all_active(),
         ]);

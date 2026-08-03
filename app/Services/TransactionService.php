@@ -60,4 +60,21 @@ class TransactionService
     {
         return $this->transactionRepository->recent($limit, $person_id);
     }
+
+    /** @param array<string, mixed> $data */
+    public function create(array $data): Transaction
+    {
+        return $this->transactionRepository->create($data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function update(Transaction $transaction, array $data): Transaction
+    {
+        return $this->transactionRepository->update($transaction, $data);
+    }
+
+    public function delete(Transaction $transaction): void
+    {
+        $this->transactionRepository->delete($transaction);
+    }
 }
