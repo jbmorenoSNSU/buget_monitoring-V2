@@ -13,6 +13,8 @@ class BudgetGoalSeeder extends Seeder
 {
     public function run(): void
     {
+        if (BudgetGoal::exists()) return; // ponytail: skip if already seeded
+
         $now = Carbon::now();
         $cats = Category::all()->keyBy('name');
 

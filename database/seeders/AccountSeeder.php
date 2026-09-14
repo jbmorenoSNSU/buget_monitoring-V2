@@ -15,6 +15,8 @@ class AccountSeeder extends Seeder
 {
     public function run(): void
     {
+        if (Account::exists()) return; // ponytail: skip if already seeded
+
         $cash = AccountType::where('name', 'Cash')->first();
         $bank = AccountType::where('name', 'Bank Account')->first();
         $ewallet = AccountType::where('name', 'E-Wallet')->first();

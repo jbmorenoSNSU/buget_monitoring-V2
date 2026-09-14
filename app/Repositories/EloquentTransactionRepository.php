@@ -254,7 +254,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
                         // ponytail: sequential interest-first — each payment covers outstanding
                         // interest before touching principal. Sum what was already paid toward
                         // interest this calendar month, charge only the remainder.
-                        $txn_date = $transaction->transaction_date;
+                        $txn_date = (string) $transaction->transaction_date;
                         $month_start = date('Y-m-01', strtotime($txn_date));
                         $month_end = date('Y-m-t', strtotime($txn_date));
 
@@ -335,10 +335,12 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
 
     public function spent_by_category_and_person_map(int $month, int $year): array
     {
+        $start = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $end = $start->copy()->endOfMonth()->endOfDay();
+
         $query = Transaction::join('accounts', 'transactions.account_id', '=', 'accounts.id')
             ->where('transactions.type', 'expense')
-            ->whereMonth('transactions.transaction_date', $month)
-            ->whereYear('transactions.transaction_date', $year)
+            ->whereBetween('transactions.transaction_date', [$start, $end])
             ->whereNotNull('accounts.person_id')
             ->selectRaw('transactions.category_id, accounts.person_id, SUM(transactions.amount) as spent')
             ->groupBy('transactions.category_id', 'accounts.person_id')

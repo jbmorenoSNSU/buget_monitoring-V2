@@ -198,10 +198,6 @@ onUnmounted(() => {
         >
             <div v-if="isOpen" ref="panelRef" :style="panelStyle">
                 <ul class="bg-[#0D1017] border border-[#232936] rounded-xl shadow-2xl shadow-black/50 overflow-y-auto max-h-60 py-1">
-                    <!-- Placeholder hint -->
-                    <li class="px-3 py-2 text-xs text-slate-500 italic select-none border-b border-[#1a2030] mb-1">
-                        {{ placeholder }}
-                    </li>
                     <li
                         v-for="(opt, index) in options"
                         :key="opt.value ?? opt.id"

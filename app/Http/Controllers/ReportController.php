@@ -80,7 +80,7 @@ class ReportController extends Controller
         return Inertia::render('Reports/AccountStatement', [
             'data' => $data,
             'filters' => compact('account_id', 'from', 'to'),
-            'accounts' => $this->accountRepository->all()->load('person')->map(fn ($acc) => [
+            'accounts' => $this->accountRepository->all()->map(fn ($acc) => [
                 'id' => $acc->id,
                 'name' => $acc->name,
                 'person' => $acc->person ? ['name' => $acc->person->name] : null,

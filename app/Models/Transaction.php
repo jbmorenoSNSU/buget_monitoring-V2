@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\TransactionType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -122,10 +123,15 @@ class Transaction extends Model
 
     /**
      * Scope: for a specific month and year.
+     * ponytail: uses whereBetween instead of whereMonth/whereYear so the
+     * transaction_date index is sargable. Upgrade from the old MONTH()/YEAR()
+     * wrapper that forced full table scans.
      */
     public function scopeForMonth(Builder $query, int $month, int $year): Builder
     {
-        return $query->whereMonth('transaction_date', $month)
-            ->whereYear('transaction_date', $year);
+        $start = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $end = $start->copy()->endOfMonth()->endOfDay();
+
+        return $query->whereBetween('transaction_date', [$start, $end]);
     }
 }

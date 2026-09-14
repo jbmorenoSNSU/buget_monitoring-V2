@@ -14,6 +14,8 @@ class RecurringTransactionSeeder extends Seeder
 {
     public function run(): void
     {
+        if (RecurringTransaction::exists()) return; // ponytail: skip if already seeded
+
         $bdo = Account::where('name', 'BDO Savings')->first();
         $gcash = Account::where('name', 'GCash')->first();
         $cats = Category::all()->keyBy('name');
